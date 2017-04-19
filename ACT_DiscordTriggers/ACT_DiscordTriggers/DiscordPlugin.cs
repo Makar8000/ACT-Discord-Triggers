@@ -95,7 +95,7 @@ namespace ACT_Plugin {
 			this.lblLog.TabIndex = 5;
 			this.lblLog.Text = "Debug Log";
 			// 
-			// MyPlugin
+			// DiscordPlugin
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -105,7 +105,7 @@ namespace ACT_Plugin {
 			this.Controls.Add(this.lblName);
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
-			this.Name = "MyPlugin";
+			this.Name = "DiscordPlugin";
 			this.Size = new System.Drawing.Size(686, 384);
 			this.Load += new System.EventHandler(this.MyPlugin_Load);
 			this.ResumeLayout(false);
