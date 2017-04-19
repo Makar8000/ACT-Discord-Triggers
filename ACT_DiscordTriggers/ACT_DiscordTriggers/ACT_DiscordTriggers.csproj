@@ -56,14 +56,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MyPlugin.cs">
+    <Compile Include="DiscordPlugin.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="MyPlugin.resx">
-      <DependentUpon>MyPlugin.cs</DependentUpon>
+    <EmbeddedResource Include="DiscordPlugin.resx">
+      <DependentUpon>DiscordPlugin.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

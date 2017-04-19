@@ -11,7 +11,7 @@ using System.Reflection;
 using System.Xml;
 
 namespace ACT_Plugin {
-	public class MyPlugin : UserControl, IActPluginV1 {
+	public class DiscordPlugin : UserControl, IActPluginV1 {
 		#region Designer Created Code (Avoid editing)
 		/// <summary> 
 		/// Required designer variable.
@@ -116,7 +116,7 @@ namespace ACT_Plugin {
 		#endregion
 
 		#endregion
-		public MyPlugin() {
+		public DiscordPlugin() {
 			InitializeComponent();
 		}
 
