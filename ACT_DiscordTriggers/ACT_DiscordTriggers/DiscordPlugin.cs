@@ -107,7 +107,7 @@ namespace ACT_Plugin {
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
 			this.Size = new System.Drawing.Size(686, 384);
-			this.Load += new System.EventHandler(this.MyPlugin_Load);
+			this.Load += new System.EventHandler(this.DiscordPlugin_Load);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -148,7 +148,7 @@ namespace ACT_Plugin {
 
 		private void OFormActMain_OnLogLineRead(bool isImport, LogLineEventArgs logInfo) {
 			foreach (KeyValuePair<string, CustomTrigger> trig in ActGlobals.oFormActMain.CustomTriggers) {
-				if (trig.Value.RegEx.IsMatch(logInfo.logLine)) {
+				if (trig.Value.Active && trig.Value.RegEx.IsMatch(logInfo.logLine)) {
 					logBox.AppendText("Found a match!\n");
 					//this is where I would say something in discord
 					break;
@@ -208,7 +208,7 @@ namespace ACT_Plugin {
 			xWriter.Close();
 		}
 
-		private void MyPlugin_Load(object sender, EventArgs e) {
+		private void DiscordPlugin_Load(object sender, EventArgs e) {
 			
 		}
 	}

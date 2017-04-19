@@ -37,9 +37,6 @@
       <HintPath>..\packages\DSharpPlus.1.7.0\lib\DSharpPlus.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="FFXIV_ACT_Plugin">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Advanced Combat Tracker\FFXIV_ACT_Plugin.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\DSharpPlus.1.7.0\lib\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
