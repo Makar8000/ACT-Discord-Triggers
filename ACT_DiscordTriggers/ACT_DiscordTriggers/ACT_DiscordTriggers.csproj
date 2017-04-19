@@ -33,8 +33,16 @@
     <Reference Include="Advanced Combat Tracker">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Advanced Combat Tracker\Advanced Combat Tracker.exe</HintPath>
     </Reference>
+    <Reference Include="DSharpPlus, Version=1.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DSharpPlus.1.7.0\lib\DSharpPlus.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FFXIV_ACT_Plugin">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Advanced Combat Tracker\FFXIV_ACT_Plugin.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\DSharpPlus.1.7.0\lib\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -57,6 +65,10 @@
     <EmbeddedResource Include="MyPlugin.resx">
       <DependentUpon>MyPlugin.cs</DependentUpon>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
