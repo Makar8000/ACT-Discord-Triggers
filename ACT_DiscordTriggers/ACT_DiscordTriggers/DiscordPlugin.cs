@@ -16,7 +16,6 @@ using Discord.Audio;
 using System.Speech.Synthesis;
 using System.Diagnostics;
 using System.Speech.AudioFormat;
-using NAudio.Wave;
 
 namespace ACT_Plugin {
 	public class DiscordPlugin : UserControl, IActPluginV1 {
