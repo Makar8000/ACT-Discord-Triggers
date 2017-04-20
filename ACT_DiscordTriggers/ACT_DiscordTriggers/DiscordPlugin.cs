@@ -221,14 +221,17 @@ namespace ACT_Plugin {
 
 		#region IActPluginV1 Members
 		public async void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
-			botReady = false;
-			voiceStream = null; 
-			lblStatus = pluginStatusText;   // Hand the status label's reference to our local var
-			pluginScreenSpace.Controls.Add(this);   // Add this UserControl to the tab ACT provides
+			//ACT Stuff
+			lblStatus = pluginStatusText;   
+			pluginScreenSpace.Controls.Add(this);  
 			pluginScreenSpace.Text = "Discord Triggers";
-			this.Dock = DockStyle.Fill; // Expand the UserControl to fill the tab's client space
-			xmlSettings = new SettingsSerializer(this); // Create a new settings serializer and pass it this instance
+			this.Dock = DockStyle.Fill; 
+			xmlSettings = new SettingsSerializer(this);
 			LoadSettings();
+
+			//Discord Bot Stuff
+			botReady = false;
+			voiceStream = null;
 			logBox.Text = "";
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 			bot = new DiscordSocketClient();
@@ -237,7 +240,7 @@ namespace ACT_Plugin {
 			bot.Connected += Bot_Connected;
 			bot.Disconnected += Bot_Disconnected;
 
-			// Create some sort of parsing event handler.  After the "+=" hit TAB twice and the code will be generated for you.
+			//More ACT Stuff
 			ActGlobals.oFormActMain.OnLogLineRead += OFormActMain_OnLogLineRead;
 			lblStatus.Text = "Plugin Started";
 			logBox.AppendText("Plugin loaded.\n");
@@ -263,7 +266,6 @@ namespace ACT_Plugin {
 		private void speak(string text) {
 			SpeechSynthesizer tts = new SpeechSynthesizer();
 			MemoryStream ms = new MemoryStream();
-			//formatInfo: 48000 bitrate, 15-bit, stereo
 			tts.SetOutputToAudioStream(ms, formatInfo);
 			if(voiceStream == null)
 				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
@@ -279,7 +281,7 @@ namespace ACT_Plugin {
 		private void speakFile(string filename) {
 			SpeechSynthesizer tts = new SpeechSynthesizer();
 			MemoryStream ms = new MemoryStream();
-			//formatInfo: 48000 bitrate, 15-bit, stereo
+			//tts.SelectVoice("Microsoft Zira Desktop");
 			tts.SetOutputToAudioStream(ms, formatInfo);
 			if (voiceStream == null)
 				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
@@ -288,7 +290,7 @@ namespace ACT_Plugin {
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(voiceStream);
 				await voiceStream.FlushAsync();
-				logBox.AppendText("Completed speaking\n");
+				//logBox.AppendText("Completed speaking\n");
 			};
 		}
 
@@ -304,8 +306,6 @@ namespace ACT_Plugin {
 		private async void btnJoin_Click(object sender, EventArgs e) {
 			if (botReady == false || bot.ConnectionState != Discord.ConnectionState.Connected)
 				return;
-			//ulong gid = 91676956352868352;
-			//ulong cid = 208007918858141697;
 			btnJoin.Enabled = false;
 			btnDisconnect.Enabled = false;
 			ulong uid;
@@ -417,13 +417,13 @@ namespace ACT_Plugin {
 			xWriter.Indentation = 1;
 			xWriter.IndentChar = '\t';
 			xWriter.WriteStartDocument(true);
-			xWriter.WriteStartElement("Config");    // <Config>
-			xWriter.WriteStartElement("SettingsSerializer");    // <Config><SettingsSerializer>
-			xmlSettings.ExportToXml(xWriter);   // Fill the SettingsSerializer XML
-			xWriter.WriteEndElement();  // </SettingsSerializer>
-			xWriter.WriteEndElement();  // </Config>
-			xWriter.WriteEndDocument(); // Tie up loose ends (shouldn't be any)
-			xWriter.Flush();    // Flush the file buffer to disk
+			xWriter.WriteStartElement("Config");  
+			xWriter.WriteStartElement("SettingsSerializer");  
+			xmlSettings.ExportToXml(xWriter);  
+			xWriter.WriteEndElement(); 
+			xWriter.WriteEndElement(); 
+			xWriter.WriteEndDocument(); 
+			xWriter.Flush();    
 			xWriter.Close();
 		}
 	}
