@@ -9,6 +9,14 @@ using Advanced_Combat_Tracker;
 using System.IO;
 using System.Reflection;
 using System.Xml;
+using System.Threading.Tasks;
+using Discord;
+using Discord.WebSocket;
+using Discord.Audio;
+using System.Speech.Synthesis;
+using System.Diagnostics;
+using System.Speech.AudioFormat;
+using NAudio.Wave;
 
 namespace ACT_Plugin {
 	public class DiscordPlugin : UserControl, IActPluginV1 {
@@ -39,9 +47,15 @@ namespace ACT_Plugin {
 			this.lblBotTok = new System.Windows.Forms.Label();
 			this.txtToken = new System.Windows.Forms.TextBox();
 			this.lblName = new System.Windows.Forms.Label();
-			this.txtName = new System.Windows.Forms.TextBox();
+			this.txtUserID = new System.Windows.Forms.TextBox();
 			this.logBox = new System.Windows.Forms.TextBox();
 			this.lblLog = new System.Windows.Forms.Label();
+			this.btnJoin = new System.Windows.Forms.Button();
+			this.btnLeave = new System.Windows.Forms.Button();
+			this.btnConnect = new System.Windows.Forms.Button();
+			this.btnDisconnect = new System.Windows.Forms.Button();
+			this.lblServer = new System.Windows.Forms.Label();
+			this.lblChannel = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// lblBotTok
@@ -59,7 +73,6 @@ namespace ACT_Plugin {
 			this.txtToken.Name = "txtToken";
 			this.txtToken.Size = new System.Drawing.Size(281, 20);
 			this.txtToken.TabIndex = 1;
-			this.txtToken.Text = "Enter your Discord Bot Token";
 			// 
 			// lblName
 			// 
@@ -70,20 +83,20 @@ namespace ACT_Plugin {
 			this.lblName.TabIndex = 2;
 			this.lblName.Text = "Discord ID";
 			// 
-			// txtName
+			// txtUserID
 			// 
-			this.txtName.Location = new System.Drawing.Point(31, 104);
-			this.txtName.Name = "txtName";
-			this.txtName.Size = new System.Drawing.Size(281, 20);
-			this.txtName.TabIndex = 3;
-			this.txtName.Text = "Enter your Discord ID";
+			this.txtUserID.Location = new System.Drawing.Point(31, 104);
+			this.txtUserID.Name = "txtUserID";
+			this.txtUserID.Size = new System.Drawing.Size(281, 20);
+			this.txtUserID.TabIndex = 3;
 			// 
 			// logBox
 			// 
-			this.logBox.Location = new System.Drawing.Point(31, 167);
+			this.logBox.Location = new System.Drawing.Point(31, 176);
 			this.logBox.Multiline = true;
 			this.logBox.Name = "logBox";
-			this.logBox.Size = new System.Drawing.Size(588, 180);
+			this.logBox.ReadOnly = true;
+			this.logBox.Size = new System.Drawing.Size(528, 180);
 			this.logBox.TabIndex = 4;
 			// 
 			// lblLog
@@ -95,19 +108,85 @@ namespace ACT_Plugin {
 			this.lblLog.TabIndex = 5;
 			this.lblLog.Text = "Debug Log";
 			// 
+			// btnJoin
+			// 
+			this.btnJoin.Enabled = false;
+			this.btnJoin.Location = new System.Drawing.Point(341, 102);
+			this.btnJoin.Name = "btnJoin";
+			this.btnJoin.Size = new System.Drawing.Size(106, 23);
+			this.btnJoin.TabIndex = 6;
+			this.btnJoin.Text = "Join Channel";
+			this.btnJoin.UseVisualStyleBackColor = true;
+			this.btnJoin.Click += new System.EventHandler(this.btnJoin_Click);
+			// 
+			// btnLeave
+			// 
+			this.btnLeave.Enabled = false;
+			this.btnLeave.Location = new System.Drawing.Point(453, 102);
+			this.btnLeave.Name = "btnLeave";
+			this.btnLeave.Size = new System.Drawing.Size(106, 23);
+			this.btnLeave.TabIndex = 7;
+			this.btnLeave.Text = "Leave Channel";
+			this.btnLeave.UseVisualStyleBackColor = true;
+			this.btnLeave.Click += new System.EventHandler(this.btnLeave_Click);
+			// 
+			// btnConnect
+			// 
+			this.btnConnect.Location = new System.Drawing.Point(341, 37);
+			this.btnConnect.Name = "btnConnect";
+			this.btnConnect.Size = new System.Drawing.Size(106, 23);
+			this.btnConnect.TabIndex = 8;
+			this.btnConnect.Text = "Connect";
+			this.btnConnect.UseVisualStyleBackColor = true;
+			this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
+			// 
+			// btnDisconnect
+			// 
+			this.btnDisconnect.Enabled = false;
+			this.btnDisconnect.Location = new System.Drawing.Point(453, 37);
+			this.btnDisconnect.Name = "btnDisconnect";
+			this.btnDisconnect.Size = new System.Drawing.Size(106, 23);
+			this.btnDisconnect.TabIndex = 9;
+			this.btnDisconnect.Text = "Disconnect";
+			this.btnDisconnect.UseVisualStyleBackColor = true;
+			this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
+			// 
+			// lblServer
+			// 
+			this.lblServer.AutoSize = true;
+			this.lblServer.Location = new System.Drawing.Point(338, 21);
+			this.lblServer.Name = "lblServer";
+			this.lblServer.Size = new System.Drawing.Size(77, 13);
+			this.lblServer.TabIndex = 10;
+			this.lblServer.Text = "Server Options";
+			// 
+			// lblChannel
+			// 
+			this.lblChannel.AutoSize = true;
+			this.lblChannel.Location = new System.Drawing.Point(338, 86);
+			this.lblChannel.Name = "lblChannel";
+			this.lblChannel.Size = new System.Drawing.Size(85, 13);
+			this.lblChannel.TabIndex = 11;
+			this.lblChannel.Text = "Channel Options";
+			// 
 			// DiscordPlugin
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.lblChannel);
+			this.Controls.Add(this.lblServer);
+			this.Controls.Add(this.btnDisconnect);
+			this.Controls.Add(this.btnConnect);
+			this.Controls.Add(this.btnLeave);
+			this.Controls.Add(this.btnJoin);
 			this.Controls.Add(this.lblLog);
 			this.Controls.Add(this.logBox);
-			this.Controls.Add(this.txtName);
+			this.Controls.Add(this.txtUserID);
 			this.Controls.Add(this.lblName);
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
-			this.Size = new System.Drawing.Size(686, 384);
-			this.Load += new System.EventHandler(this.DiscordPlugin_Load);
+			this.Size = new System.Drawing.Size(831, 384);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -125,53 +204,194 @@ namespace ACT_Plugin {
 		private Label lblBotTok;
 		private TextBox txtToken;
 		private Label lblName;
-		private TextBox txtName;
+		private TextBox txtUserID;
 		private TextBox logBox;
 		private Label lblLog;
 		SettingsSerializer xmlSettings;
+		private Button btnJoin;
+		private Button btnLeave;
+		private Button btnConnect;
+		private Button btnDisconnect;
+		private DiscordSocketClient bot;
+		private IAudioClient audioClient;
+		private SpeechAudioFormatInfo formatInfo;
+		private AudioOutStream voiceStream;
+		private Label lblServer;
+		private Label lblChannel;
+		private bool botReady;
 
 		#region IActPluginV1 Members
-		public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
+		public async void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
+			botReady = false;
+			voiceStream = null; 
 			lblStatus = pluginStatusText;   // Hand the status label's reference to our local var
 			pluginScreenSpace.Controls.Add(this);   // Add this UserControl to the tab ACT provides
 			pluginScreenSpace.Text = "Discord Triggers";
 			this.Dock = DockStyle.Fill; // Expand the UserControl to fill the tab's client space
 			xmlSettings = new SettingsSerializer(this); // Create a new settings serializer and pass it this instance
 			LoadSettings();
+			logBox.Text = "";
+			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
+			bot = new DiscordSocketClient();
+			await bot.LoginAsync(TokenType.Bot, txtToken.Text);
+			bot.Ready += Bot_Ready;
+			bot.Connected += Bot_Connected;
+			bot.Disconnected += Bot_Disconnected;
 
 			// Create some sort of parsing event handler.  After the "+=" hit TAB twice and the code will be generated for you.
-			ActGlobals.oFormActMain.AfterCombatAction += new CombatActionDelegate(oFormActMain_AfterCombatAction);
 			ActGlobals.oFormActMain.OnLogLineRead += OFormActMain_OnLogLineRead;
-
 			lblStatus.Text = "Plugin Started";
+			logBox.AppendText("Plugin loaded.\n");
 		}
 
 		private void OFormActMain_OnLogLineRead(bool isImport, LogLineEventArgs logInfo) {
-			foreach (KeyValuePair<string, CustomTrigger> trig in ActGlobals.oFormActMain.CustomTriggers) {
-				if (trig.Value.Active && trig.Value.RegEx.IsMatch(logInfo.logLine)) {
-					logBox.AppendText("Found a match!\n");
-					//this is where I would say something in discord
+			if (!botReady || audioClient == null || audioClient.ConnectionState != Discord.ConnectionState.Connected)
+				return;
+
+			foreach (CustomTrigger trig in ActGlobals.oFormActMain.CustomTriggers.Values) {
+				if (trig.Active && trig.RegEx.IsMatch(logInfo.logLine)) {
+					if (trig.SoundType == 1)
+						speak("beep");
+					if (trig.SoundType == 2) 
+						speak(trig.SoundData);
+					if (trig.SoundType == 3)
+						speakFile(trig.SoundData);
 					break;
 				}
 			}
 		}
 
+		private void speak(string text) {
+			SpeechSynthesizer tts = new SpeechSynthesizer();
+			MemoryStream ms = new MemoryStream();
+			//formatInfo: 48000 bitrate, 15-bit, stereo
+			tts.SetOutputToAudioStream(ms, formatInfo);
+			if(voiceStream == null)
+				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
+			tts.SpeakAsync(text);
+			tts.SpeakCompleted += async (a, b) => {
+				ms.Seek(0, SeekOrigin.Begin);
+				await ms.CopyToAsync(voiceStream);
+				await voiceStream.FlushAsync();
+				logBox.AppendText("Completed speaking\n");
+			};
+		}
+
+		private void speakFile(string filename) {
+			SpeechSynthesizer tts = new SpeechSynthesizer();
+			MemoryStream ms = new MemoryStream();
+			//formatInfo: 48000 bitrate, 15-bit, stereo
+			tts.SetOutputToAudioStream(ms, formatInfo);
+			if (voiceStream == null)
+				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
+			tts.SpeakAsync(filename);
+			tts.SpeakCompleted += async (a, b) => {
+				ms.Seek(0, SeekOrigin.Begin);
+				await ms.CopyToAsync(voiceStream);
+				await voiceStream.FlushAsync();
+				logBox.AppendText("Completed speaking\n");
+			};
+		}
+
 		public void DeInitPlugin() {
 			// Unsubscribe from any events you listen to when exiting!
-			ActGlobals.oFormActMain.AfterCombatAction -= oFormActMain_AfterCombatAction;
-
+			ActGlobals.oFormActMain.OnLogLineRead -= OFormActMain_OnLogLineRead;
 			SaveSettings();
+			bot.StopAsync();
 			lblStatus.Text = "Plugin Exited";
 		}
 		#endregion
 
-		void oFormActMain_AfterCombatAction(bool isImport, CombatActionEventArgs actionInfo) {
-			throw new NotImplementedException();
+		private async void btnJoin_Click(object sender, EventArgs e) {
+			if (botReady == false || bot.ConnectionState != Discord.ConnectionState.Connected)
+				return;
+			//ulong gid = 91676956352868352;
+			//ulong cid = 208007918858141697;
+			btnJoin.Enabled = false;
+			btnDisconnect.Enabled = false;
+			ulong uid;
+			if (!UInt64.TryParse(txtUserID.Text, out uid))
+				return;
+			SocketVoiceChannel chan = null;
+			foreach (SocketGuild g in bot.Guilds) {
+				if (chan != null)
+					break;
+				foreach (SocketVoiceChannel v in g.VoiceChannels) {
+					if (chan != null)
+						break;
+					foreach (SocketGuildUser u in v.Users) {
+						if (u.Id == uid) {
+							chan = bot.GetGuild(g.Id).GetVoiceChannel(v.Id);
+							break;
+						}
+					}
+				}
+			}
+			if (chan != null) {
+				audioClient = await chan.ConnectAsync();
+				logBox.AppendText("Joined channel: " + chan.Name + "\n");
+				btnLeave.Enabled = true;
+			}
+			else {
+				logBox.AppendText("Either you are not in a discord channel, or the bot does not have access to the channel you are connected to.\n");
+				btnJoin.Enabled = true;
+				btnDisconnect.Enabled = true;
+			}
 		}
 
-		void LoadSettings() {
+		private void btnLeave_Click(object sender, EventArgs e) {
+			if (!botReady || bot.ConnectionState != Discord.ConnectionState.Connected)
+				return;
+			if (audioClient != null && audioClient.ConnectionState == Discord.ConnectionState.Connected) {
+				if(voiceStream != null)
+					voiceStream.Close();
+				audioClient.StopAsync();
+				btnJoin.Enabled = true;
+				btnLeave.Enabled = false;
+				btnDisconnect.Enabled = true;
+				logBox.AppendText("Left channel.\n");
+			}
+		}
+
+		private async void btnConnect_Click(object sender, EventArgs e) {
+			await bot.StartAsync();
+		}
+
+		private void btnDisconnect_Click(object sender, EventArgs e) {
+			if (!botReady || bot.ConnectionState != Discord.ConnectionState.Connected)
+				return;
+			bot.StopAsync();
+		}
+
+		private Task Bot_Disconnected(Exception arg) {
+			logBox.AppendText("Bot is disconnected.\n");
+			btnConnect.Enabled = true;
+			btnDisconnect.Enabled = false;
+			btnJoin.Enabled = false;
+			btnLeave.Enabled = false;
+			return Task.CompletedTask;
+		}
+
+		private Task Bot_Connected() {
+			logBox.AppendText("Bot is connected.\n");
+			btnConnect.Enabled = false;
+			btnDisconnect.Enabled = true;
+			btnJoin.Enabled = true;
+			return Task.CompletedTask;
+		}
+
+		private async Task Bot_Ready() {
+			botReady = true;
+			logBox.AppendText("Bot is now ready.\n");
+		}
+
+		private async Task Bot_LoggedIn() {
+			await bot.StartAsync();
+		}
+
+		public void LoadSettings() {
 			xmlSettings.AddControlSetting(txtToken.Name, txtToken);
-			xmlSettings.AddControlSetting(txtName.Name, txtName);
+			xmlSettings.AddControlSetting(txtUserID.Name, txtUserID);
 
 			if (File.Exists(settingsFile)) {
 				FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -191,7 +411,7 @@ namespace ACT_Plugin {
 				xReader.Close();
 			}
 		}
-		void SaveSettings() {
+		public void SaveSettings() {
 			FileStream fs = new FileStream(settingsFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
 			XmlTextWriter xWriter = new XmlTextWriter(fs, Encoding.UTF8);
 			xWriter.Formatting = Formatting.Indented;
@@ -206,10 +426,6 @@ namespace ACT_Plugin {
 			xWriter.WriteEndDocument(); // Tie up loose ends (shouldn't be any)
 			xWriter.Flush();    // Flush the file buffer to disk
 			xWriter.Close();
-		}
-
-		private void DiscordPlugin_Load(object sender, EventArgs e) {
-			
 		}
 	}
 }
