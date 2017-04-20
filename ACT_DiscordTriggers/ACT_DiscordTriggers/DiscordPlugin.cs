@@ -70,8 +70,9 @@ namespace ACT_Plugin {
 			// 
 			this.txtToken.Location = new System.Drawing.Point(31, 39);
 			this.txtToken.Name = "txtToken";
-			this.txtToken.Size = new System.Drawing.Size(281, 20);
+			this.txtToken.Size = new System.Drawing.Size(207, 20);
 			this.txtToken.TabIndex = 1;
+			this.txtToken.UseSystemPasswordChar = true;
 			// 
 			// lblName
 			// 
@@ -86,7 +87,7 @@ namespace ACT_Plugin {
 			// 
 			this.txtUserID.Location = new System.Drawing.Point(31, 104);
 			this.txtUserID.Name = "txtUserID";
-			this.txtUserID.Size = new System.Drawing.Size(281, 20);
+			this.txtUserID.Size = new System.Drawing.Size(207, 20);
 			this.txtUserID.TabIndex = 3;
 			// 
 			// logBox
@@ -95,7 +96,7 @@ namespace ACT_Plugin {
 			this.logBox.Multiline = true;
 			this.logBox.Name = "logBox";
 			this.logBox.ReadOnly = true;
-			this.logBox.Size = new System.Drawing.Size(528, 180);
+			this.logBox.Size = new System.Drawing.Size(458, 180);
 			this.logBox.TabIndex = 4;
 			// 
 			// lblLog
@@ -110,7 +111,7 @@ namespace ACT_Plugin {
 			// btnJoin
 			// 
 			this.btnJoin.Enabled = false;
-			this.btnJoin.Location = new System.Drawing.Point(341, 102);
+			this.btnJoin.Location = new System.Drawing.Point(271, 102);
 			this.btnJoin.Name = "btnJoin";
 			this.btnJoin.Size = new System.Drawing.Size(106, 23);
 			this.btnJoin.TabIndex = 6;
@@ -121,7 +122,7 @@ namespace ACT_Plugin {
 			// btnLeave
 			// 
 			this.btnLeave.Enabled = false;
-			this.btnLeave.Location = new System.Drawing.Point(453, 102);
+			this.btnLeave.Location = new System.Drawing.Point(383, 102);
 			this.btnLeave.Name = "btnLeave";
 			this.btnLeave.Size = new System.Drawing.Size(106, 23);
 			this.btnLeave.TabIndex = 7;
@@ -131,7 +132,7 @@ namespace ACT_Plugin {
 			// 
 			// btnConnect
 			// 
-			this.btnConnect.Location = new System.Drawing.Point(341, 37);
+			this.btnConnect.Location = new System.Drawing.Point(271, 37);
 			this.btnConnect.Name = "btnConnect";
 			this.btnConnect.Size = new System.Drawing.Size(106, 23);
 			this.btnConnect.TabIndex = 8;
@@ -142,7 +143,7 @@ namespace ACT_Plugin {
 			// btnDisconnect
 			// 
 			this.btnDisconnect.Enabled = false;
-			this.btnDisconnect.Location = new System.Drawing.Point(453, 37);
+			this.btnDisconnect.Location = new System.Drawing.Point(383, 37);
 			this.btnDisconnect.Name = "btnDisconnect";
 			this.btnDisconnect.Size = new System.Drawing.Size(106, 23);
 			this.btnDisconnect.TabIndex = 9;
@@ -153,7 +154,7 @@ namespace ACT_Plugin {
 			// lblServer
 			// 
 			this.lblServer.AutoSize = true;
-			this.lblServer.Location = new System.Drawing.Point(338, 21);
+			this.lblServer.Location = new System.Drawing.Point(268, 21);
 			this.lblServer.Name = "lblServer";
 			this.lblServer.Size = new System.Drawing.Size(77, 13);
 			this.lblServer.TabIndex = 10;
@@ -162,7 +163,7 @@ namespace ACT_Plugin {
 			// lblChannel
 			// 
 			this.lblChannel.AutoSize = true;
-			this.lblChannel.Location = new System.Drawing.Point(338, 86);
+			this.lblChannel.Location = new System.Drawing.Point(268, 86);
 			this.lblChannel.Name = "lblChannel";
 			this.lblChannel.Size = new System.Drawing.Size(85, 13);
 			this.lblChannel.TabIndex = 11;
@@ -185,7 +186,7 @@ namespace ACT_Plugin {
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
-			this.Size = new System.Drawing.Size(831, 384);
+			this.Size = new System.Drawing.Size(540, 384);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -249,7 +250,7 @@ namespace ACT_Plugin {
 		private void OFormActMain_OnLogLineRead(bool isImport, LogLineEventArgs logInfo) {
 			if (!botReady || audioClient == null || audioClient.ConnectionState != Discord.ConnectionState.Connected)
 				return;
-
+			//logBox.AppendText(logInfo.logLine + "\n");
 			foreach (CustomTrigger trig in ActGlobals.oFormActMain.CustomTriggers.Values) {
 				if (trig.Active && trig.RegEx.IsMatch(logInfo.logLine)) {
 					if (trig.SoundType == 1)
@@ -353,13 +354,15 @@ namespace ACT_Plugin {
 		}
 
 		private async void btnConnect_Click(object sender, EventArgs e) {
+			if (bot.ConnectionState != Discord.ConnectionState.Disconnected)
+				return;
 			await bot.StartAsync();
 		}
 
-		private void btnDisconnect_Click(object sender, EventArgs e) {
+		private async void btnDisconnect_Click(object sender, EventArgs e) {
 			if (!botReady || bot.ConnectionState != Discord.ConnectionState.Connected)
 				return;
-			bot.StopAsync();
+			await bot.StopAsync();
 		}
 
 		private Task Bot_Disconnected(Exception arg) {
@@ -381,11 +384,8 @@ namespace ACT_Plugin {
 
 		private async Task Bot_Ready() {
 			botReady = true;
+			await bot.SetGameAsync("with ACT Triggers");
 			logBox.AppendText("Bot is now ready.\n");
-		}
-
-		private async Task Bot_LoggedIn() {
-			await bot.StartAsync();
 		}
 
 		public void LoadSettings() {
