@@ -200,8 +200,8 @@ namespace ACT_Plugin {
 			InitializeComponent();
 		}
 
-		Label lblStatus;    // The status label that appears in ACT's Plugin tab
-		string settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Config\\ACT_DiscordTriggers.config.xml");
+		Label lblStatus;
+		string settingsFile;
 		private Label lblBotTok;
 		private TextBox txtToken;
 		private Label lblName;
@@ -217,6 +217,7 @@ namespace ACT_Plugin {
 		private IAudioClient audioClient;
 		private SpeechAudioFormatInfo formatInfo;
 		private AudioOutStream voiceStream;
+		private FormActMain.PlayTtsDelegate ttsDelegate;
 		private Label lblServer;
 		private Label lblChannel;
 		private bool botReady;
@@ -224,13 +225,14 @@ namespace ACT_Plugin {
 		#region IActPluginV1 Members
 		public async void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
 			//ACT Stuff
-			lblStatus = pluginStatusText;   
-			pluginScreenSpace.Controls.Add(this);  
+			lblStatus = pluginStatusText;
+			settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Config\\ACT_DiscordTriggers.config.xml");
+			pluginScreenSpace.Controls.Add(this);
 			pluginScreenSpace.Text = "Discord Triggers";
-			this.Dock = DockStyle.Fill; 
+			this.Dock = DockStyle.Fill;
 			xmlSettings = new SettingsSerializer(this);
 			LoadSettings();
-			ActGlobals.oFormActMain.OnLogLineRead += OFormActMain_OnLogLineRead;
+			ttsDelegate = ActGlobals.oFormActMain.PlayTtsMethod;
 
 			//Discord Bot Stuff
 			if (txtToken.Text == "")
@@ -242,8 +244,8 @@ namespace ACT_Plugin {
 			bot = new DiscordSocketClient();
 			try {
 				await bot.LoginAsync(TokenType.Bot, txtToken.Text);
-			} catch(Exception ex) {
-				logBox.Text = "Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again";
+			} catch (Exception ex) {
+				logBox.Text = "Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again).";
 				bot = null;
 				return;
 			}
@@ -255,42 +257,37 @@ namespace ACT_Plugin {
 			logBox.AppendText("Plugin loaded successfully.\n");
 		}
 
-		private void OFormActMain_OnLogLineRead(bool isImport, LogLineEventArgs logInfo) {
-			if (!botReady || audioClient == null || audioClient.ConnectionState != Discord.ConnectionState.Connected)
-				return;
-			//logBox.AppendText(logInfo.logLine + "\n");
-			foreach (CustomTrigger trig in ActGlobals.oFormActMain.CustomTriggers.Values) {
-				if (trig.Active && trig.RegEx.IsMatch(logInfo.logLine)) {
-					if (trig.SoundType == 1)
-						speak("beep");
-					if (trig.SoundType == 2) 
-						speak(trig.SoundData);
-					if (trig.SoundType == 3)
-						speakFile(trig.SoundData);
-					break;
-				}
-			}
+		public async void DeInitPlugin() {
+			ActGlobals.oFormActMain.PlayTtsMethod = ttsDelegate;
+			SaveSettings();
+			bot.Ready -= Bot_Ready;
+			bot.Connected -= Bot_Connected;
+			bot.Disconnected -= Bot_Disconnected;
+			await bot.StopAsync();
+			await bot.LogoutAsync();
+			lblStatus.Text = "Plugin Exited";
 		}
+		#endregion
 
+		#region Discord Methods
 		private void speak(string text) {
 			SpeechSynthesizer tts = new SpeechSynthesizer();
 			MemoryStream ms = new MemoryStream();
 			tts.SetOutputToAudioStream(ms, formatInfo);
-			if(voiceStream == null)
+			if (voiceStream == null)
 				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
 			tts.SpeakAsync(text);
-			tts.SpeakCompleted += async (a, b) => {
+			tts.SpeakCompleted += (a, b) => {
 				ms.Seek(0, SeekOrigin.Begin);
-				await ms.CopyToAsync(voiceStream);
-				await voiceStream.FlushAsync();
-				logBox.AppendText("Completed speaking\n");
+				ms.CopyTo(voiceStream);
+				voiceStream.Flush();
 			};
 		}
 
 		private void speakFile(string filename) {
+			
 			SpeechSynthesizer tts = new SpeechSynthesizer();
 			MemoryStream ms = new MemoryStream();
-			//tts.SelectVoice("Microsoft Zira Desktop");
 			tts.SetOutputToAudioStream(ms, formatInfo);
 			if (voiceStream == null)
 				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
@@ -299,19 +296,20 @@ namespace ACT_Plugin {
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(voiceStream);
 				await voiceStream.FlushAsync();
-				//logBox.AppendText("Completed speaking\n");
 			};
 		}
 
-		public void DeInitPlugin() {
-			// Unsubscribe from any events you listen to when exiting!
-			ActGlobals.oFormActMain.OnLogLineRead -= OFormActMain_OnLogLineRead;
-			SaveSettings();
-			bot.StopAsync();
-			lblStatus.Text = "Plugin Exited";
+		private SocketVoiceChannel getUsersVoiceChannel(ulong uid) {
+			foreach (SocketGuild g in bot.Guilds)
+				foreach (SocketVoiceChannel v in g.VoiceChannels)
+					foreach (SocketGuildUser u in v.Users)
+						if (u.Id == uid)
+							return bot.GetGuild(g.Id).GetVoiceChannel(v.Id);
+			return null;
 		}
 		#endregion
 
+		#region UI Events
 		private async void btnJoin_Click(object sender, EventArgs e) {
 			if (botReady == false || bot.ConnectionState != Discord.ConnectionState.Connected)
 				return;
@@ -320,21 +318,7 @@ namespace ACT_Plugin {
 			ulong uid;
 			if (!UInt64.TryParse(txtUserID.Text, out uid))
 				return;
-			SocketVoiceChannel chan = null;
-			foreach (SocketGuild g in bot.Guilds) {
-				if (chan != null)
-					break;
-				foreach (SocketVoiceChannel v in g.VoiceChannels) {
-					if (chan != null)
-						break;
-					foreach (SocketGuildUser u in v.Users) {
-						if (u.Id == uid) {
-							chan = bot.GetGuild(g.Id).GetVoiceChannel(v.Id);
-							break;
-						}
-					}
-				}
-			}
+			SocketVoiceChannel chan = getUsersVoiceChannel(uid);
 			if (chan != null) {
 				try {
 					audioClient = await chan.ConnectAsync();
@@ -344,6 +328,7 @@ namespace ACT_Plugin {
 				}
 				logBox.AppendText("Joined channel: " + chan.Name + "\n");
 				btnLeave.Enabled = true;
+				ActGlobals.oFormActMain.PlayTtsMethod = speak;
 			}
 			else {
 				logBox.AppendText("Unable to join channel. This could be due to any of the following reasons:\n");
@@ -358,28 +343,29 @@ namespace ACT_Plugin {
 			if (!botReady || bot.ConnectionState != Discord.ConnectionState.Connected)
 				return;
 			if (audioClient != null && audioClient.ConnectionState == Discord.ConnectionState.Connected) {
-				if(voiceStream != null)
+				if (voiceStream != null)
 					voiceStream.Close();
 				audioClient.StopAsync();
 				btnJoin.Enabled = true;
 				btnLeave.Enabled = false;
 				btnDisconnect.Enabled = true;
 				logBox.AppendText("Left channel.\n");
+				ActGlobals.oFormActMain.PlayTtsMethod = ttsDelegate;
 			}
 		}
 
 		private async void btnConnect_Click(object sender, EventArgs e) {
-			if (bot.ConnectionState != Discord.ConnectionState.Disconnected)
-				return;
-			await bot.StartAsync();
+			if (bot.ConnectionState == Discord.ConnectionState.Disconnected)
+				await bot.StartAsync();
 		}
 
 		private async void btnDisconnect_Click(object sender, EventArgs e) {
-			if (!botReady || bot.ConnectionState != Discord.ConnectionState.Connected)
-				return;
-			await bot.StopAsync();
+			if (botReady && bot.ConnectionState == Discord.ConnectionState.Connected)
+				await bot.StopAsync();
 		}
+		#endregion
 
+		#region Discord Events
 		private Task Bot_Disconnected(Exception arg) {
 			logBox.AppendText("Bot is disconnected.\n");
 			btnConnect.Enabled = true;
@@ -394,6 +380,7 @@ namespace ACT_Plugin {
 			btnConnect.Enabled = false;
 			btnDisconnect.Enabled = true;
 			btnJoin.Enabled = true;
+			btnLeave.Enabled = false;
 			return Task.CompletedTask;
 		}
 
@@ -402,7 +389,9 @@ namespace ACT_Plugin {
 			await bot.SetGameAsync("with ACT Triggers");
 			logBox.AppendText("Bot is now ready.\n");
 		}
+		#endregion
 
+		#region Settings
 		public void LoadSettings() {
 			xmlSettings.AddControlSetting(txtToken.Name, txtToken);
 			xmlSettings.AddControlSetting(txtUserID.Name, txtUserID);
@@ -410,15 +399,12 @@ namespace ACT_Plugin {
 			if (File.Exists(settingsFile)) {
 				FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 				XmlTextReader xReader = new XmlTextReader(fs);
-
+				
 				try {
-					while (xReader.Read()) {
-						if (xReader.NodeType == XmlNodeType.Element) {
-							if (xReader.LocalName == "SettingsSerializer") {
+					while (xReader.Read()) 
+						if (xReader.NodeType == XmlNodeType.Element) 
+							if (xReader.LocalName == "SettingsSerializer") 
 								xmlSettings.ImportFromXml(xReader);
-							}
-						}
-					}
 				} catch (Exception ex) {
 					lblStatus.Text = "Error loading settings: " + ex.Message;
 				}
@@ -432,14 +418,15 @@ namespace ACT_Plugin {
 			xWriter.Indentation = 1;
 			xWriter.IndentChar = '\t';
 			xWriter.WriteStartDocument(true);
-			xWriter.WriteStartElement("Config");  
-			xWriter.WriteStartElement("SettingsSerializer");  
-			xmlSettings.ExportToXml(xWriter);  
-			xWriter.WriteEndElement(); 
-			xWriter.WriteEndElement(); 
-			xWriter.WriteEndDocument(); 
-			xWriter.Flush();    
+			xWriter.WriteStartElement("Config");
+			xWriter.WriteStartElement("SettingsSerializer");
+			xmlSettings.ExportToXml(xWriter);
+			xWriter.WriteEndElement();
+			xWriter.WriteEndElement();
+			xWriter.WriteEndDocument();
+			xWriter.Flush();
 			xWriter.Close();
 		}
+		#endregion
 	}
 }
