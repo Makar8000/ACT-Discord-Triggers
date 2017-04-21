@@ -132,6 +132,7 @@ namespace ACT_Plugin {
 			// 
 			// btnConnect
 			// 
+			this.btnConnect.Enabled = false;
 			this.btnConnect.Location = new System.Drawing.Point(271, 37);
 			this.btnConnect.Name = "btnConnect";
 			this.btnConnect.Size = new System.Drawing.Size(106, 23);
@@ -229,22 +230,29 @@ namespace ACT_Plugin {
 			this.Dock = DockStyle.Fill; 
 			xmlSettings = new SettingsSerializer(this);
 			LoadSettings();
+			ActGlobals.oFormActMain.OnLogLineRead += OFormActMain_OnLogLineRead;
 
 			//Discord Bot Stuff
+			if (txtToken.Text == "")
+				return;
 			botReady = false;
 			voiceStream = null;
 			logBox.Text = "";
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 			bot = new DiscordSocketClient();
-			await bot.LoginAsync(TokenType.Bot, txtToken.Text);
+			try {
+				await bot.LoginAsync(TokenType.Bot, txtToken.Text);
+			} catch(Exception ex) {
+				logBox.Text = "Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again";
+				bot = null;
+				return;
+			}
+			btnConnect.Enabled = true;
 			bot.Ready += Bot_Ready;
 			bot.Connected += Bot_Connected;
 			bot.Disconnected += Bot_Disconnected;
-
-			//More ACT Stuff
-			ActGlobals.oFormActMain.OnLogLineRead += OFormActMain_OnLogLineRead;
 			lblStatus.Text = "Plugin Started";
-			logBox.AppendText("Plugin loaded.\n");
+			logBox.AppendText("Plugin loaded successfully.\n");
 		}
 
 		private void OFormActMain_OnLogLineRead(bool isImport, LogLineEventArgs logInfo) {
@@ -328,12 +336,19 @@ namespace ACT_Plugin {
 				}
 			}
 			if (chan != null) {
-				audioClient = await chan.ConnectAsync();
+				try {
+					audioClient = await chan.ConnectAsync();
+				} catch (Exception ex) {
+					logBox.AppendText("Unable to join channel. Does your bot have permission to join this channel?");
+					return;
+				}
 				logBox.AppendText("Joined channel: " + chan.Name + "\n");
 				btnLeave.Enabled = true;
 			}
 			else {
-				logBox.AppendText("Either you are not in a discord channel, or the bot does not have access to the channel you are connected to.\n");
+				logBox.AppendText("Unable to join channel. This could be due to any of the following reasons:\n");
+				logBox.AppendText("* You are not in a voice channel.\n");
+				logBox.AppendText("* The Discord ID you entered above is incorrect.\n");
 				btnJoin.Enabled = true;
 				btnDisconnect.Enabled = true;
 			}
