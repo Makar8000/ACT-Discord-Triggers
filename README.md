@@ -1,11 +1,11 @@
 # ACT Discord Triggers
 An ACT plugin for using ACT Custom Triggers with Discord bots.
 
-# Setup
-See the [wiki](https://github.com/Makar8000/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
-
 # Download
 See the [releases](https://github.com/Makar8000/ACT-Discord-Triggers/releases)
+
+# Setup
+See the [wiki](https://github.com/Makar8000/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
 
 # Software Used
  * [Microsoft .NET Framework 4.6.2](https://www.microsoft.com/en-us/download/details.aspx?id=53344)
