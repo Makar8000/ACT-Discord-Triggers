@@ -51,9 +51,6 @@ namespace ACT_Plugin {
 			this.lblLog = new System.Windows.Forms.Label();
 			this.btnJoin = new System.Windows.Forms.Button();
 			this.btnLeave = new System.Windows.Forms.Button();
-			this.btnConnect = new System.Windows.Forms.Button();
-			this.btnDisconnect = new System.Windows.Forms.Button();
-			this.lblServer = new System.Windows.Forms.Label();
 			this.lblChannel = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
@@ -130,37 +127,6 @@ namespace ACT_Plugin {
 			this.btnLeave.UseVisualStyleBackColor = true;
 			this.btnLeave.Click += new System.EventHandler(this.btnLeave_Click);
 			// 
-			// btnConnect
-			// 
-			this.btnConnect.Enabled = false;
-			this.btnConnect.Location = new System.Drawing.Point(271, 37);
-			this.btnConnect.Name = "btnConnect";
-			this.btnConnect.Size = new System.Drawing.Size(106, 23);
-			this.btnConnect.TabIndex = 8;
-			this.btnConnect.Text = "Connect";
-			this.btnConnect.UseVisualStyleBackColor = true;
-			this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
-			// 
-			// btnDisconnect
-			// 
-			this.btnDisconnect.Enabled = false;
-			this.btnDisconnect.Location = new System.Drawing.Point(383, 37);
-			this.btnDisconnect.Name = "btnDisconnect";
-			this.btnDisconnect.Size = new System.Drawing.Size(106, 23);
-			this.btnDisconnect.TabIndex = 9;
-			this.btnDisconnect.Text = "Disconnect";
-			this.btnDisconnect.UseVisualStyleBackColor = true;
-			this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
-			// 
-			// lblServer
-			// 
-			this.lblServer.AutoSize = true;
-			this.lblServer.Location = new System.Drawing.Point(268, 21);
-			this.lblServer.Name = "lblServer";
-			this.lblServer.Size = new System.Drawing.Size(77, 13);
-			this.lblServer.TabIndex = 10;
-			this.lblServer.Text = "Server Options";
-			// 
 			// lblChannel
 			// 
 			this.lblChannel.AutoSize = true;
@@ -175,9 +141,6 @@ namespace ACT_Plugin {
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.Controls.Add(this.lblChannel);
-			this.Controls.Add(this.lblServer);
-			this.Controls.Add(this.btnDisconnect);
-			this.Controls.Add(this.btnConnect);
 			this.Controls.Add(this.btnLeave);
 			this.Controls.Add(this.btnJoin);
 			this.Controls.Add(this.lblLog);
@@ -211,19 +174,14 @@ namespace ACT_Plugin {
 		SettingsSerializer xmlSettings;
 		private Button btnJoin;
 		private Button btnLeave;
-		private Button btnConnect;
-		private Button btnDisconnect;
 		private DiscordSocketClient bot;
 		private IAudioClient audioClient;
 		private SpeechAudioFormatInfo formatInfo;
 		private AudioOutStream voiceStream;
-		private FormActMain.PlayTtsDelegate ttsDelegate;
-		private Label lblServer;
 		private Label lblChannel;
-		private bool botReady;
 
 		#region IActPluginV1 Members
-		public async void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
+		public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
 			//ACT Stuff
 			lblStatus = pluginStatusText;
 			settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Config\\ACT_DiscordTriggers.config.xml");
@@ -232,37 +190,28 @@ namespace ACT_Plugin {
 			this.Dock = DockStyle.Fill;
 			xmlSettings = new SettingsSerializer(this);
 			LoadSettings();
-			ttsDelegate = ActGlobals.oFormActMain.PlayTtsMethod;
 
 			//Discord Bot Stuff
-			if (txtToken.Text == "")
-				return;
-			botReady = false;
 			voiceStream = null;
 			logBox.Text = "";
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 			bot = new DiscordSocketClient();
 			try {
-				await bot.LoginAsync(TokenType.Bot, txtToken.Text);
+				bot.LoginAsync(TokenType.Bot, txtToken.Text);
+				bot.LoggedIn += Bot_LoggedIn;
+				bot.Ready += Bot_Ready;
+				logBox.AppendText("Plugin loaded successfully.\n");
 			} catch (Exception ex) {
 				logBox.Text = "Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again).";
-				bot = null;
-				return;
 			}
-			btnConnect.Enabled = true;
-			bot.Ready += Bot_Ready;
-			bot.Connected += Bot_Connected;
-			bot.Disconnected += Bot_Disconnected;
 			lblStatus.Text = "Plugin Started";
-			logBox.AppendText("Plugin loaded successfully.\n");
 		}
 
 		public async void DeInitPlugin() {
-			ActGlobals.oFormActMain.PlayTtsMethod = ttsDelegate;
+			ActGlobals.oFormActMain.PlayTtsMethod = ActGlobals.oFormActMain.TTS;
 			SaveSettings();
 			bot.Ready -= Bot_Ready;
-			bot.Connected -= Bot_Connected;
-			bot.Disconnected -= Bot_Disconnected;
+			bot.LoggedIn -= Bot_LoggedIn;
 			await bot.StopAsync();
 			await bot.LogoutAsync();
 			lblStatus.Text = "Plugin Exited";
@@ -284,8 +233,8 @@ namespace ACT_Plugin {
 			};
 		}
 
+		//TODO:
 		private void speakFile(string filename) {
-			
 			SpeechSynthesizer tts = new SpeechSynthesizer();
 			MemoryStream ms = new MemoryStream();
 			tts.SetOutputToAudioStream(ms, formatInfo);
@@ -311,19 +260,20 @@ namespace ACT_Plugin {
 
 		#region UI Events
 		private async void btnJoin_Click(object sender, EventArgs e) {
-			if (botReady == false || bot.ConnectionState != Discord.ConnectionState.Connected)
-				return;
 			btnJoin.Enabled = false;
-			btnDisconnect.Enabled = false;
 			ulong uid;
-			if (!UInt64.TryParse(txtUserID.Text, out uid))
+			if (!UInt64.TryParse(txtUserID.Text, out uid)) {
+				logBox.AppendText("Invalid Discord ID.\n");
+				btnJoin.Enabled = true;
 				return;
+			}
 			SocketVoiceChannel chan = getUsersVoiceChannel(uid);
 			if (chan != null) {
 				try {
 					audioClient = await chan.ConnectAsync();
 				} catch (Exception ex) {
 					logBox.AppendText("Unable to join channel. Does your bot have permission to join this channel?");
+					btnJoin.Enabled = true;
 					return;
 				}
 				logBox.AppendText("Joined channel: " + chan.Name + "\n");
@@ -335,59 +285,37 @@ namespace ACT_Plugin {
 				logBox.AppendText("* You are not in a voice channel.\n");
 				logBox.AppendText("* The Discord ID you entered above is incorrect.\n");
 				btnJoin.Enabled = true;
-				btnDisconnect.Enabled = true;
 			}
 		}
 
 		private void btnLeave_Click(object sender, EventArgs e) {
-			if (!botReady || bot.ConnectionState != Discord.ConnectionState.Connected)
-				return;
-			if (audioClient != null && audioClient.ConnectionState == Discord.ConnectionState.Connected) {
+			btnLeave.Enabled = false;
+			try {
 				if (voiceStream != null)
 					voiceStream.Close();
+				voiceStream = null;
 				audioClient.StopAsync();
 				btnJoin.Enabled = true;
 				btnLeave.Enabled = false;
-				btnDisconnect.Enabled = true;
 				logBox.AppendText("Left channel.\n");
-				ActGlobals.oFormActMain.PlayTtsMethod = ttsDelegate;
+				ActGlobals.oFormActMain.PlayTtsMethod = ActGlobals.oFormActMain.TTS;
+				btnJoin.Enabled = true;
+			} catch (Exception ex) {
+				logBox.AppendText("Error leaving channel. Possible connection issue.\n");
+				btnLeave.Enabled = true;
 			}
-		}
-
-		private async void btnConnect_Click(object sender, EventArgs e) {
-			if (bot.ConnectionState == Discord.ConnectionState.Disconnected)
-				await bot.StartAsync();
-		}
-
-		private async void btnDisconnect_Click(object sender, EventArgs e) {
-			if (botReady && bot.ConnectionState == Discord.ConnectionState.Connected)
-				await bot.StopAsync();
 		}
 		#endregion
 
 		#region Discord Events
-		private Task Bot_Disconnected(Exception arg) {
-			logBox.AppendText("Bot is disconnected.\n");
-			btnConnect.Enabled = true;
-			btnDisconnect.Enabled = false;
-			btnJoin.Enabled = false;
-			btnLeave.Enabled = false;
-			return Task.CompletedTask;
-		}
-
-		private Task Bot_Connected() {
-			logBox.AppendText("Bot is connected.\n");
-			btnConnect.Enabled = false;
-			btnDisconnect.Enabled = true;
-			btnJoin.Enabled = true;
-			btnLeave.Enabled = false;
-			return Task.CompletedTask;
-		}
-
 		private async Task Bot_Ready() {
-			botReady = true;
+			btnJoin.Enabled = true;
 			await bot.SetGameAsync("with ACT Triggers");
 			logBox.AppendText("Bot is now ready.\n");
+		}
+
+		private async Task Bot_LoggedIn() {
+			await bot.StartAsync();
 		}
 		#endregion
 
@@ -399,11 +327,11 @@ namespace ACT_Plugin {
 			if (File.Exists(settingsFile)) {
 				FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 				XmlTextReader xReader = new XmlTextReader(fs);
-				
+
 				try {
-					while (xReader.Read()) 
-						if (xReader.NodeType == XmlNodeType.Element) 
-							if (xReader.LocalName == "SettingsSerializer") 
+					while (xReader.Read())
+						if (xReader.NodeType == XmlNodeType.Element)
+							if (xReader.LocalName == "SettingsSerializer")
 								xmlSettings.ImportFromXml(xReader);
 				} catch (Exception ex) {
 					lblStatus.Text = "Error loading settings: " + ex.Message;
