@@ -52,6 +52,8 @@ namespace ACT_Plugin {
 			this.btnJoin = new System.Windows.Forms.Button();
 			this.btnLeave = new System.Windows.Forms.Button();
 			this.lblChannel = new System.Windows.Forms.Label();
+			this.lblTTS = new System.Windows.Forms.Label();
+			this.cmbTTS = new System.Windows.Forms.ComboBox();
 			this.SuspendLayout();
 			// 
 			// lblBotTok
@@ -67,14 +69,14 @@ namespace ACT_Plugin {
 			// 
 			this.txtToken.Location = new System.Drawing.Point(31, 39);
 			this.txtToken.Name = "txtToken";
-			this.txtToken.Size = new System.Drawing.Size(207, 20);
+			this.txtToken.Size = new System.Drawing.Size(177, 20);
 			this.txtToken.TabIndex = 1;
 			this.txtToken.UseSystemPasswordChar = true;
 			// 
 			// lblName
 			// 
 			this.lblName.AutoSize = true;
-			this.lblName.Location = new System.Drawing.Point(28, 62);
+			this.lblName.Location = new System.Drawing.Point(28, 71);
 			this.lblName.Name = "lblName";
 			this.lblName.Size = new System.Drawing.Size(57, 13);
 			this.lblName.TabIndex = 2;
@@ -82,25 +84,25 @@ namespace ACT_Plugin {
 			// 
 			// txtUserID
 			// 
-			this.txtUserID.Location = new System.Drawing.Point(31, 78);
+			this.txtUserID.Location = new System.Drawing.Point(31, 87);
 			this.txtUserID.Name = "txtUserID";
-			this.txtUserID.Size = new System.Drawing.Size(207, 20);
+			this.txtUserID.Size = new System.Drawing.Size(177, 20);
 			this.txtUserID.TabIndex = 3;
 			// 
 			// logBox
 			// 
 			this.logBox.BackColor = System.Drawing.SystemColors.Control;
-			this.logBox.Location = new System.Drawing.Point(31, 135);
+			this.logBox.Location = new System.Drawing.Point(31, 204);
 			this.logBox.Multiline = true;
 			this.logBox.Name = "logBox";
 			this.logBox.ReadOnly = true;
-			this.logBox.Size = new System.Drawing.Size(337, 180);
+			this.logBox.Size = new System.Drawing.Size(425, 150);
 			this.logBox.TabIndex = 4;
 			// 
 			// lblLog
 			// 
 			this.lblLog.AutoSize = true;
-			this.lblLog.Location = new System.Drawing.Point(28, 110);
+			this.lblLog.Location = new System.Drawing.Point(30, 179);
 			this.lblLog.Name = "lblLog";
 			this.lblLog.Size = new System.Drawing.Size(60, 13);
 			this.lblLog.TabIndex = 5;
@@ -109,7 +111,7 @@ namespace ACT_Plugin {
 			// btnJoin
 			// 
 			this.btnJoin.Enabled = false;
-			this.btnJoin.Location = new System.Drawing.Point(262, 39);
+			this.btnJoin.Location = new System.Drawing.Point(223, 39);
 			this.btnJoin.Name = "btnJoin";
 			this.btnJoin.Size = new System.Drawing.Size(106, 23);
 			this.btnJoin.TabIndex = 6;
@@ -120,7 +122,7 @@ namespace ACT_Plugin {
 			// btnLeave
 			// 
 			this.btnLeave.Enabled = false;
-			this.btnLeave.Location = new System.Drawing.Point(262, 68);
+			this.btnLeave.Location = new System.Drawing.Point(223, 68);
 			this.btnLeave.Name = "btnLeave";
 			this.btnLeave.Size = new System.Drawing.Size(106, 23);
 			this.btnLeave.TabIndex = 7;
@@ -131,16 +133,35 @@ namespace ACT_Plugin {
 			// lblChannel
 			// 
 			this.lblChannel.AutoSize = true;
-			this.lblChannel.Location = new System.Drawing.Point(259, 23);
+			this.lblChannel.Location = new System.Drawing.Point(220, 23);
 			this.lblChannel.Name = "lblChannel";
 			this.lblChannel.Size = new System.Drawing.Size(85, 13);
 			this.lblChannel.TabIndex = 11;
 			this.lblChannel.Text = "Channel Options";
 			// 
+			// lblTTS
+			// 
+			this.lblTTS.AutoSize = true;
+			this.lblTTS.Location = new System.Drawing.Point(30, 119);
+			this.lblTTS.Name = "lblTTS";
+			this.lblTTS.Size = new System.Drawing.Size(58, 13);
+			this.lblTTS.TabIndex = 12;
+			this.lblTTS.Text = "TTS Voice";
+			// 
+			// cmbTTS
+			// 
+			this.cmbTTS.FormattingEnabled = true;
+			this.cmbTTS.Location = new System.Drawing.Point(33, 136);
+			this.cmbTTS.Name = "cmbTTS";
+			this.cmbTTS.Size = new System.Drawing.Size(177, 21);
+			this.cmbTTS.TabIndex = 13;
+			// 
 			// DiscordPlugin
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.cmbTTS);
+			this.Controls.Add(this.lblTTS);
 			this.Controls.Add(this.lblChannel);
 			this.Controls.Add(this.btnLeave);
 			this.Controls.Add(this.btnJoin);
@@ -151,7 +172,7 @@ namespace ACT_Plugin {
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
-			this.Size = new System.Drawing.Size(402, 338);
+			this.Size = new System.Drawing.Size(496, 396);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -162,6 +183,10 @@ namespace ACT_Plugin {
 		#endregion
 		public DiscordPlugin() {
 			InitializeComponent();
+			var tts = new SpeechSynthesizer();
+			foreach (InstalledVoice v in tts.GetInstalledVoices())
+				cmbTTS.Items.Add(v.VoiceInfo.Name);
+			cmbTTS.SelectedIndex = 0;
 		}
 
 		Label lblStatus;
@@ -179,6 +204,8 @@ namespace ACT_Plugin {
 		private IAudioClient audioClient;
 		private SpeechAudioFormatInfo formatInfo;
 		private AudioOutStream voiceStream;
+		private Label lblTTS;
+		private ComboBox cmbTTS;
 		private Label lblChannel;
 
 		#region IActPluginV1 Members
@@ -194,7 +221,6 @@ namespace ACT_Plugin {
 
 			//Discord Bot Stuff
 			voiceStream = null;
-			logBox.Text = "";
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 			bot = new DiscordSocketClient();
 			try {
@@ -222,6 +248,7 @@ namespace ACT_Plugin {
 		#region Discord Methods
 		private void speak(string text) {
 			SpeechSynthesizer tts = new SpeechSynthesizer();
+			tts.SelectVoice((string)cmbTTS.SelectedItem);
 			MemoryStream ms = new MemoryStream();
 			tts.SetOutputToAudioStream(ms, formatInfo);
 			if (voiceStream == null)
@@ -234,19 +261,8 @@ namespace ACT_Plugin {
 			};
 		}
 
-		//TODO:
 		private void speakFile(string filename) {
-			SpeechSynthesizer tts = new SpeechSynthesizer();
-			MemoryStream ms = new MemoryStream();
-			tts.SetOutputToAudioStream(ms, formatInfo);
-			if (voiceStream == null)
-				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
-			tts.SpeakAsync(filename);
-			tts.SpeakCompleted += async (a, b) => {
-				ms.Seek(0, SeekOrigin.Begin);
-				await ms.CopyToAsync(voiceStream);
-				await voiceStream.FlushAsync();
-			};
+			//TODO
 		}
 
 		private SocketVoiceChannel getUsersVoiceChannel(ulong uid) {
