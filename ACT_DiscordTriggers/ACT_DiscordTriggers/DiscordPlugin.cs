@@ -10,6 +10,8 @@ using Discord.WebSocket;
 using Discord.Audio;
 using System.Speech.Synthesis;
 using System.Speech.AudioFormat;
+using System.Diagnostics;
+using NAudio.Wave;
 
 namespace ACT_Plugin {
 	public class DiscordPlugin : UserControl, IActPluginV1 {
@@ -247,9 +249,15 @@ namespace ACT_Plugin {
 
 		public async void DeInitPlugin() {
 			ActGlobals.oFormActMain.PlayTtsMethod = ActGlobals.oFormActMain.TTS;
+			ActGlobals.oFormActMain.PlaySoundMethod = ActGlobals.oFormActMain.PlaySoundWmpApi;
 			SaveSettings();
 			bot.Ready -= Bot_Ready;
 			bot.LoggedIn -= Bot_LoggedIn;
+			if (audioClient != null && audioClient.ConnectionState == ConnectionState.Connected) {
+				if (voiceStream != null)
+					voiceStream.Close();
+				await audioClient.StopAsync();
+			}
 			await bot.StopAsync();
 			await bot.LogoutAsync();
 			lblStatus.Text = "Plugin Exited";
@@ -263,7 +271,7 @@ namespace ACT_Plugin {
 			MemoryStream ms = new MemoryStream();
 			tts.SetOutputToAudioStream(ms, formatInfo);
 			if (voiceStream == null)
-				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
+				voiceStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 1920);
 			tts.SpeakAsync(text);
 			tts.SpeakCompleted += (a, b) => {
 				ms.Seek(0, SeekOrigin.Begin);
@@ -272,17 +280,19 @@ namespace ACT_Plugin {
 			};
 		}
 
-		private void speakFile(string filename) {
-			//TODO
-		}
-
-		private SocketVoiceChannel getUsersVoiceChannel(ulong uid) {
-			foreach (SocketGuild g in bot.Guilds)
-				foreach (SocketVoiceChannel v in g.VoiceChannels)
-					foreach (SocketGuildUser u in v.Users)
-						if (u.Id == uid)
-							return bot.GetGuild(g.Id).GetVoiceChannel(v.Id);
-			return null;
+		private void speakFile(string path, int volume) {
+			if (voiceStream == null)
+				voiceStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 1920);
+			try {
+				WaveFileReader wav = new WaveFileReader(path);
+				WaveFormat waveFormat = new WaveFormat(48000, 16, 2);
+				WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(wav);
+				WaveFormatConversionStream output = new WaveFormatConversionStream(waveFormat, pcm);
+				output.CopyTo(voiceStream);
+				voiceStream.Flush();
+			} catch (Exception ex) {
+				logBox.AppendText("Unable to read file.\n" + ex.Message + "\n");
+			}
 		}
 
 		private void populateServers() {
@@ -312,6 +322,7 @@ namespace ACT_Plugin {
 				logBox.AppendText("Joined channel: " + chan.Name + "\n");
 				btnLeave.Enabled = true;
 				ActGlobals.oFormActMain.PlayTtsMethod = speak;
+				ActGlobals.oFormActMain.PlaySoundMethod = speakFile;
 			} catch (Exception ex) {
 				logBox.AppendText("Unable to join channel. Does your bot have permission to join this channel?");
 				btnJoin.Enabled = true;
@@ -332,6 +343,7 @@ namespace ACT_Plugin {
 				btnLeave.Enabled = false;
 				logBox.AppendText("Left channel.\n");
 				ActGlobals.oFormActMain.PlayTtsMethod = ActGlobals.oFormActMain.TTS;
+				ActGlobals.oFormActMain.PlaySoundMethod = ActGlobals.oFormActMain.PlaySoundWmpApi;
 				btnJoin.Enabled = true;
 			} catch (Exception ex) {
 				logBox.AppendText("Error leaving channel. Possible connection issue.\n");
