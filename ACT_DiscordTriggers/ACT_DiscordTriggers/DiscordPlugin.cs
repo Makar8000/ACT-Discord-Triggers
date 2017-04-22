@@ -1,20 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
 using System.Text;
 using System.Windows.Forms;
 using Advanced_Combat_Tracker;
 using System.IO;
-using System.Reflection;
 using System.Xml;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Discord.Audio;
 using System.Speech.Synthesis;
-using System.Diagnostics;
 using System.Speech.AudioFormat;
 
 namespace ACT_Plugin {
@@ -45,15 +39,16 @@ namespace ACT_Plugin {
 		private void InitializeComponent() {
 			this.lblBotTok = new System.Windows.Forms.Label();
 			this.txtToken = new System.Windows.Forms.TextBox();
-			this.lblName = new System.Windows.Forms.Label();
-			this.txtUserID = new System.Windows.Forms.TextBox();
 			this.logBox = new System.Windows.Forms.TextBox();
 			this.lblLog = new System.Windows.Forms.Label();
 			this.btnJoin = new System.Windows.Forms.Button();
 			this.btnLeave = new System.Windows.Forms.Button();
-			this.lblChannel = new System.Windows.Forms.Label();
 			this.lblTTS = new System.Windows.Forms.Label();
 			this.cmbTTS = new System.Windows.Forms.ComboBox();
+			this.cmbServer = new System.Windows.Forms.ComboBox();
+			this.lblServer = new System.Windows.Forms.Label();
+			this.cmbChan = new System.Windows.Forms.ComboBox();
+			this.lblChan = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// lblBotTok
@@ -69,40 +64,24 @@ namespace ACT_Plugin {
 			// 
 			this.txtToken.Location = new System.Drawing.Point(31, 39);
 			this.txtToken.Name = "txtToken";
-			this.txtToken.Size = new System.Drawing.Size(177, 20);
+			this.txtToken.Size = new System.Drawing.Size(193, 20);
 			this.txtToken.TabIndex = 1;
 			this.txtToken.UseSystemPasswordChar = true;
-			// 
-			// lblName
-			// 
-			this.lblName.AutoSize = true;
-			this.lblName.Location = new System.Drawing.Point(28, 71);
-			this.lblName.Name = "lblName";
-			this.lblName.Size = new System.Drawing.Size(57, 13);
-			this.lblName.TabIndex = 2;
-			this.lblName.Text = "Discord ID";
-			// 
-			// txtUserID
-			// 
-			this.txtUserID.Location = new System.Drawing.Point(31, 87);
-			this.txtUserID.Name = "txtUserID";
-			this.txtUserID.Size = new System.Drawing.Size(177, 20);
-			this.txtUserID.TabIndex = 3;
 			// 
 			// logBox
 			// 
 			this.logBox.BackColor = System.Drawing.SystemColors.Control;
-			this.logBox.Location = new System.Drawing.Point(31, 204);
+			this.logBox.Location = new System.Drawing.Point(272, 49);
 			this.logBox.Multiline = true;
 			this.logBox.Name = "logBox";
 			this.logBox.ReadOnly = true;
-			this.logBox.Size = new System.Drawing.Size(425, 150);
+			this.logBox.Size = new System.Drawing.Size(381, 189);
 			this.logBox.TabIndex = 4;
 			// 
 			// lblLog
 			// 
 			this.lblLog.AutoSize = true;
-			this.lblLog.Location = new System.Drawing.Point(30, 179);
+			this.lblLog.Location = new System.Drawing.Point(269, 23);
 			this.lblLog.Name = "lblLog";
 			this.lblLog.Size = new System.Drawing.Size(60, 13);
 			this.lblLog.TabIndex = 5;
@@ -111,9 +90,9 @@ namespace ACT_Plugin {
 			// btnJoin
 			// 
 			this.btnJoin.Enabled = false;
-			this.btnJoin.Location = new System.Drawing.Point(223, 39);
+			this.btnJoin.Location = new System.Drawing.Point(31, 165);
 			this.btnJoin.Name = "btnJoin";
-			this.btnJoin.Size = new System.Drawing.Size(106, 23);
+			this.btnJoin.Size = new System.Drawing.Size(93, 23);
 			this.btnJoin.TabIndex = 6;
 			this.btnJoin.Text = "Join Channel";
 			this.btnJoin.UseVisualStyleBackColor = true;
@@ -122,27 +101,18 @@ namespace ACT_Plugin {
 			// btnLeave
 			// 
 			this.btnLeave.Enabled = false;
-			this.btnLeave.Location = new System.Drawing.Point(223, 68);
+			this.btnLeave.Location = new System.Drawing.Point(130, 165);
 			this.btnLeave.Name = "btnLeave";
-			this.btnLeave.Size = new System.Drawing.Size(106, 23);
+			this.btnLeave.Size = new System.Drawing.Size(94, 23);
 			this.btnLeave.TabIndex = 7;
 			this.btnLeave.Text = "Leave Channel";
 			this.btnLeave.UseVisualStyleBackColor = true;
 			this.btnLeave.Click += new System.EventHandler(this.btnLeave_Click);
 			// 
-			// lblChannel
-			// 
-			this.lblChannel.AutoSize = true;
-			this.lblChannel.Location = new System.Drawing.Point(220, 23);
-			this.lblChannel.Name = "lblChannel";
-			this.lblChannel.Size = new System.Drawing.Size(85, 13);
-			this.lblChannel.TabIndex = 11;
-			this.lblChannel.Text = "Channel Options";
-			// 
 			// lblTTS
 			// 
 			this.lblTTS.AutoSize = true;
-			this.lblTTS.Location = new System.Drawing.Point(30, 119);
+			this.lblTTS.Location = new System.Drawing.Point(28, 200);
 			this.lblTTS.Name = "lblTTS";
 			this.lblTTS.Size = new System.Drawing.Size(58, 13);
 			this.lblTTS.TabIndex = 12;
@@ -150,29 +120,68 @@ namespace ACT_Plugin {
 			// 
 			// cmbTTS
 			// 
+			this.cmbTTS.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.cmbTTS.FormattingEnabled = true;
-			this.cmbTTS.Location = new System.Drawing.Point(33, 136);
+			this.cmbTTS.Location = new System.Drawing.Point(31, 217);
 			this.cmbTTS.Name = "cmbTTS";
-			this.cmbTTS.Size = new System.Drawing.Size(177, 21);
+			this.cmbTTS.Size = new System.Drawing.Size(193, 21);
 			this.cmbTTS.TabIndex = 13;
+			// 
+			// cmbServer
+			// 
+			this.cmbServer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cmbServer.FormattingEnabled = true;
+			this.cmbServer.Location = new System.Drawing.Point(31, 88);
+			this.cmbServer.Name = "cmbServer";
+			this.cmbServer.Size = new System.Drawing.Size(193, 21);
+			this.cmbServer.TabIndex = 15;
+			this.cmbServer.SelectedIndexChanged += new System.EventHandler(this.cmbServer_SelectedIndexChanged);
+			// 
+			// lblServer
+			// 
+			this.lblServer.AutoSize = true;
+			this.lblServer.Location = new System.Drawing.Point(28, 71);
+			this.lblServer.Name = "lblServer";
+			this.lblServer.Size = new System.Drawing.Size(38, 13);
+			this.lblServer.TabIndex = 14;
+			this.lblServer.Text = "Server";
+			// 
+			// cmbChan
+			// 
+			this.cmbChan.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cmbChan.FormattingEnabled = true;
+			this.cmbChan.Location = new System.Drawing.Point(31, 138);
+			this.cmbChan.Name = "cmbChan";
+			this.cmbChan.Size = new System.Drawing.Size(193, 21);
+			this.cmbChan.TabIndex = 17;
+			// 
+			// lblChan
+			// 
+			this.lblChan.AutoSize = true;
+			this.lblChan.Location = new System.Drawing.Point(28, 121);
+			this.lblChan.Name = "lblChan";
+			this.lblChan.Size = new System.Drawing.Size(46, 13);
+			this.lblChan.TabIndex = 16;
+			this.lblChan.Text = "Channel";
 			// 
 			// DiscordPlugin
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.cmbChan);
+			this.Controls.Add(this.lblChan);
+			this.Controls.Add(this.cmbServer);
+			this.Controls.Add(this.lblServer);
 			this.Controls.Add(this.cmbTTS);
 			this.Controls.Add(this.lblTTS);
-			this.Controls.Add(this.lblChannel);
 			this.Controls.Add(this.btnLeave);
 			this.Controls.Add(this.btnJoin);
 			this.Controls.Add(this.lblLog);
 			this.Controls.Add(this.logBox);
-			this.Controls.Add(this.txtUserID);
-			this.Controls.Add(this.lblName);
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
-			this.Size = new System.Drawing.Size(496, 396);
+			this.Size = new System.Drawing.Size(701, 296);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -193,8 +202,6 @@ namespace ACT_Plugin {
 		string settingsFile;
 		private Label lblBotTok;
 		private TextBox txtToken;
-		private Label lblName;
-		private TextBox txtUserID;
 		private TextBox logBox;
 		private Label lblLog;
 		SettingsSerializer xmlSettings;
@@ -205,8 +212,11 @@ namespace ACT_Plugin {
 		private SpeechAudioFormatInfo formatInfo;
 		private AudioOutStream voiceStream;
 		private Label lblTTS;
+		private ComboBox cmbServer;
+		private Label lblServer;
+		private ComboBox cmbChan;
+		private Label lblChan;
 		private ComboBox cmbTTS;
-		private Label lblChannel;
 
 		#region IActPluginV1 Members
 		public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
@@ -230,6 +240,7 @@ namespace ACT_Plugin {
 				logBox.AppendText("Plugin loaded successfully.\n");
 			} catch (Exception ex) {
 				logBox.Text = "Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again).";
+				logBox.AppendText(ex.Message + "\n");
 			}
 			lblStatus.Text = "Plugin Started";
 		}
@@ -248,7 +259,7 @@ namespace ACT_Plugin {
 		#region Discord Methods
 		private void speak(string text) {
 			SpeechSynthesizer tts = new SpeechSynthesizer();
-			tts.SelectVoice((string)cmbTTS.SelectedItem);
+			tts.SelectVoice((string) cmbTTS.SelectedItem);
 			MemoryStream ms = new MemoryStream();
 			tts.SetOutputToAudioStream(ms, formatInfo);
 			if (voiceStream == null)
@@ -273,35 +284,40 @@ namespace ACT_Plugin {
 							return bot.GetGuild(g.Id).GetVoiceChannel(v.Id);
 			return null;
 		}
+
+		private void populateServers() {
+			cmbServer.Items.Clear();
+			cmbChan.Items.Clear();
+			foreach (SocketGuild g in bot.Guilds)
+				cmbServer.Items.Add(g);
+			if (cmbServer.Items.Count > 0)
+				cmbServer.SelectedIndex = 0;
+		}
+
+		private void populateChannels(SocketGuild g) {
+			cmbChan.Items.Clear();
+			foreach (SocketVoiceChannel v in g.VoiceChannels)
+				cmbChan.Items.Add(v);
+			if (cmbChan.Items.Count > 0)
+				cmbChan.SelectedIndex = 0;
+		}
 		#endregion
 
 		#region UI Events
 		private async void btnJoin_Click(object sender, EventArgs e) {
 			btnJoin.Enabled = false;
-			ulong uid;
-			if (!UInt64.TryParse(txtUserID.Text, out uid)) {
-				logBox.AppendText("Invalid Discord ID.\n");
-				btnJoin.Enabled = true;
-				return;
-			}
-			SocketVoiceChannel chan = getUsersVoiceChannel(uid);
-			if (chan != null) {
-				try {
-					audioClient = await chan.ConnectAsync();
-				} catch (Exception ex) {
-					logBox.AppendText("Unable to join channel. Does your bot have permission to join this channel?");
-					btnJoin.Enabled = true;
-					return;
-				}
+			SocketVoiceChannel chan = (SocketVoiceChannel) cmbChan.SelectedItem;
+			try {
+				audioClient = await chan.ConnectAsync();
 				logBox.AppendText("Joined channel: " + chan.Name + "\n");
 				btnLeave.Enabled = true;
 				ActGlobals.oFormActMain.PlayTtsMethod = speak;
-			}
-			else {
-				logBox.AppendText("Unable to join channel. This could be due to any of the following reasons:\n");
-				logBox.AppendText("* You are not in a voice channel.\n");
-				logBox.AppendText("* The Discord ID you entered above is incorrect.\n");
+			} catch (Exception ex) {
+				logBox.AppendText("Unable to join channel. Does your bot have permission to join this channel?");
 				btnJoin.Enabled = true;
+				populateServers();
+				logBox.AppendText(ex.Message + "\n");
+				return;
 			}
 		}
 
@@ -320,7 +336,12 @@ namespace ACT_Plugin {
 			} catch (Exception ex) {
 				logBox.AppendText("Error leaving channel. Possible connection issue.\n");
 				btnLeave.Enabled = true;
+				logBox.AppendText(ex.Message + "\n");
 			}
+		}
+
+		private void cmbServer_SelectedIndexChanged(object sender, EventArgs e) {
+			populateChannels((SocketGuild) cmbServer.SelectedItem);
 		}
 		#endregion
 
@@ -328,6 +349,7 @@ namespace ACT_Plugin {
 		private async Task Bot_Ready() {
 			btnJoin.Enabled = true;
 			await bot.SetGameAsync("with ACT Triggers");
+			populateServers();
 			logBox.AppendText("Bot is now ready.\n");
 		}
 
@@ -339,7 +361,6 @@ namespace ACT_Plugin {
 		#region Settings
 		public void LoadSettings() {
 			xmlSettings.AddControlSetting(txtToken.Name, txtToken);
-			xmlSettings.AddControlSetting(txtUserID.Name, txtUserID);
 
 			if (File.Exists(settingsFile)) {
 				FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
