@@ -74,7 +74,7 @@ namespace ACT_Plugin {
 			// lblName
 			// 
 			this.lblName.AutoSize = true;
-			this.lblName.Location = new System.Drawing.Point(28, 88);
+			this.lblName.Location = new System.Drawing.Point(28, 62);
 			this.lblName.Name = "lblName";
 			this.lblName.Size = new System.Drawing.Size(57, 13);
 			this.lblName.TabIndex = 2;
@@ -82,24 +82,25 @@ namespace ACT_Plugin {
 			// 
 			// txtUserID
 			// 
-			this.txtUserID.Location = new System.Drawing.Point(31, 104);
+			this.txtUserID.Location = new System.Drawing.Point(31, 78);
 			this.txtUserID.Name = "txtUserID";
 			this.txtUserID.Size = new System.Drawing.Size(207, 20);
 			this.txtUserID.TabIndex = 3;
 			// 
 			// logBox
 			// 
-			this.logBox.Location = new System.Drawing.Point(31, 176);
+			this.logBox.BackColor = System.Drawing.SystemColors.Control;
+			this.logBox.Location = new System.Drawing.Point(31, 135);
 			this.logBox.Multiline = true;
 			this.logBox.Name = "logBox";
 			this.logBox.ReadOnly = true;
-			this.logBox.Size = new System.Drawing.Size(458, 180);
+			this.logBox.Size = new System.Drawing.Size(337, 180);
 			this.logBox.TabIndex = 4;
 			// 
 			// lblLog
 			// 
 			this.lblLog.AutoSize = true;
-			this.lblLog.Location = new System.Drawing.Point(28, 151);
+			this.lblLog.Location = new System.Drawing.Point(28, 110);
 			this.lblLog.Name = "lblLog";
 			this.lblLog.Size = new System.Drawing.Size(60, 13);
 			this.lblLog.TabIndex = 5;
@@ -108,7 +109,7 @@ namespace ACT_Plugin {
 			// btnJoin
 			// 
 			this.btnJoin.Enabled = false;
-			this.btnJoin.Location = new System.Drawing.Point(271, 102);
+			this.btnJoin.Location = new System.Drawing.Point(262, 39);
 			this.btnJoin.Name = "btnJoin";
 			this.btnJoin.Size = new System.Drawing.Size(106, 23);
 			this.btnJoin.TabIndex = 6;
@@ -119,7 +120,7 @@ namespace ACT_Plugin {
 			// btnLeave
 			// 
 			this.btnLeave.Enabled = false;
-			this.btnLeave.Location = new System.Drawing.Point(383, 102);
+			this.btnLeave.Location = new System.Drawing.Point(262, 68);
 			this.btnLeave.Name = "btnLeave";
 			this.btnLeave.Size = new System.Drawing.Size(106, 23);
 			this.btnLeave.TabIndex = 7;
@@ -130,7 +131,7 @@ namespace ACT_Plugin {
 			// lblChannel
 			// 
 			this.lblChannel.AutoSize = true;
-			this.lblChannel.Location = new System.Drawing.Point(268, 86);
+			this.lblChannel.Location = new System.Drawing.Point(259, 23);
 			this.lblChannel.Name = "lblChannel";
 			this.lblChannel.Size = new System.Drawing.Size(85, 13);
 			this.lblChannel.TabIndex = 11;
@@ -150,7 +151,7 @@ namespace ACT_Plugin {
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
-			this.Size = new System.Drawing.Size(540, 384);
+			this.Size = new System.Drawing.Size(402, 338);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
