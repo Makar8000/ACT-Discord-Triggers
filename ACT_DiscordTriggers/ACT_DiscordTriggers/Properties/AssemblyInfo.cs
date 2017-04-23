@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ACT_DiscordTriggers")]
-[assembly: AssemblyCopyright("Copyright © 2017 Makar")]
+[assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a27054ff-6163-43dd-8c94-d77f9e91347f")]
+[assembly: Guid("000fffc0-8d23-4476-b312-0438655973a1")]
 
 // Version information for an assembly consists of the following four values:
 //
