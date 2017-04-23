@@ -243,7 +243,7 @@ namespace ACT_Plugin {
 					UdpSocketProvider = UDPClientProvider.Instance,
 				});
 			}
-			try {
+			try { 
 				bot.LoginAsync(TokenType.Bot, txtToken.Text);
 				bot.LoggedIn += Bot_LoggedIn;
 				bot.Ready += Bot_Ready;
