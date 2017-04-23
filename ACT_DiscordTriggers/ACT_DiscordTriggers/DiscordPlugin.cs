@@ -236,10 +236,14 @@ namespace ACT_Plugin {
 			voiceStream = null;
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 			try {
+				bot = new DiscordSocketClient();
+			} catch (InvalidOperationException) {
 				bot = new DiscordSocketClient(new DiscordSocketConfig {
 					WebSocketProvider = WS4NetProvider.Instance,
 					UdpSocketProvider = UDPClientProvider.Instance,
 				});
+			}
+			try {
 				bot.LoginAsync(TokenType.Bot, txtToken.Text);
 				bot.LoggedIn += Bot_LoggedIn;
 				bot.Ready += Bot_Ready;
