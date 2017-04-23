@@ -393,7 +393,7 @@ namespace ACT_Plugin {
 			xWriter.Formatting = Formatting.Indented;
 			xWriter.Indentation = 1;
 			xWriter.IndentChar = '\t';
-			xWriter.WriteStartDocument(true);
+			xWriter.WriteStartDocument(true); 
 			xWriter.WriteStartElement("Config");
 			xWriter.WriteStartElement("SettingsSerializer");
 			xmlSettings.ExportToXml(xWriter);
