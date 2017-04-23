@@ -10,7 +10,6 @@ using Discord.WebSocket;
 using Discord.Audio;
 using System.Speech.Synthesis;
 using System.Speech.AudioFormat;
-using System.Diagnostics;
 using NAudio.Wave;
 
 namespace ACT_Plugin {
@@ -251,14 +250,18 @@ namespace ACT_Plugin {
 			ActGlobals.oFormActMain.PlayTtsMethod = ActGlobals.oFormActMain.TTS;
 			ActGlobals.oFormActMain.PlaySoundMethod = ActGlobals.oFormActMain.PlaySoundWmpApi;
 			SaveSettings();
-			bot.Ready -= Bot_Ready;
-			bot.LoggedIn -= Bot_LoggedIn;
-			if (audioClient?.ConnectionState == ConnectionState.Connected) {
-				voiceStream?.Close();
-				await audioClient.StopAsync();
+			try {
+				bot.Ready -= Bot_Ready;
+				bot.LoggedIn -= Bot_LoggedIn;
+				if (audioClient?.ConnectionState == ConnectionState.Connected) {
+					voiceStream?.Close();
+					await audioClient.StopAsync();
+				}
+				await bot.StopAsync();
+				await bot.LogoutAsync();
+			} catch (Exception ex) {
+				//nothing to see here
 			}
-			await bot.StopAsync();
-			await bot.LogoutAsync();
 			lblStatus.Text = "Plugin Exited";
 		}
 		#endregion
@@ -393,7 +396,7 @@ namespace ACT_Plugin {
 			xWriter.Formatting = Formatting.Indented;
 			xWriter.Indentation = 1;
 			xWriter.IndentChar = '\t';
-			xWriter.WriteStartDocument(true); 
+			xWriter.WriteStartDocument(true);
 			xWriter.WriteStartElement("Config");
 			xWriter.WriteStartElement("SettingsSerializer");
 			xmlSettings.ExportToXml(xWriter);
