@@ -11,6 +11,8 @@ using Discord.Audio;
 using System.Speech.Synthesis;
 using System.Speech.AudioFormat;
 using NAudio.Wave;
+using Discord.Net.Providers.WS4Net;
+using Discord.Net.Providers.UDPClient;
 
 namespace ACT_Plugin {
 	public class DiscordPlugin : UserControl, IActPluginV1 {
@@ -233,8 +235,11 @@ namespace ACT_Plugin {
 			//Discord Bot Stuff
 			voiceStream = null;
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
-			bot = new DiscordSocketClient();
 			try {
+				bot = new DiscordSocketClient(new DiscordSocketConfig {
+					WebSocketProvider = WS4NetProvider.Instance,
+					UdpSocketProvider = UDPClientProvider.Instance,
+				});
 				bot.LoginAsync(TokenType.Bot, txtToken.Text);
 				bot.LoggedIn += Bot_LoggedIn;
 				bot.Ready += Bot_Ready;
@@ -273,7 +278,7 @@ namespace ACT_Plugin {
 			MemoryStream ms = new MemoryStream();
 			tts.SetOutputToAudioStream(ms, formatInfo);
 			if (voiceStream == null)
-				voiceStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 1920);
+				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
 			tts.SpeakAsync(text);
 			tts.SpeakCompleted += (a, b) => {
 				ms.Seek(0, SeekOrigin.Begin);
@@ -284,7 +289,7 @@ namespace ACT_Plugin {
 
 		private void speakFile(string path, int volume) {
 			if (voiceStream == null)
-				voiceStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 1920);
+				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
 			try {
 				WaveFileReader wav = new WaveFileReader(path);
 				WaveFormat waveFormat = new WaveFormat(48000, 16, 2);
