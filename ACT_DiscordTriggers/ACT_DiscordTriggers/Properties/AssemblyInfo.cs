@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ACT_DiscordTriggers")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("An ACT Plugin for sending triggers through Discord.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ACT_DiscordTriggers")]
-[assembly: AssemblyCopyright("Copyright ©  2017")]
+[assembly: AssemblyCopyright("Copyright © 2017 Makar")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
