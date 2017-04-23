@@ -237,7 +237,7 @@ namespace ACT_Plugin {
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 			try {
 				bot = new DiscordSocketClient();
-			} catch (InvalidOperationException) {
+			} catch (PlatformNotSupportedException) {
 				bot = new DiscordSocketClient(new DiscordSocketConfig {
 					WebSocketProvider = WS4NetProvider.Instance,
 					UdpSocketProvider = UDPClientProvider.Instance,
