@@ -253,9 +253,8 @@ namespace ACT_Plugin {
 			SaveSettings();
 			bot.Ready -= Bot_Ready;
 			bot.LoggedIn -= Bot_LoggedIn;
-			if (audioClient != null && audioClient.ConnectionState == ConnectionState.Connected) {
-				if (voiceStream != null)
-					voiceStream.Close();
+			if (audioClient?.ConnectionState == ConnectionState.Connected) {
+				voiceStream?.Close();
 				await audioClient.StopAsync();
 			}
 			await bot.StopAsync();
@@ -335,8 +334,7 @@ namespace ACT_Plugin {
 		private void btnLeave_Click(object sender, EventArgs e) {
 			btnLeave.Enabled = false;
 			try {
-				if (voiceStream != null)
-					voiceStream.Close();
+				voiceStream?.Close();
 				voiceStream = null;
 				audioClient.StopAsync();
 				btnJoin.Enabled = true;
