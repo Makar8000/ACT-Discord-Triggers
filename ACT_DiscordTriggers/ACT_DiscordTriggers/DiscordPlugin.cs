@@ -235,11 +235,14 @@ namespace ACT_Plugin {
 			//Discord Bot Stuff
 			voiceStream = null;
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
-
-			bot = new DiscordSocketClient(new DiscordSocketConfig {
-				WebSocketProvider = WS4NetProvider.Instance,
-				UdpSocketProvider = UDPClientProvider.Instance,
-			});
+			try {
+				bot = new DiscordSocketClient();
+			} catch (PlatformNotSupportedException) {
+				bot = new DiscordSocketClient(new DiscordSocketConfig {
+					WebSocketProvider = WS4NetProvider.Instance,
+					UdpSocketProvider = UDPClientProvider.Instance,
+				});
+			}
 			try {
 				logBox.AppendText("Starting bot...\n");
 				bot.LoggedIn += Bot_LoggedIn;
@@ -367,7 +370,6 @@ namespace ACT_Plugin {
 
 		#region Discord Events
 		private async Task Bot_Ready() {
-			logBox.AppendText("Ready even triggered. Attempting to set game...\n");
 			btnJoin.Enabled = true;
 			await bot.SetGameAsync("with ACT Triggers");
 			populateServers();
@@ -375,7 +377,6 @@ namespace ACT_Plugin {
 		}
 
 		private async Task Bot_LoggedIn() {
-			logBox.AppendText("Login event triggered. Attempting to start...\n");
 			try {
 				await bot.StartAsync();
 			} catch (Exception ex) {

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ACT_DiscordTriggers")]
-[assembly: AssemblyDescription("An ACT Plugin for sending triggers through Discord.")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ACT_DiscordTriggers")]
-[assembly: AssemblyCopyright("Copyright © 2017 Makar")]
+[assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("2809ee1e-e77d-4bc2-b656-08a82b86cd9a")]
+[assembly: Guid("a27054ff-6163-43dd-8c94-d77f9e91347f")]
 
 // Version information for an assembly consists of the following four values:
 //
