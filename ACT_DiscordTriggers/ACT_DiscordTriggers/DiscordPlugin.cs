@@ -235,21 +235,19 @@ namespace ACT_Plugin {
 			//Discord Bot Stuff
 			voiceStream = null;
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
+
+			bot = new DiscordSocketClient(new DiscordSocketConfig {
+				WebSocketProvider = WS4NetProvider.Instance,
+				UdpSocketProvider = UDPClientProvider.Instance,
+			});
 			try {
-				bot = new DiscordSocketClient();
-			} catch (PlatformNotSupportedException) {
-				bot = new DiscordSocketClient(new DiscordSocketConfig {
-					WebSocketProvider = WS4NetProvider.Instance,
-					UdpSocketProvider = UDPClientProvider.Instance,
-				});
-			}
-			try { 
-				bot.LoginAsync(TokenType.Bot, txtToken.Text);
+				logBox.AppendText("Starting bot...\n");
 				bot.LoggedIn += Bot_LoggedIn;
 				bot.Ready += Bot_Ready;
+				bot.LoginAsync(TokenType.Bot, txtToken.Text).GetAwaiter().GetResult();
 				logBox.AppendText("Plugin loaded successfully.\n");
 			} catch (Exception ex) {
-				logBox.Text = "Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again).";
+				logBox.AppendText("Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again).\n");
 				logBox.AppendText(ex.Message + "\n");
 			}
 			lblStatus.Text = "Plugin Started";
@@ -335,7 +333,7 @@ namespace ACT_Plugin {
 				ActGlobals.oFormActMain.PlayTtsMethod = speak;
 				ActGlobals.oFormActMain.PlaySoundMethod = speakFile;
 			} catch (Exception ex) {
-				logBox.AppendText("Unable to join channel. Does your bot have permission to join this channel?");
+				logBox.AppendText("Unable to join channel. Does your bot have permission to join this channel?\n");
 				btnJoin.Enabled = true;
 				populateServers();
 				logBox.AppendText(ex.Message + "\n");
@@ -369,6 +367,7 @@ namespace ACT_Plugin {
 
 		#region Discord Events
 		private async Task Bot_Ready() {
+			logBox.AppendText("Ready even triggered. Attempting to set game...\n");
 			btnJoin.Enabled = true;
 			await bot.SetGameAsync("with ACT Triggers");
 			populateServers();
@@ -376,7 +375,12 @@ namespace ACT_Plugin {
 		}
 
 		private async Task Bot_LoggedIn() {
-			await bot.StartAsync();
+			logBox.AppendText("Login event triggered. Attempting to start...\n");
+			try {
+				await bot.StartAsync();
+			} catch (Exception ex) {
+				logBox.AppendText("Unable to start. Error:\n" + ex.Message + "\n");
+			}
 		}
 		#endregion
 
