@@ -14,6 +14,7 @@ using NAudio.Wave;
 using Discord.Net.Providers.WS4Net;
 using Discord.Net.Providers.UDPClient;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace ACT_Plugin {
 	public class DiscordPlugin : UserControl, IActPluginV1 {
@@ -196,6 +197,7 @@ namespace ACT_Plugin {
 		#endregion
 		public DiscordPlugin() {
 			//Required for assembly references
+			//Copied from anoyetta's ccode
 			AppDomain.CurrentDomain.AssemblyResolve += (s, e) => {
 				try {
 					var asm = new AssemblyName(e.Name);
@@ -209,15 +211,13 @@ namespace ACT_Plugin {
 					}
 					var pluginDirectory = Path.Combine(
 						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-						@"Advanced Combat Tracker\Plugins");
+						@"Advanced Combat Tracker\Plugins\Test\");
 					var path = Path.Combine(pluginDirectory, asm.Name + ".dll");
 					if (File.Exists(path)) {
 						return Assembly.LoadFrom(path);
 					}
 				} catch (Exception ex) {
-					ActGlobals.oFormActMain.WriteExceptionLog(
-						ex,
-						"Uh oh.");
+					ActGlobals.oFormActMain.WriteExceptionLog(ex,"Uh oh.");
 				}
 				return null;
 			};
@@ -249,7 +249,7 @@ namespace ACT_Plugin {
 		private ComboBox cmbTTS;
 
 		#region IActPluginV1 Members
-		public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
+		public async void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
 			//ACT Stuff
 			lblStatus = pluginStatusText;
 			settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Config\\ACT_DiscordTriggers.config.xml");
@@ -271,9 +271,9 @@ namespace ACT_Plugin {
 				});
 			}
 			try {
-				bot.LoggedIn += Bot_LoggedIn;
 				bot.Ready += Bot_Ready;
-				bot.LoginAsync(TokenType.Bot, txtToken.Text).GetAwaiter().GetResult();
+				await bot.LoginAsync(TokenType.Bot, txtToken.Text);
+				await bot.StartAsync();
 				logBox.AppendText("Plugin loaded successfully.\n");
 			} catch (Exception ex) {
 				logBox.AppendText("Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again).\n");
@@ -288,7 +288,6 @@ namespace ACT_Plugin {
 			SaveSettings();
 			try {
 				bot.Ready -= Bot_Ready;
-				bot.LoggedIn -= Bot_LoggedIn;
 				if (audioClient?.ConnectionState == ConnectionState.Connected) {
 					voiceStream?.Close();
 					await audioClient.StopAsync();
@@ -350,8 +349,9 @@ namespace ACT_Plugin {
 		private void populateChannels(SocketGuild g) {
 			try {
 				cmbChan.Items.Clear();
-				foreach (SocketVoiceChannel v in g.VoiceChannels)
-					cmbChan.Items.Add(v);
+				var channels = new List<SocketVoiceChannel>(g.VoiceChannels);
+				channels.Sort((x, y) => x.Position.CompareTo(y.Position));
+				cmbChan.Items.AddRange(channels.ToArray());
 				if (cmbChan.Items.Count > 0)
 					cmbChan.SelectedIndex = 0;
 			} catch (Exception ex) {
@@ -411,15 +411,6 @@ namespace ACT_Plugin {
 			await bot.SetGameAsync("with ACT Triggers");
 			populateServers();
 			logBox.AppendText("Bot is now ready.\n");
-		}
-
-		private async Task Bot_LoggedIn() {
-			try {
-				await bot.StartAsync();
-				logBox.AppendText("Bot started successfully.\n");
-			} catch (Exception ex) {
-				logBox.AppendText("Unable to start. Error:\n" + ex.Message + "\n");
-			}
 		}
 		#endregion
 
