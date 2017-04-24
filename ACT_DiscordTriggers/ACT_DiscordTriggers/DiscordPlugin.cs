@@ -13,6 +13,7 @@ using System.Speech.AudioFormat;
 using NAudio.Wave;
 using Discord.Net.Providers.WS4Net;
 using Discord.Net.Providers.UDPClient;
+using System.Reflection;
 
 namespace ACT_Plugin {
 	public class DiscordPlugin : UserControl, IActPluginV1 {
@@ -194,6 +195,32 @@ namespace ACT_Plugin {
 
 		#endregion
 		public DiscordPlugin() {
+			//Required for assembly references
+			AppDomain.CurrentDomain.AssemblyResolve += (s, e) => {
+				try {
+					var asm = new AssemblyName(e.Name);
+					var plugin = ActGlobals.oFormActMain.PluginGetSelfData(this);
+					if (plugin != null) {
+						var thisDirectory = plugin.pluginFile.DirectoryName;
+						var path1 = Path.Combine(thisDirectory, asm.Name + ".dll");
+						if (File.Exists(path1)) {
+							return Assembly.LoadFrom(path1);
+						}
+					}
+					var pluginDirectory = Path.Combine(
+						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+						@"Advanced Combat Tracker\Plugins");
+					var path = Path.Combine(pluginDirectory, asm.Name + ".dll");
+					if (File.Exists(path)) {
+						return Assembly.LoadFrom(path);
+					}
+				} catch (Exception ex) {
+					ActGlobals.oFormActMain.WriteExceptionLog(
+						ex,
+						"Uh oh.");
+				}
+				return null;
+			};
 			InitializeComponent();
 			var tts = new SpeechSynthesizer();
 			foreach (InstalledVoice v in tts.GetInstalledVoices())
@@ -235,16 +262,17 @@ namespace ACT_Plugin {
 			//Discord Bot Stuff
 			voiceStream = null;
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
-			try {
-				bot = new DiscordSocketClient();
-			} catch (PlatformNotSupportedException) {
+			//try {
+			//	bot = new DiscordSocketClient();
+			//} catch (PlatformNotSupportedException) {
+				logBox.AppendText("PlatformNotSupportedException");
 				bot = new DiscordSocketClient(new DiscordSocketConfig {
 					WebSocketProvider = WS4NetProvider.Instance,
 					UdpSocketProvider = UDPClientProvider.Instance,
 				});
-			}
+			//}
 			try {
-				logBox.AppendText("Starting bot...\n");
+				logBox.AppendText("Logging in bot...\n");
 				bot.LoggedIn += Bot_LoggedIn;
 				bot.Ready += Bot_Ready;
 				bot.LoginAsync(TokenType.Bot, txtToken.Text).GetAwaiter().GetResult();
@@ -308,28 +336,49 @@ namespace ACT_Plugin {
 		}
 
 		private void populateServers() {
-			cmbServer.Items.Clear();
-			cmbChan.Items.Clear();
-			foreach (SocketGuild g in bot.Guilds)
-				cmbServer.Items.Add(g);
-			if (cmbServer.Items.Count > 0)
-				cmbServer.SelectedIndex = 0;
+			try {
+				cmbServer.Items.Clear();
+				cmbChan.Items.Clear();
+				foreach (SocketGuild g in bot.Guilds)
+					cmbServer.Items.Add(g);
+				if (cmbServer.Items.Count > 0)
+					cmbServer.SelectedIndex = 0;
+			} catch (Exception ex) {
+				logBox.AppendText("Error populating servers.\n");
+				logBox.AppendText(ex.Message + "\n");
+			}
 		}
 
 		private void populateChannels(SocketGuild g) {
-			cmbChan.Items.Clear();
-			foreach (SocketVoiceChannel v in g.VoiceChannels)
-				cmbChan.Items.Add(v);
-			if (cmbChan.Items.Count > 0)
-				cmbChan.SelectedIndex = 0;
+			try {
+				cmbChan.Items.Clear();
+				foreach (SocketVoiceChannel v in g.VoiceChannels)
+					cmbChan.Items.Add(v);
+				if (cmbChan.Items.Count > 0)
+					cmbChan.SelectedIndex = 0;
+			} catch (Exception ex) {
+				logBox.AppendText("Error populating channels.\n");
+				logBox.AppendText(ex.Message + "\n");
+			}
 		}
 		#endregion
 
 		#region UI Events
 		private async void btnJoin_Click(object sender, EventArgs e) {
-			btnJoin.Enabled = false;
-			SocketVoiceChannel chan = (SocketVoiceChannel) cmbChan.SelectedItem;
+			SocketVoiceChannel chan = null;
 			try {
+				logBox.AppendText("Join button pressed.\n");
+				btnJoin.Enabled = false;
+				chan = (SocketVoiceChannel) cmbChan.SelectedItem;
+				logBox.AppendText("Successfully created SocketVoiceChannel.\n");
+				if (chan == null)
+					logBox.AppendText("It is null.\n");
+			} catch (Exception ex) {
+				logBox.AppendText("Error creating SocketVoiceChannel object.\n");
+				logBox.AppendText(ex.Message + "\n");
+			}
+			try {
+				logBox.AppendText("Creating audio client and joining channel....\n");
 				audioClient = await chan.ConnectAsync();
 				logBox.AppendText("Joined channel: " + chan.Name + "\n");
 				btnLeave.Enabled = true;
@@ -370,15 +419,23 @@ namespace ACT_Plugin {
 
 		#region Discord Events
 		private async Task Bot_Ready() {
-			btnJoin.Enabled = true;
-			await bot.SetGameAsync("with ACT Triggers");
-			populateServers();
-			logBox.AppendText("Bot is now ready.\n");
+			logBox.AppendText("Ready event triggered. Adjusting game....\n");
+			try {
+				btnJoin.Enabled = true;
+				await bot.SetGameAsync("with ACT Triggers");
+				populateServers();
+				logBox.AppendText("Bot is now ready.\n");
+			} catch (Exception ex) {
+				logBox.AppendText("Error setting game.\n");
+				logBox.AppendText(ex.Message + "\n");
+			}
 		}
 
 		private async Task Bot_LoggedIn() {
+			logBox.AppendText("Bot logged in. Starting bot...\n");
 			try {
 				await bot.StartAsync();
+				logBox.AppendText("Bot started successfully\n");
 			} catch (Exception ex) {
 				logBox.AppendText("Unable to start. Error:\n" + ex.Message + "\n");
 			}
