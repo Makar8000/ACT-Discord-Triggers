@@ -262,17 +262,15 @@ namespace ACT_Plugin {
 			//Discord Bot Stuff
 			voiceStream = null;
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
-			//try {
-			//	bot = new DiscordSocketClient();
-			//} catch (PlatformNotSupportedException) {
-				logBox.AppendText("PlatformNotSupportedException");
+			try {
+				bot = new DiscordSocketClient();
+			} catch (PlatformNotSupportedException) {
 				bot = new DiscordSocketClient(new DiscordSocketConfig {
 					WebSocketProvider = WS4NetProvider.Instance,
 					UdpSocketProvider = UDPClientProvider.Instance,
 				});
-			//}
+			}
 			try {
-				logBox.AppendText("Logging in bot...\n");
 				bot.LoggedIn += Bot_LoggedIn;
 				bot.Ready += Bot_Ready;
 				bot.LoginAsync(TokenType.Bot, txtToken.Text).GetAwaiter().GetResult();
@@ -365,20 +363,9 @@ namespace ACT_Plugin {
 
 		#region UI Events
 		private async void btnJoin_Click(object sender, EventArgs e) {
-			SocketVoiceChannel chan = null;
+			btnJoin.Enabled = false;
+			SocketVoiceChannel chan = (SocketVoiceChannel) cmbChan.SelectedItem;
 			try {
-				logBox.AppendText("Join button pressed.\n");
-				btnJoin.Enabled = false;
-				chan = (SocketVoiceChannel) cmbChan.SelectedItem;
-				logBox.AppendText("Successfully created SocketVoiceChannel.\n");
-				if (chan == null)
-					logBox.AppendText("It is null.\n");
-			} catch (Exception ex) {
-				logBox.AppendText("Error creating SocketVoiceChannel object.\n");
-				logBox.AppendText(ex.Message + "\n");
-			}
-			try {
-				logBox.AppendText("Creating audio client and joining channel....\n");
 				audioClient = await chan.ConnectAsync();
 				logBox.AppendText("Joined channel: " + chan.Name + "\n");
 				btnLeave.Enabled = true;
@@ -396,6 +383,7 @@ namespace ACT_Plugin {
 		private void btnLeave_Click(object sender, EventArgs e) {
 			btnLeave.Enabled = false;
 			try {
+				bot.SetStatusAsync(UserStatus.Offline);
 				voiceStream?.Close();
 				voiceStream = null;
 				audioClient.StopAsync();
@@ -419,23 +407,16 @@ namespace ACT_Plugin {
 
 		#region Discord Events
 		private async Task Bot_Ready() {
-			logBox.AppendText("Ready event triggered. Adjusting game....\n");
-			try {
-				btnJoin.Enabled = true;
-				await bot.SetGameAsync("with ACT Triggers");
-				populateServers();
-				logBox.AppendText("Bot is now ready.\n");
-			} catch (Exception ex) {
-				logBox.AppendText("Error setting game.\n");
-				logBox.AppendText(ex.Message + "\n");
-			}
+			btnJoin.Enabled = true;
+			await bot.SetGameAsync("with ACT Triggers");
+			populateServers();
+			logBox.AppendText("Bot is now ready.\n");
 		}
 
 		private async Task Bot_LoggedIn() {
-			logBox.AppendText("Bot logged in. Starting bot...\n");
 			try {
 				await bot.StartAsync();
-				logBox.AppendText("Bot started successfully\n");
+				logBox.AppendText("Bot started successfully.\n");
 			} catch (Exception ex) {
 				logBox.AppendText("Unable to start. Error:\n" + ex.Message + "\n");
 			}
@@ -445,11 +426,9 @@ namespace ACT_Plugin {
 		#region Settings
 		public void LoadSettings() {
 			xmlSettings.AddControlSetting(txtToken.Name, txtToken);
-
 			if (File.Exists(settingsFile)) {
 				FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 				XmlTextReader xReader = new XmlTextReader(fs);
-
 				try {
 					while (xReader.Read())
 						if (xReader.NodeType == XmlNodeType.Element)
@@ -461,6 +440,7 @@ namespace ACT_Plugin {
 				xReader.Close();
 			}
 		}
+
 		public void SaveSettings() {
 			FileStream fs = new FileStream(settingsFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
 			XmlTextWriter xWriter = new XmlTextWriter(fs, Encoding.UTF8);
