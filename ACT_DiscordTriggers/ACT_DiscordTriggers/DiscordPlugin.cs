@@ -15,6 +15,7 @@ using Discord.Net.Providers.WS4Net;
 using Discord.Net.Providers.UDPClient;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace ACT_Plugin {
 	public class DiscordPlugin : UserControl, IActPluginV1 {
@@ -196,31 +197,7 @@ namespace ACT_Plugin {
 
 		#endregion
 		public DiscordPlugin() {
-			//Required for assembly references
-			//Copied from anoyetta's ccode
-			AppDomain.CurrentDomain.AssemblyResolve += (s, e) => {
-				try {
-					var asm = new AssemblyName(e.Name);
-					var plugin = ActGlobals.oFormActMain.PluginGetSelfData(this);
-					if (plugin != null) {
-						var thisDirectory = plugin.pluginFile.DirectoryName;
-						var path1 = Path.Combine(thisDirectory, asm.Name + ".dll");
-						if (File.Exists(path1)) {
-							return Assembly.LoadFrom(path1);
-						}
-					}
-					var pluginDirectory = Path.Combine(
-						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-						@"Advanced Combat Tracker\Plugins\Test\");
-					var path = Path.Combine(pluginDirectory, asm.Name + ".dll");
-					if (File.Exists(path)) {
-						return Assembly.LoadFrom(path);
-					}
-				} catch (Exception ex) {
-					ActGlobals.oFormActMain.WriteExceptionLog(ex,"Uh oh.");
-				}
-				return null;
-			};
+			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 			InitializeComponent();
 			var tts = new SpeechSynthesizer();
 			foreach (InstalledVoice v in tts.GetInstalledVoices())
@@ -295,9 +272,32 @@ namespace ACT_Plugin {
 				await bot.StopAsync();
 				await bot.LogoutAsync();
 			} catch (Exception ex) {
-				//nothing to see here
+				ActGlobals.oFormActMain.WriteExceptionLog(ex, "Error with DeInit of Discord Plugin.");
 			}
 			lblStatus.Text = "Plugin Exited";
+		}
+
+		private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args) {
+			try {
+				var asm = new AssemblyName(args.Name);
+				var plugin = ActGlobals.oFormActMain.PluginGetSelfData(this);
+				string file;
+				if (plugin != null) {
+					file = plugin.pluginFile.DirectoryName;
+					file = Path.Combine(file, asm.Name + ".dll");
+					if (File.Exists(file)) {
+						return Assembly.LoadFile(file);
+					}
+				}
+				file = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Plugins\\Discord");
+				file = Path.Combine(file, asm.Name + ".dll");
+				if (File.Exists(file)) {
+					return Assembly.LoadFrom(file);
+				}
+			} catch (Exception ex) {
+				ActGlobals.oFormActMain.WriteExceptionLog(ex, "Error with loading an assembly for Discord Plugin.");
+			}
+			return null;
 		}
 		#endregion
 
@@ -371,6 +371,7 @@ namespace ACT_Plugin {
 				btnLeave.Enabled = true;
 				ActGlobals.oFormActMain.PlayTtsMethod = speak;
 				ActGlobals.oFormActMain.PlaySoundMethod = speakFile;
+				speak(" ");
 			} catch (Exception ex) {
 				logBox.AppendText("Unable to join channel. Does your bot have permission to join this channel?\n");
 				btnJoin.Enabled = true;
@@ -410,7 +411,6 @@ namespace ACT_Plugin {
 			btnJoin.Enabled = true;
 			await bot.SetGameAsync("with ACT Triggers");
 			populateServers();
-			logBox.AppendText("Bot is now ready.\n");
 		}
 		#endregion
 
