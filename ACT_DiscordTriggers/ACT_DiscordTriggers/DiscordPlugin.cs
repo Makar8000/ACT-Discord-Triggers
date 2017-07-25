@@ -55,6 +55,12 @@ namespace ACT_Plugin {
 			this.lblServer = new System.Windows.Forms.Label();
 			this.cmbChan = new System.Windows.Forms.ComboBox();
 			this.lblChan = new System.Windows.Forms.Label();
+			this.lblTTSVol = new System.Windows.Forms.Label();
+			this.sliderTTSVol = new System.Windows.Forms.TrackBar();
+			this.sliderTTSSpeed = new System.Windows.Forms.TrackBar();
+			this.lblTTSSpeed = new System.Windows.Forms.Label();
+			((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// lblBotTok
@@ -81,7 +87,7 @@ namespace ACT_Plugin {
 			this.logBox.Multiline = true;
 			this.logBox.Name = "logBox";
 			this.logBox.ReadOnly = true;
-			this.logBox.Size = new System.Drawing.Size(381, 189);
+			this.logBox.Size = new System.Drawing.Size(424, 310);
 			this.logBox.TabIndex = 4;
 			// 
 			// lblLog
@@ -170,10 +176,50 @@ namespace ACT_Plugin {
 			this.lblChan.TabIndex = 16;
 			this.lblChan.Text = "Channel";
 			// 
+			// lblTTSVol
+			// 
+			this.lblTTSVol.AutoSize = true;
+			this.lblTTSVol.Location = new System.Drawing.Point(28, 254);
+			this.lblTTSVol.Name = "lblTTSVol";
+			this.lblTTSVol.Size = new System.Drawing.Size(66, 13);
+			this.lblTTSVol.TabIndex = 18;
+			this.lblTTSVol.Text = "TTS Volume";
+			// 
+			// sliderTTSVol
+			// 
+			this.sliderTTSVol.Location = new System.Drawing.Point(31, 270);
+			this.sliderTTSVol.Maximum = 20;
+			this.sliderTTSVol.Name = "sliderTTSVol";
+			this.sliderTTSVol.Size = new System.Drawing.Size(193, 45);
+			this.sliderTTSVol.TabIndex = 19;
+			this.sliderTTSVol.Value = 10;
+			// 
+			// sliderTTSSpeed
+			// 
+			this.sliderTTSSpeed.Location = new System.Drawing.Point(31, 334);
+			this.sliderTTSSpeed.Maximum = 20;
+			this.sliderTTSSpeed.Name = "sliderTTSSpeed";
+			this.sliderTTSSpeed.Size = new System.Drawing.Size(193, 45);
+			this.sliderTTSSpeed.TabIndex = 21;
+			this.sliderTTSSpeed.Value = 10;
+			// 
+			// lblTTSSpeed
+			// 
+			this.lblTTSSpeed.AutoSize = true;
+			this.lblTTSSpeed.Location = new System.Drawing.Point(28, 318);
+			this.lblTTSSpeed.Name = "lblTTSSpeed";
+			this.lblTTSSpeed.Size = new System.Drawing.Size(62, 13);
+			this.lblTTSSpeed.TabIndex = 20;
+			this.lblTTSSpeed.Text = "TTS Speed";
+			// 
 			// DiscordPlugin
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.sliderTTSSpeed);
+			this.Controls.Add(this.lblTTSSpeed);
+			this.Controls.Add(this.sliderTTSVol);
+			this.Controls.Add(this.lblTTSVol);
 			this.Controls.Add(this.cmbChan);
 			this.Controls.Add(this.lblChan);
 			this.Controls.Add(this.cmbServer);
@@ -187,7 +233,9 @@ namespace ACT_Plugin {
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
-			this.Size = new System.Drawing.Size(701, 296);
+			this.Size = new System.Drawing.Size(730, 399);
+			((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -223,6 +271,10 @@ namespace ACT_Plugin {
 		private Label lblServer;
 		private ComboBox cmbChan;
 		private Label lblChan;
+		private Label lblTTSVol;
+		private TrackBar sliderTTSVol;
+		private TrackBar sliderTTSSpeed;
+		private Label lblTTSSpeed;
 		private ComboBox cmbTTS;
 
 		#region IActPluginV1 Members
@@ -242,6 +294,7 @@ namespace ACT_Plugin {
 			try {
 				bot = new DiscordSocketClient();
 			} catch (PlatformNotSupportedException) {
+				logBox.AppendText("Unsupported Operating System. Bot may not work correctly.\n");
 				bot = new DiscordSocketClient(new DiscordSocketConfig {
 					WebSocketProvider = WS4NetProvider.Instance,
 					UdpSocketProvider = UDPClientProvider.Instance,
@@ -305,10 +358,12 @@ namespace ACT_Plugin {
 		private void speak(string text) {
 			SpeechSynthesizer tts = new SpeechSynthesizer();
 			tts.SelectVoice((string) cmbTTS.SelectedItem);
+			tts.Volume = sliderTTSVol.Value * 5;
+			tts.Rate = sliderTTSSpeed.Value - 10;
 			MemoryStream ms = new MemoryStream();
 			tts.SetOutputToAudioStream(ms, formatInfo);
 			if (voiceStream == null)
-				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
+				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
 			tts.SpeakAsync(text);
 			tts.SpeakCompleted += (a, b) => {
 				ms.Seek(0, SeekOrigin.Begin);
@@ -319,7 +374,7 @@ namespace ACT_Plugin {
 
 		private void speakFile(string path, int volume) {
 			if (voiceStream == null)
-				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 1920);
+				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
 			try {
 				WaveFileReader wav = new WaveFileReader(path);
 				WaveFormat waveFormat = new WaveFormat(48000, 16, 2);
@@ -417,6 +472,8 @@ namespace ACT_Plugin {
 		#region Settings
 		public void LoadSettings() {
 			xmlSettings.AddControlSetting(txtToken.Name, txtToken);
+			xmlSettings.AddControlSetting(sliderTTSVol.Name, sliderTTSVol);
+			xmlSettings.AddControlSetting(sliderTTSSpeed.Name, sliderTTSSpeed);
 			if (File.Exists(settingsFile)) {
 				FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 				XmlTextReader xReader = new XmlTextReader(fs);
