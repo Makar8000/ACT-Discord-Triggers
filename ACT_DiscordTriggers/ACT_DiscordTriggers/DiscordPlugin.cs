@@ -59,8 +59,8 @@ namespace ACT_Plugin {
 			this.sliderTTSVol = new System.Windows.Forms.TrackBar();
 			this.sliderTTSSpeed = new System.Windows.Forms.TrackBar();
 			this.lblTTSSpeed = new System.Windows.Forms.Label();
-			((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
+			((System.ComponentModel.ISupportInitialize) (this.sliderTTSVol)).BeginInit();
+			((System.ComponentModel.ISupportInitialize) (this.sliderTTSSpeed)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// lblBotTok
@@ -234,8 +234,8 @@ namespace ACT_Plugin {
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
 			this.Size = new System.Drawing.Size(730, 399);
-			((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
+			((System.ComponentModel.ISupportInitialize) (this.sliderTTSVol)).EndInit();
+			((System.ComponentModel.ISupportInitialize) (this.sliderTTSSpeed)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
