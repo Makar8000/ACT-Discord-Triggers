@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Program Files (x86)\Advanced Combat Tracker\Advanced Combat Tracker.exe</StartProgram>
+  </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -217,7 +221,39 @@
     <Compile Include="DiscordPlugin.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="DiscordTriggers.cs" />
+    <Compile Include="JsonWrappers\CharacterSearch\CharacterResult.cs" />
+    <Compile Include="JsonWrappers\CharacterSearch\Characters.cs" />
+    <Compile Include="JsonWrappers\CharacterSearch\CharacterSearch.cs" />
+    <Compile Include="JsonWrappers\CharacterSearch\Paging.cs" />
+    <Compile Include="JsonWrappers\Fights\DatumFight.cs" />
+    <Compile Include="JsonWrappers\Fights\Parses.cs" />
+    <Compile Include="JsonWrappers\Fights\Spec.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\ActiveRole.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\ActiveRoleData.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\ActiveRoleExp.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\ActiveRoleProgress.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Active_Class.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\City.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Exp.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Extras.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\GrandCompany.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Grand_Companies.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Grand_Company.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Guardian.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Minion.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Minions.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Minions1.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Mount.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Mounts.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\Mounts1.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\PlayerData.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\XIVDBCharacter.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\XIVDBClassJob.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\XIVDBClassJobData.cs" />
+    <Compile Include="JsonWrappers\xivdbCharacter\XIVDBClassjobs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="World.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -228,6 +264,7 @@
       <DependentUpon>DiscordPlugin.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
