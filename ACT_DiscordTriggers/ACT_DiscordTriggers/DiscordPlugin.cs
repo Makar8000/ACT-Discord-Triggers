@@ -47,6 +47,8 @@ namespace ACT_DiscordTriggers
 		private void InitializeComponent() {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.chkAutoConnect = new System.Windows.Forms.CheckBox();
+            this.discordConnectbtn = new System.Windows.Forms.Button();
             this.txtFFLogsToken = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.sliderTTSSpeed = new System.Windows.Forms.TrackBar();
@@ -66,10 +68,39 @@ namespace ACT_DiscordTriggers
             this.txtToken = new System.Windows.Forms.TextBox();
             this.lblBotTok = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
+            this.txtFriend = new System.Windows.Forms.TextBox();
+            this.lstFriends = new System.Windows.Forms.ListBox();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.txtDirThree = new System.Windows.Forms.TextBox();
+            this.lstThreeDirections = new System.Windows.Forms.ListBox();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.txtDirTwo = new System.Windows.Forms.TextBox();
+            this.lstTwoDirections = new System.Windows.Forms.ListBox();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
+            this.txtTrigger = new System.Windows.Forms.TextBox();
+            this.lstMapTriggers = new System.Windows.Forms.ListBox();
+            this.txtDiscordID = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtFFXIVName = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
+            this.tabPage2.SuspendLayout();
+            this.groupBox6.SuspendLayout();
+            this.tableLayoutPanel4.SuspendLayout();
+            this.groupBox5.SuspendLayout();
+            this.tableLayoutPanel2.SuspendLayout();
+            this.groupBox4.SuspendLayout();
+            this.tableLayoutPanel1.SuspendLayout();
+            this.groupBox3.SuspendLayout();
+            this.tableLayoutPanel3.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -85,6 +116,12 @@ namespace ACT_DiscordTriggers
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.label3);
+            this.tabPage1.Controls.Add(this.txtFFXIVName);
+            this.tabPage1.Controls.Add(this.label2);
+            this.tabPage1.Controls.Add(this.txtDiscordID);
+            this.tabPage1.Controls.Add(this.chkAutoConnect);
+            this.tabPage1.Controls.Add(this.discordConnectbtn);
             this.tabPage1.Controls.Add(this.txtFFLogsToken);
             this.tabPage1.Controls.Add(this.label1);
             this.tabPage1.Controls.Add(this.sliderTTSSpeed);
@@ -111,9 +148,29 @@ namespace ACT_DiscordTriggers
             this.tabPage1.Text = "Settings";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // chkAutoConnect
+            // 
+            this.chkAutoConnect.AutoSize = true;
+            this.chkAutoConnect.Location = new System.Drawing.Point(132, 140);
+            this.chkAutoConnect.Name = "chkAutoConnect";
+            this.chkAutoConnect.Size = new System.Drawing.Size(91, 17);
+            this.chkAutoConnect.TabIndex = 41;
+            this.chkAutoConnect.Text = "Auto Connect";
+            this.chkAutoConnect.UseVisualStyleBackColor = true;
+            // 
+            // discordConnectbtn
+            // 
+            this.discordConnectbtn.Location = new System.Drawing.Point(30, 136);
+            this.discordConnectbtn.Name = "discordConnectbtn";
+            this.discordConnectbtn.Size = new System.Drawing.Size(93, 23);
+            this.discordConnectbtn.TabIndex = 40;
+            this.discordConnectbtn.Text = "Connect";
+            this.discordConnectbtn.UseVisualStyleBackColor = true;
+            this.discordConnectbtn.Click += new System.EventHandler(this.discordConnectbtn_Click);
+            // 
             // txtFFLogsToken
             // 
-            this.txtFFLogsToken.Location = new System.Drawing.Point(30, 67);
+            this.txtFFLogsToken.Location = new System.Drawing.Point(30, 63);
             this.txtFFLogsToken.Name = "txtFFLogsToken";
             this.txtFFLogsToken.Size = new System.Drawing.Size(193, 20);
             this.txtFFLogsToken.TabIndex = 39;
@@ -122,7 +179,7 @@ namespace ACT_DiscordTriggers
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(27, 51);
+            this.label1.Location = new System.Drawing.Point(27, 47);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(76, 13);
             this.label1.TabIndex = 38;
@@ -130,7 +187,7 @@ namespace ACT_DiscordTriggers
             // 
             // sliderTTSSpeed
             // 
-            this.sliderTTSSpeed.Location = new System.Drawing.Point(30, 347);
+            this.sliderTTSSpeed.Location = new System.Drawing.Point(448, 134);
             this.sliderTTSSpeed.Maximum = 20;
             this.sliderTTSSpeed.Name = "sliderTTSSpeed";
             this.sliderTTSSpeed.Size = new System.Drawing.Size(193, 45);
@@ -140,7 +197,7 @@ namespace ACT_DiscordTriggers
             // lblTTSSpeed
             // 
             this.lblTTSSpeed.AutoSize = true;
-            this.lblTTSSpeed.Location = new System.Drawing.Point(27, 331);
+            this.lblTTSSpeed.Location = new System.Drawing.Point(449, 116);
             this.lblTTSSpeed.Name = "lblTTSSpeed";
             this.lblTTSSpeed.Size = new System.Drawing.Size(62, 13);
             this.lblTTSSpeed.TabIndex = 36;
@@ -148,7 +205,7 @@ namespace ACT_DiscordTriggers
             // 
             // sliderTTSVol
             // 
-            this.sliderTTSVol.Location = new System.Drawing.Point(30, 283);
+            this.sliderTTSVol.Location = new System.Drawing.Point(448, 67);
             this.sliderTTSVol.Maximum = 20;
             this.sliderTTSVol.Name = "sliderTTSVol";
             this.sliderTTSVol.Size = new System.Drawing.Size(193, 45);
@@ -158,7 +215,7 @@ namespace ACT_DiscordTriggers
             // lblTTSVol
             // 
             this.lblTTSVol.AutoSize = true;
-            this.lblTTSVol.Location = new System.Drawing.Point(27, 267);
+            this.lblTTSVol.Location = new System.Drawing.Point(445, 47);
             this.lblTTSVol.Name = "lblTTSVol";
             this.lblTTSVol.Size = new System.Drawing.Size(66, 13);
             this.lblTTSVol.TabIndex = 34;
@@ -168,7 +225,7 @@ namespace ACT_DiscordTriggers
             // 
             this.cmbChan.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbChan.FormattingEnabled = true;
-            this.cmbChan.Location = new System.Drawing.Point(30, 151);
+            this.cmbChan.Location = new System.Drawing.Point(241, 108);
             this.cmbChan.Name = "cmbChan";
             this.cmbChan.Size = new System.Drawing.Size(193, 21);
             this.cmbChan.TabIndex = 33;
@@ -176,7 +233,7 @@ namespace ACT_DiscordTriggers
             // lblChan
             // 
             this.lblChan.AutoSize = true;
-            this.lblChan.Location = new System.Drawing.Point(27, 134);
+            this.lblChan.Location = new System.Drawing.Point(238, 90);
             this.lblChan.Name = "lblChan";
             this.lblChan.Size = new System.Drawing.Size(46, 13);
             this.lblChan.TabIndex = 32;
@@ -186,7 +243,7 @@ namespace ACT_DiscordTriggers
             // 
             this.cmbServer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbServer.FormattingEnabled = true;
-            this.cmbServer.Location = new System.Drawing.Point(30, 109);
+            this.cmbServer.Location = new System.Drawing.Point(241, 62);
             this.cmbServer.Name = "cmbServer";
             this.cmbServer.Size = new System.Drawing.Size(193, 21);
             this.cmbServer.TabIndex = 31;
@@ -195,7 +252,7 @@ namespace ACT_DiscordTriggers
             // lblServer
             // 
             this.lblServer.AutoSize = true;
-            this.lblServer.Location = new System.Drawing.Point(27, 92);
+            this.lblServer.Location = new System.Drawing.Point(238, 48);
             this.lblServer.Name = "lblServer";
             this.lblServer.Size = new System.Drawing.Size(38, 13);
             this.lblServer.TabIndex = 30;
@@ -205,7 +262,7 @@ namespace ACT_DiscordTriggers
             // 
             this.cmbTTS.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbTTS.FormattingEnabled = true;
-            this.cmbTTS.Location = new System.Drawing.Point(30, 230);
+            this.cmbTTS.Location = new System.Drawing.Point(448, 23);
             this.cmbTTS.Name = "cmbTTS";
             this.cmbTTS.Size = new System.Drawing.Size(193, 21);
             this.cmbTTS.TabIndex = 29;
@@ -213,7 +270,7 @@ namespace ACT_DiscordTriggers
             // lblTTS
             // 
             this.lblTTS.AutoSize = true;
-            this.lblTTS.Location = new System.Drawing.Point(27, 213);
+            this.lblTTS.Location = new System.Drawing.Point(445, 8);
             this.lblTTS.Name = "lblTTS";
             this.lblTTS.Size = new System.Drawing.Size(58, 13);
             this.lblTTS.TabIndex = 28;
@@ -222,7 +279,7 @@ namespace ACT_DiscordTriggers
             // btnLeave
             // 
             this.btnLeave.Enabled = false;
-            this.btnLeave.Location = new System.Drawing.Point(129, 178);
+            this.btnLeave.Location = new System.Drawing.Point(340, 135);
             this.btnLeave.Name = "btnLeave";
             this.btnLeave.Size = new System.Drawing.Size(94, 23);
             this.btnLeave.TabIndex = 27;
@@ -233,7 +290,7 @@ namespace ACT_DiscordTriggers
             // btnJoin
             // 
             this.btnJoin.Enabled = false;
-            this.btnJoin.Location = new System.Drawing.Point(30, 178);
+            this.btnJoin.Location = new System.Drawing.Point(241, 134);
             this.btnJoin.Name = "btnJoin";
             this.btnJoin.Size = new System.Drawing.Size(93, 23);
             this.btnJoin.TabIndex = 26;
@@ -244,7 +301,7 @@ namespace ACT_DiscordTriggers
             // lblLog
             // 
             this.lblLog.AutoSize = true;
-            this.lblLog.Location = new System.Drawing.Point(268, 8);
+            this.lblLog.Location = new System.Drawing.Point(27, 166);
             this.lblLog.Name = "lblLog";
             this.lblLog.Size = new System.Drawing.Size(60, 13);
             this.lblLog.TabIndex = 25;
@@ -253,11 +310,11 @@ namespace ACT_DiscordTriggers
             // logBox
             // 
             this.logBox.BackColor = System.Drawing.SystemColors.Control;
-            this.logBox.Location = new System.Drawing.Point(271, 34);
+            this.logBox.Location = new System.Drawing.Point(30, 185);
             this.logBox.Multiline = true;
             this.logBox.Name = "logBox";
             this.logBox.ReadOnly = true;
-            this.logBox.Size = new System.Drawing.Size(424, 310);
+            this.logBox.Size = new System.Drawing.Size(789, 276);
             this.logBox.TabIndex = 24;
             // 
             // txtToken
@@ -279,6 +336,10 @@ namespace ACT_DiscordTriggers
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.groupBox6);
+            this.tabPage2.Controls.Add(this.groupBox5);
+            this.tabPage2.Controls.Add(this.groupBox4);
+            this.tabPage2.Controls.Add(this.groupBox3);
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
@@ -286,6 +347,267 @@ namespace ACT_DiscordTriggers
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Maps";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this.tableLayoutPanel4);
+            this.groupBox6.Location = new System.Drawing.Point(652, 7);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(167, 397);
+            this.groupBox6.TabIndex = 2;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "Friend List";
+            // 
+            // tableLayoutPanel4
+            // 
+            this.tableLayoutPanel4.ColumnCount = 1;
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel4.Controls.Add(this.txtFriend, 0, 1);
+            this.tableLayoutPanel4.Controls.Add(this.lstFriends, 0, 0);
+            this.tableLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel4.Location = new System.Drawing.Point(3, 16);
+            this.tableLayoutPanel4.Name = "tableLayoutPanel4";
+            this.tableLayoutPanel4.RowCount = 2;
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(161, 378);
+            this.tableLayoutPanel4.TabIndex = 1;
+            // 
+            // txtFriend
+            // 
+            this.txtFriend.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtFriend.Location = new System.Drawing.Point(3, 356);
+            this.txtFriend.Name = "txtFriend";
+            this.txtFriend.Size = new System.Drawing.Size(155, 20);
+            this.txtFriend.TabIndex = 0;
+            // 
+            // lstFriends
+            // 
+            this.lstFriends.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstFriends.FormattingEnabled = true;
+            this.lstFriends.Items.AddRange(new object[] {
+            "Cyther",
+            "Ketzia",
+            "Buttys",
+            "Vivi",
+            "Jadoo",
+            "Bryne",
+            "The Devil Child",
+            "Tryhard",
+            "Bronchy",
+            "Bel Sama"});
+            this.lstFriends.Location = new System.Drawing.Point(3, 3);
+            this.lstFriends.Name = "lstFriends";
+            this.lstFriends.Size = new System.Drawing.Size(155, 347);
+            this.lstFriends.TabIndex = 1;
+            // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.tableLayoutPanel2);
+            this.groupBox5.Location = new System.Drawing.Point(9, 208);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(200, 196);
+            this.groupBox5.TabIndex = 2;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "Directions (Three Doors)";
+            // 
+            // tableLayoutPanel2
+            // 
+            this.tableLayoutPanel2.ColumnCount = 1;
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel2.Controls.Add(this.txtDirThree, 0, 1);
+            this.tableLayoutPanel2.Controls.Add(this.lstThreeDirections, 0, 0);
+            this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel2.Location = new System.Drawing.Point(3, 16);
+            this.tableLayoutPanel2.Name = "tableLayoutPanel2";
+            this.tableLayoutPanel2.RowCount = 2;
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(194, 177);
+            this.tableLayoutPanel2.TabIndex = 1;
+            // 
+            // txtDirThree
+            // 
+            this.txtDirThree.Dock = System.Windows.Forms.DockStyle.Top;
+            this.txtDirThree.Location = new System.Drawing.Point(3, 155);
+            this.txtDirThree.Name = "txtDirThree";
+            this.txtDirThree.Size = new System.Drawing.Size(188, 20);
+            this.txtDirThree.TabIndex = 0;
+            // 
+            // lstThreeDirections
+            // 
+            this.lstThreeDirections.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lstThreeDirections.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstThreeDirections.FormattingEnabled = true;
+            this.lstThreeDirections.Items.AddRange(new object[] {
+            "to the Left",
+            "in the Middle",
+            "to the Right"});
+            this.lstThreeDirections.Location = new System.Drawing.Point(3, 3);
+            this.lstThreeDirections.Name = "lstThreeDirections";
+            this.lstThreeDirections.Size = new System.Drawing.Size(188, 146);
+            this.lstThreeDirections.TabIndex = 1;
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.tableLayoutPanel1);
+            this.groupBox4.Location = new System.Drawing.Point(6, 6);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(200, 196);
+            this.groupBox4.TabIndex = 1;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Directions (Two Doors)";
+            // 
+            // tableLayoutPanel1
+            // 
+            this.tableLayoutPanel1.ColumnCount = 1;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.Controls.Add(this.txtDirTwo, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.lstTwoDirections, 0, 0);
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(3, 16);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 2;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(194, 177);
+            this.tableLayoutPanel1.TabIndex = 0;
+            // 
+            // txtDirTwo
+            // 
+            this.txtDirTwo.Dock = System.Windows.Forms.DockStyle.Top;
+            this.txtDirTwo.Location = new System.Drawing.Point(3, 160);
+            this.txtDirTwo.Name = "txtDirTwo";
+            this.txtDirTwo.Size = new System.Drawing.Size(188, 20);
+            this.txtDirTwo.TabIndex = 0;
+            // 
+            // lstTwoDirections
+            // 
+            this.lstTwoDirections.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lstTwoDirections.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstTwoDirections.FormattingEnabled = true;
+            this.lstTwoDirections.Items.AddRange(new object[] {
+            "to the Left",
+            "to the Right"});
+            this.lstTwoDirections.Location = new System.Drawing.Point(3, 3);
+            this.lstTwoDirections.Name = "lstTwoDirections";
+            this.lstTwoDirections.Size = new System.Drawing.Size(188, 151);
+            this.lstTwoDirections.TabIndex = 1;
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.tableLayoutPanel3);
+            this.groupBox3.Location = new System.Drawing.Point(212, 6);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(434, 397);
+            this.groupBox3.TabIndex = 0;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Triggers";
+            // 
+            // tableLayoutPanel3
+            // 
+            this.tableLayoutPanel3.ColumnCount = 1;
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel3.Controls.Add(this.txtTrigger, 0, 1);
+            this.tableLayoutPanel3.Controls.Add(this.lstMapTriggers, 0, 0);
+            this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel3.Location = new System.Drawing.Point(3, 16);
+            this.tableLayoutPanel3.Name = "tableLayoutPanel3";
+            this.tableLayoutPanel3.RowCount = 2;
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+            this.tableLayoutPanel3.Size = new System.Drawing.Size(428, 378);
+            this.tableLayoutPanel3.TabIndex = 1;
+            // 
+            // txtTrigger
+            // 
+            this.txtTrigger.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtTrigger.Location = new System.Drawing.Point(3, 356);
+            this.txtTrigger.Name = "txtTrigger";
+            this.txtTrigger.Size = new System.Drawing.Size(422, 20);
+            this.txtTrigger.TabIndex = 0;
+            // 
+            // lstMapTriggers
+            // 
+            this.lstMapTriggers.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstMapTriggers.FormattingEnabled = true;
+            this.lstMapTriggers.Items.AddRange(new object[] {
+            "Every door is now {0}.",
+            "My 100 percentile is pointing {0}",
+            "The secret to Buttys healing can be found {0}.",
+            "Sloppy Right.",
+            "Sloppy left",
+            "The sign over there points {0}.",
+            "The future predicts {0}.",
+            "Try hards pants can be found {0}.",
+            "Buttys says {0}.",
+            "My map points {0}.",
+            "If I was to guess wrong, It would be {0}.",
+            "Bel sama o\'clock is {0}.",
+            "If i was a Geordie, I would pick {0}.",
+            "My Lettuce pizza is pointing {0}.",
+            "Vivi says {0}.",
+            "Ketzia is {0}.",
+            "If i was to quit the static... I would go {0}.",
+            "Left sword.",
+            "Right sword.",
+            "Cythers corpse is pointing {0}.",
+            "President Trump says {0}.",
+            "We should build the Mexican wall on the Right.",
+            "We should build the Mexican wall on the Left.",
+            "I used a potion and it said go {0}.",
+            "Ketzia is always right.",
+            "Tell Ketzia we went left",
+            "If Brine was here tonight? I think he would of gone left.",
+            "Screw you guys! I\'m going {0}.",
+            "Buttys did too much dps so we go {0}.",
+            "Anyone that survived can go {0}.",
+            "Bonjour detected! {0} incoming.",
+            "My bucket is leaning {0}.",
+            "This door smells funny, lets go {0}.",
+            "The devil child said go {0}.",
+            "The voices in my head say {0}.",
+            "Mummy Bel, should we go {0}.",
+            "Just like Dark Souls, {0}.",
+            "Zero deaths {0}."});
+            this.lstMapTriggers.Location = new System.Drawing.Point(3, 3);
+            this.lstMapTriggers.Name = "lstMapTriggers";
+            this.lstMapTriggers.Size = new System.Drawing.Size(422, 347);
+            this.lstMapTriggers.TabIndex = 1;
+            // 
+            // txtDiscordID
+            // 
+            this.txtDiscordID.Location = new System.Drawing.Point(30, 108);
+            this.txtDiscordID.Name = "txtDiscordID";
+            this.txtDiscordID.Size = new System.Drawing.Size(193, 20);
+            this.txtDiscordID.TabIndex = 42;
+            this.txtDiscordID.UseSystemPasswordChar = true;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(27, 90);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(73, 13);
+            this.label2.TabIndex = 43;
+            this.label2.Text = "Parse Chat ID";
+            // 
+            // txtFFXIVName
+            // 
+            this.txtFFXIVName.Location = new System.Drawing.Point(241, 24);
+            this.txtFFXIVName.Name = "txtFFXIVName";
+            this.txtFFXIVName.Size = new System.Drawing.Size(193, 20);
+            this.txtFFXIVName.TabIndex = 44;
+            this.txtFFXIVName.Text = "Buttys";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(238, 7);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(92, 13);
+            this.label3.TabIndex = 45;
+            this.label3.Text = "Your FFXIV Name";
             // 
             // DiscordPlugin
             // 
@@ -299,6 +621,19 @@ namespace ACT_DiscordTriggers
             this.tabPage1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
+            this.tabPage2.ResumeLayout(false);
+            this.groupBox6.ResumeLayout(false);
+            this.tableLayoutPanel4.ResumeLayout(false);
+            this.tableLayoutPanel4.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.tableLayoutPanel2.ResumeLayout(false);
+            this.tableLayoutPanel2.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
+            this.groupBox3.ResumeLayout(false);
+            this.tableLayoutPanel3.ResumeLayout(false);
+            this.tableLayoutPanel3.PerformLayout();
             this.ResumeLayout(false);
 
 		}
@@ -343,48 +678,59 @@ namespace ACT_DiscordTriggers
         public TextBox txtFFLogsToken;
         private Label label1;
         private AudioOutStream voiceStream;
-
+        private Button discordConnectbtn;
+        private GroupBox groupBox5;
+        private TableLayoutPanel tableLayoutPanel2;
+        private TextBox txtDirThree;
+        private ListBox lstThreeDirections;
+        private GroupBox groupBox4;
+        private TableLayoutPanel tableLayoutPanel1;
+        private TextBox txtDirTwo;
+        private ListBox lstTwoDirections;
+        private GroupBox groupBox3;
+        private TableLayoutPanel tableLayoutPanel3;
+        private TextBox txtTrigger;
+        private ListBox lstMapTriggers;
+        private GroupBox groupBox6;
+        private TableLayoutPanel tableLayoutPanel4;
+        private TextBox txtFriend;
+        private ListBox lstFriends;
+        private CheckBox chkAutoConnect;
+        private Label label2;
+        private TextBox txtDiscordID;
+        private Label label3;
+        private TextBox txtFFXIVName;
         private Random ran = new Random();
 
         #region IActPluginV1 Members
-        public async void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
+        public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
 			//ACT Stuff
 			lblStatus = pluginStatusText;
 			settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Config\\ACT_DiscordTriggers.config.xml");
 			pluginScreenSpace.Controls.Add(this);
 			pluginScreenSpace.Text = "Discord Triggers";
-			this.Dock = DockStyle.Fill;
+			Dock = DockStyle.Fill;
 			xmlSettings = new SettingsSerializer(this);
 			LoadSettings();
+            txtDirTwo.KeyUp += AddNewListItem;
+            txtDirThree.KeyUp += AddNewListItem;
+            txtTrigger.KeyUp += AddNewListItem;
+            txtFriend.KeyUp += AddNewListItem;
 
-			//Discord Bot Stuff
-			voiceStream = null;
+            lstTwoDirections.KeyUp += RemoveListItem;
+            lstThreeDirections.KeyUp += RemoveListItem;
+            lstMapTriggers.KeyUp += RemoveListItem;
+            lstFriends.KeyUp += RemoveListItem;
+
+            //Discord Bot Stuff
+            voiceStream = null;
 			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
-			try {
-				bot = new DiscordSocketClient();
-                commands = new CommandService();
-                services = new ServiceCollection().BuildServiceProvider();
-            } catch (PlatformNotSupportedException) {
-				Log("Unsupported Operating System. Bot may not work correctly.");
-				bot = new DiscordSocketClient(new DiscordSocketConfig {
-					WebSocketProvider = WS4NetProvider.Instance,
-					UdpSocketProvider = UDPClientProvider.Instance,
-				});
-			}
-			try {
-				bot.Ready += Bot_Ready;
-                ActGlobals.oFormActMain.OnCombatEnd += OFormActMain_OnCombatEnd;
-                await commands.AddModuleAsync(typeof(DiscordTriggers));
-                await bot.LoginAsync(TokenType.Bot, txtToken.Text);
-				await bot.StartAsync();
-                DiscordTriggers.Init(this);
-                bot.MessageReceived += Bot_MessageReceived;
-                Log("Plugin loaded successfully.");
-			} catch (Exception ex) {
-				Log("Error connecting bot. Make sure your Bot Token is correct then restart the plugin (Go to \"Plugin Listing\" tab, uncheck \"Enabled\" and then check it again).");
-				Log(ex.Message);
-			}
-			lblStatus.Text = "Plugin Started";
+
+            if (chkAutoConnect.Checked)
+                discordConnectbtn_Click(null, EventArgs.Empty);
+
+
+            lblStatus.Text = "Drellis Started";
 		}
 
 		public async void DeInitPlugin() {
@@ -427,38 +773,51 @@ namespace ACT_DiscordTriggers
 			}
 			return null;
 		}
-		#endregion
+        #endregion
+
+        private object speaklock = new object();
 
 		#region Discord Methods
 		private void speak(string text) {
-            if (voiceStream == null)
-                voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
-            SpeechSynthesizer tts = new SpeechSynthesizer();
-            tts.SelectVoice((string)cmbTTS.SelectedItem);
-            tts.Volume = sliderTTSVol.Value * 5;
-            tts.Rate = sliderTTSSpeed.Value - 10;
-            MemoryStream ms = new MemoryStream();
-            tts.SetOutputToAudioStream(ms, formatInfo);
 
-            tts.Speak(text);
-            ms.Seek(0, SeekOrigin.Begin);
-            ms.CopyTo(voiceStream);
-            voiceStream.Flush();
+            lock (speaklock)
+            {
+                if (voiceStream == null)
+                    voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
+                SpeechSynthesizer tts = new SpeechSynthesizer();
+                tts.SelectVoice((string)cmbTTS.SelectedItem);
+                tts.Volume = sliderTTSVol.Value * 5;
+                tts.Rate = sliderTTSSpeed.Value - 10;
+                MemoryStream ms = new MemoryStream();
+                tts.SetOutputToAudioStream(ms, formatInfo);
+
+                tts.Speak(text);
+                ms.Seek(0, SeekOrigin.Begin);
+                ms.CopyTo(voiceStream);
+                voiceStream.Flush();
+            }
         }
 
 		private void speakFile(string path, int volume) {
-			if (voiceStream == null)
-				voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
-			try {
-				WaveFileReader wav = new WaveFileReader(path);
-				WaveFormat waveFormat = new WaveFormat(48000, 16, 2);
-				WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(wav);
-				WaveFormatConversionStream output = new WaveFormatConversionStream(waveFormat, pcm);
-				output.CopyTo(voiceStream);
-				voiceStream.Flush();
-			} catch (Exception ex) {
-				Log("Unable to read file: " + ex.Message);
-			}
+
+            lock (speaklock)
+            {
+                if (voiceStream == null)
+                    voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
+                try
+                {
+                    WaveFileReader wav = new WaveFileReader(path);
+                    WaveFormat waveFormat = new WaveFormat(48000, 16, 2);
+                    WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(wav);
+                    WaveFormatConversionStream output = new WaveFormatConversionStream(waveFormat, pcm);
+                    output.CopyTo(voiceStream);
+                    voiceStream.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Log("Unable to read file: " + ex.Message);
+                }
+            }
 		}
 
 		private void populateServers() {
@@ -614,78 +973,31 @@ namespace ACT_DiscordTriggers
 
         public string CreateQoute()
         {
-            string dir = PickDirection();
-            string q = qoutes[ran.Next(qoutes.Length)];
-
-            return string.Format(q, dir);
+            try
+            {
+                string dir = PickDirection();
+                string q = lstMapTriggers.Items[ran.Next(lstMapTriggers.Items.Count)].ToString();
+                string f = lstFriends.Items[ran.Next(lstFriends.Items.Count)].ToString();
+                return string.Format(q, dir, f);
+            }
+            catch
+            {
+                return "Looks like i can't find the door.";
+            }
         }
 
         private string PickDirection()
         {
-            return normalCanals ? directions[ran.Next(directions.Length)] : harddirections[ran.Next(harddirections.Length)];
+            return normalCanals ? lstTwoDirections.Items[ran.Next(lstTwoDirections.Items.Count)].ToString() : lstThreeDirections.Items[ran.Next(lstThreeDirections.Items.Count)].ToString();
 
         }
 
-        private string[] directions = new string[]
-        {
-            "to the Left",
-            "to the Right"
-        };
-
-        private string[] harddirections = new string[]
-        {
-            "to the Left",
-            "in the Middle",
-            "to the Right"
-        };
-
-        private string[] qoutes = new string[]
-        {
-            "Every door is now {0}.",
-            "My 100 percentile is pointing {0}.",
-            "The secret to Buttys healing can be found {0}.",
-            "Sloppy Right.",
-            "Sloppy left",
-            "The Sign over there points {0}.",
-            "The future predicts {0}.",
-            "Try hards pants can be found {0}.",
-            "Buttys says {0}.",
-            "My map points {0}.",
-            "If I was to guess wrong, It would be {0}.",
-            "Bel sama o'clock is {0}.",
-            "If i was a Geordie, I would pick {0}.",
-            "My Lettuce pizza is pointing {0}.",
-            "Vivi says {0}.",
-            "Ketzia is {0}.",
-            "If i was to quit the static... I would go {0}.",
-            "Left sword.",
-            "Right sword.",
-            "Cythers corpse is pointing {0}.",
-            "President Trump says {0}.",
-            "We should build the Mexican wall on the Right.",
-            "We should build the Mexican wall on the Left.",
-            "I used a potion and it said go {0}.",
-            "Ketzia is always right.",
-            "Tell Ketzia we went left",
-            "If Brine was here tonight? I think he would of gone left.",
-            "Screw you guys! I'm going {0}.",
-            "Buttys did too much dps so we go {0}.",
-            "Anyone that survived can go {0}.",
-            "Bonjour detected! {0} incoming.",
-            "My bucket is leaning {0}.",
-            "This door smells funny, lets go {0}.",
-            "The devil child said go {0}.",
-            "The voices in my head say {0}.",
-            "Mummy Bel, should we go {0}.",
-            "Just like Dark Souls, {0}.",
-            "Zero deaths {0}."
-        };
         #endregion
 
         #region Parses
         private void OFormActMain_OnCombatEnd(bool isImport, CombatToggleEventArgs encounterInfo)
         {
-            var channel = bot.GetChannel(282263596434456576) as SocketTextChannel;
+            var channel = bot.GetChannel(ulong.Parse(txtDiscordID.ToString())) as SocketTextChannel;
 
             StringBuilder text = new StringBuilder();
             TimeSpan totalTime = encounterInfo.encounter.EndTime - encounterInfo.encounter.StartTime;
@@ -743,7 +1055,7 @@ namespace ACT_DiscordTriggers
                 string dpsString = playerData[i].DPS.ToString();
 
                 //parsedata.Append(CreateStringWithSpacing(":" + playerData[i].GetColumnByName("Job").ToLower() + ":", 6));
-                parsedata.Append(CreateStringWithSpacing(SplitName(playerData[i].Name == "YOU" ? "Buttys" : playerData[i].Name), 10, false));
+                parsedata.Append(CreateStringWithSpacing(SplitName(playerData[i].Name == "YOU" ? txtFFXIVName.Text : playerData[i].Name), 10, false));
                 parsedata.Append(CreateStringWithSpacing(Bracket(dpsString == "NaN" || (int)playerData[i].DPS < 0 ? "∞" : ((int)playerData[i].DPS).ToString()), 8));
                 parsedata.Append(CreateStringWithSpacing(Bracket(((int)playerData[i].CritDamPerc).ToString() + "%"), 6));
                 parsedata.Append(CreateStringWithSpacing(Bracket(((int)directhit).ToString() + "%"), 6));
@@ -845,7 +1157,14 @@ namespace ACT_DiscordTriggers
             xmlSettings.AddControlSetting(txtFFLogsToken.Name, txtFFLogsToken);
 			xmlSettings.AddControlSetting(sliderTTSVol.Name, sliderTTSVol);
 			xmlSettings.AddControlSetting(sliderTTSSpeed.Name, sliderTTSSpeed);
-			if (File.Exists(settingsFile)) {
+            xmlSettings.AddControlSetting(txtDiscordID.Name, txtDiscordID);
+            xmlSettings.AddControlSetting(txtFFXIVName.Name, txtFFXIVName);
+            xmlSettings.AddControlSetting(chkAutoConnect.Name, chkAutoConnect);
+            xmlSettings.AddControlSetting(lstTwoDirections.Name, lstTwoDirections);
+            xmlSettings.AddControlSetting(lstThreeDirections.Name, lstThreeDirections);
+            xmlSettings.AddControlSetting(lstMapTriggers.Name, lstMapTriggers);
+            xmlSettings.AddControlSetting(lstFriends.Name, lstFriends);
+            if (File.Exists(settingsFile)) {
 				FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 				XmlTextReader xReader = new XmlTextReader(fs);
 				try {
@@ -877,5 +1196,93 @@ namespace ACT_DiscordTriggers
 			xWriter.Close();
 		}
         #endregion
+
+        private void RemoveListItem(object sender, KeyEventArgs e)
+        {
+            if ((e.KeyCode != Keys.Delete && e.KeyCode != Keys.Back) || sender.GetType() != typeof(ListBox))
+                return;
+
+            ListBox lst = (ListBox)sender;
+
+            if (lst.SelectedItem != null)
+                lst.Items.Remove(lst.SelectedItem);
+
+        }
+
+        private void AddNewListItem(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Enter || sender.GetType() != typeof(TextBox))
+                return;
+            TextBox txt = (TextBox)sender;
+            ListBox lst;
+
+            if (string.IsNullOrWhiteSpace(txt.Text))
+                return;
+
+            switch(txt.Name)
+            {
+                case "txtDirTwo":
+                    lst = lstTwoDirections;
+                    break;
+                case "txtDirThree":
+                    lst = lstThreeDirections;
+                    break;
+                case "txtTrigger":
+                    lst = lstMapTriggers;
+                    break;
+                case "txtFriend":
+                    lst = lstFriends;
+                    break;
+                default:
+                    return;
+            }
+
+            if(!lst.Items.Contains(txt.Text))
+                lst.Items.Add(txt.Text);
+            txt.Clear();
+        }
+
+        private void discordConnectbtn_Click(object sender, EventArgs e)
+        {
+            if (bot != null)
+            {
+                if (bot.ConnectionState == ConnectionState.Connected)
+                {
+                    Log("Already connected to Discord.");
+                    return;
+                }
+            }
+            try
+            {
+                bot = new DiscordSocketClient();
+                commands = new CommandService();
+                services = new ServiceCollection().BuildServiceProvider();
+            }
+            catch (PlatformNotSupportedException)
+            {
+                Log("Unsupported Operating System. Bot may not work correctly.");
+                bot = new DiscordSocketClient(new DiscordSocketConfig
+                {
+                    WebSocketProvider = WS4NetProvider.Instance,
+                    UdpSocketProvider = UDPClientProvider.Instance,
+                });
+            }
+            try
+            {
+                bot.Ready += Bot_Ready;
+                ActGlobals.oFormActMain.OnCombatEnd += OFormActMain_OnCombatEnd;
+                commands.AddModuleAsync(typeof(DiscordTriggers));
+                bot.LoginAsync(TokenType.Bot, txtToken.Text);
+                bot.StartAsync();
+                DiscordTriggers.Init(this);
+                bot.MessageReceived += Bot_MessageReceived;
+                Log("Connected to Discord.");
+            }
+            catch (Exception ex)
+            {
+                Log("Error connecting to Discord. Discord may be down or key is incorrect.");
+                Log(ex.Message);
+            }
+        }
     }
 }
