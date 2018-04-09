@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ACT_DiscordTriggers.JsonWrappers
+namespace DiscordAPI.JsonWrappers
 {
 
     public class Characters {

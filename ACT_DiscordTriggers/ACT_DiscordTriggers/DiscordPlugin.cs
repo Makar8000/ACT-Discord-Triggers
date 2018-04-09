@@ -4,19 +4,10 @@ using System.Windows.Forms;
 using Advanced_Combat_Tracker;
 using System.IO;
 using System.Xml;
-using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
-using Discord.Audio;
 using System.Speech.Synthesis;
-using System.Speech.AudioFormat;
-using NAudio.Wave;
-using Discord.Net.Providers.WS4Net;
-using Discord.Net.Providers.UDPClient;
 using System.Reflection;
+using DiscordAPI;
 using System.Collections.Generic;
-using Discord.Commands;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ACT_DiscordTriggers
 {
@@ -47,6 +38,10 @@ namespace ACT_DiscordTriggers
 		private void InitializeComponent() {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.label3 = new System.Windows.Forms.Label();
+            this.txtFFXIVName = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtDiscordID = new System.Windows.Forms.TextBox();
             this.chkAutoConnect = new System.Windows.Forms.CheckBox();
             this.discordConnectbtn = new System.Windows.Forms.Button();
             this.txtFFLogsToken = new System.Windows.Forms.TextBox();
@@ -68,6 +63,8 @@ namespace ACT_DiscordTriggers
             this.txtToken = new System.Windows.Forms.TextBox();
             this.lblBotTok = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.btnAddTriggers = new System.Windows.Forms.Button();
+            this.btnSaveSettings = new System.Windows.Forms.Button();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.txtFriend = new System.Windows.Forms.TextBox();
@@ -84,10 +81,7 @@ namespace ACT_DiscordTriggers
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.txtTrigger = new System.Windows.Forms.TextBox();
             this.lstMapTriggers = new System.Windows.Forms.ListBox();
-            this.txtDiscordID = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.txtFFXIVName = new System.Windows.Forms.TextBox();
-            this.label3 = new System.Windows.Forms.Label();
+            this.chkParseFilter = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
@@ -116,6 +110,7 @@ namespace ACT_DiscordTriggers
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.chkParseFilter);
             this.tabPage1.Controls.Add(this.label3);
             this.tabPage1.Controls.Add(this.txtFFXIVName);
             this.tabPage1.Controls.Add(this.label2);
@@ -147,6 +142,40 @@ namespace ACT_DiscordTriggers
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Settings";
             this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(238, 7);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(92, 13);
+            this.label3.TabIndex = 45;
+            this.label3.Text = "Your FFXIV Name";
+            // 
+            // txtFFXIVName
+            // 
+            this.txtFFXIVName.Location = new System.Drawing.Point(241, 24);
+            this.txtFFXIVName.Name = "txtFFXIVName";
+            this.txtFFXIVName.Size = new System.Drawing.Size(193, 20);
+            this.txtFFXIVName.TabIndex = 44;
+            this.txtFFXIVName.Text = "Buttys";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(27, 90);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(73, 13);
+            this.label2.TabIndex = 43;
+            this.label2.Text = "Parse Chat ID";
+            // 
+            // txtDiscordID
+            // 
+            this.txtDiscordID.Location = new System.Drawing.Point(30, 108);
+            this.txtDiscordID.Name = "txtDiscordID";
+            this.txtDiscordID.Size = new System.Drawing.Size(193, 20);
+            this.txtDiscordID.TabIndex = 42;
+            this.txtDiscordID.UseSystemPasswordChar = true;
             // 
             // chkAutoConnect
             // 
@@ -336,6 +365,8 @@ namespace ACT_DiscordTriggers
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.btnAddTriggers);
+            this.tabPage2.Controls.Add(this.btnSaveSettings);
             this.tabPage2.Controls.Add(this.groupBox6);
             this.tabPage2.Controls.Add(this.groupBox5);
             this.tabPage2.Controls.Add(this.groupBox4);
@@ -347,6 +378,26 @@ namespace ACT_DiscordTriggers
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Maps";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // btnAddTriggers
+            // 
+            this.btnAddTriggers.Location = new System.Drawing.Point(658, 407);
+            this.btnAddTriggers.Name = "btnAddTriggers";
+            this.btnAddTriggers.Size = new System.Drawing.Size(155, 23);
+            this.btnAddTriggers.TabIndex = 4;
+            this.btnAddTriggers.Text = "Add Required Triggers";
+            this.btnAddTriggers.UseVisualStyleBackColor = true;
+            this.btnAddTriggers.Click += new System.EventHandler(this.btnAddTriggers_Click);
+            // 
+            // btnSaveSettings
+            // 
+            this.btnSaveSettings.Location = new System.Drawing.Point(658, 436);
+            this.btnSaveSettings.Name = "btnSaveSettings";
+            this.btnSaveSettings.Size = new System.Drawing.Size(155, 23);
+            this.btnSaveSettings.TabIndex = 3;
+            this.btnSaveSettings.Text = "Save Settings";
+            this.btnSaveSettings.UseVisualStyleBackColor = true;
+            this.btnSaveSettings.Click += new System.EventHandler(this.btnSaveSettings_Click);
             // 
             // groupBox6
             // 
@@ -469,14 +520,14 @@ namespace ACT_DiscordTriggers
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 2;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 23F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(194, 177);
             this.tableLayoutPanel1.TabIndex = 0;
             // 
             // txtDirTwo
             // 
             this.txtDirTwo.Dock = System.Windows.Forms.DockStyle.Top;
-            this.txtDirTwo.Location = new System.Drawing.Point(3, 160);
+            this.txtDirTwo.Location = new System.Drawing.Point(3, 157);
             this.txtDirTwo.Name = "txtDirTwo";
             this.txtDirTwo.Size = new System.Drawing.Size(188, 20);
             this.txtDirTwo.TabIndex = 0;
@@ -491,7 +542,7 @@ namespace ACT_DiscordTriggers
             "to the Right"});
             this.lstTwoDirections.Location = new System.Drawing.Point(3, 3);
             this.lstTwoDirections.Name = "lstTwoDirections";
-            this.lstTwoDirections.Size = new System.Drawing.Size(188, 151);
+            this.lstTwoDirections.Size = new System.Drawing.Size(188, 148);
             this.lstTwoDirections.TabIndex = 1;
             // 
             // groupBox3
@@ -575,39 +626,17 @@ namespace ACT_DiscordTriggers
             this.lstMapTriggers.Size = new System.Drawing.Size(422, 347);
             this.lstMapTriggers.TabIndex = 1;
             // 
-            // txtDiscordID
+            // chkParseFilter
             // 
-            this.txtDiscordID.Location = new System.Drawing.Point(30, 108);
-            this.txtDiscordID.Name = "txtDiscordID";
-            this.txtDiscordID.Size = new System.Drawing.Size(193, 20);
-            this.txtDiscordID.TabIndex = 42;
-            this.txtDiscordID.UseSystemPasswordChar = true;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(27, 90);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(73, 13);
-            this.label2.TabIndex = 43;
-            this.label2.Text = "Parse Chat ID";
-            // 
-            // txtFFXIVName
-            // 
-            this.txtFFXIVName.Location = new System.Drawing.Point(241, 24);
-            this.txtFFXIVName.Name = "txtFFXIVName";
-            this.txtFFXIVName.Size = new System.Drawing.Size(193, 20);
-            this.txtFFXIVName.TabIndex = 44;
-            this.txtFFXIVName.Text = "Buttys";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(238, 7);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(92, 13);
-            this.label3.TabIndex = 45;
-            this.label3.Text = "Your FFXIV Name";
+            this.chkParseFilter.AutoSize = true;
+            this.chkParseFilter.Checked = true;
+            this.chkParseFilter.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkParseFilter.Location = new System.Drawing.Point(132, 162);
+            this.chkParseFilter.Name = "chkParseFilter";
+            this.chkParseFilter.Size = new System.Drawing.Size(83, 17);
+            this.chkParseFilter.TabIndex = 46;
+            this.chkParseFilter.Text = "Filter Parses";
+            this.chkParseFilter.UseVisualStyleBackColor = true;
             // 
             // DiscordPlugin
             // 
@@ -653,9 +682,6 @@ namespace ACT_DiscordTriggers
 		Label lblStatus;
 		string settingsFile;
 		SettingsSerializer xmlSettings;
-		private DiscordSocketClient bot;
-		private IAudioClient audioClient;
-		private SpeechAudioFormatInfo formatInfo;
         private TabControl tabControl1;
         private TabPage tabPage1;
         private TrackBar sliderTTSSpeed;
@@ -677,7 +703,7 @@ namespace ACT_DiscordTriggers
         private TabPage tabPage2;
         public TextBox txtFFLogsToken;
         private Label label1;
-        private AudioOutStream voiceStream;
+       
         private Button discordConnectbtn;
         private GroupBox groupBox5;
         private TableLayoutPanel tableLayoutPanel2;
@@ -700,6 +726,9 @@ namespace ACT_DiscordTriggers
         private TextBox txtDiscordID;
         private Label label3;
         private TextBox txtFFXIVName;
+        private Button btnAddTriggers;
+        private Button btnSaveSettings;
+        private CheckBox chkParseFilter;
         private Random ran = new Random();
 
         #region IActPluginV1 Members
@@ -723,8 +752,8 @@ namespace ACT_DiscordTriggers
             lstFriends.KeyUp += RemoveListItem;
 
             //Discord Bot Stuff
-            voiceStream = null;
-			formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
+            DiscordClient.BotReady += BotReady;
+            DiscordClient.Log += Log;
 
             if (chkAutoConnect.Checked)
                 discordConnectbtn_Click(null, EventArgs.Empty);
@@ -738,13 +767,7 @@ namespace ACT_DiscordTriggers
 			ActGlobals.oFormActMain.PlaySoundMethod = ActGlobals.oFormActMain.PlaySoundWmpApi;
 			SaveSettings();
 			try {
-				bot.Ready -= Bot_Ready;
-				if (audioClient?.ConnectionState == ConnectionState.Connected) {
-					voiceStream?.Close();
-					await audioClient.StopAsync();
-				}
-				await bot.StopAsync();
-				await bot.LogoutAsync();
+                await DiscordClient.deInIt();
 			} catch (Exception ex) {
 				ActGlobals.oFormActMain.WriteExceptionLog(ex, "Error with DeInit of Discord Plugin.");
 			}
@@ -779,103 +802,80 @@ namespace ACT_DiscordTriggers
 
 		#region Discord Methods
 		private void speak(string text) {
-
-            lock (speaklock)
-            {
-                if (voiceStream == null)
-                    voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
-                SpeechSynthesizer tts = new SpeechSynthesizer();
-                tts.SelectVoice((string)cmbTTS.SelectedItem);
-                tts.Volume = sliderTTSVol.Value * 5;
-                tts.Rate = sliderTTSSpeed.Value - 10;
-                MemoryStream ms = new MemoryStream();
-                tts.SetOutputToAudioStream(ms, formatInfo);
-
-                tts.Speak(text);
-                ms.Seek(0, SeekOrigin.Begin);
-                ms.CopyTo(voiceStream);
-                voiceStream.Flush();
-            }
+            DiscordClient.Speak(text, cmbTTS.SelectedItem.ToString(), sliderTTSVol.Value, sliderTTSSpeed.Value);
         }
 
 		private void speakFile(string path, int volume) {
+            DiscordClient.SpeakFile(path);
+		}
+        private void BotReady()
+        {
+            btnJoin.Enabled = true;
+            populateServers();
+        }
 
-            lock (speaklock)
+
+        private void populateServers()
+        {
+            try
             {
-                if (voiceStream == null)
-                    voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
-                try
-                {
-                    WaveFileReader wav = new WaveFileReader(path);
-                    WaveFormat waveFormat = new WaveFormat(48000, 16, 2);
-                    WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(wav);
-                    WaveFormatConversionStream output = new WaveFormatConversionStream(waveFormat, pcm);
-                    output.CopyTo(voiceStream);
-                    voiceStream.Flush();
-                }
-                catch (Exception ex)
-                {
-                    Log("Unable to read file: " + ex.Message);
-                }
+                string[] servers = DiscordClient.getServers();
+
+                cmbServer.Items.Clear();
+                cmbChan.Items.Clear();
+
+                foreach (string server in servers)
+                    cmbServer.Items.Add(server);
+                
+                if (cmbServer.Items.Count > 0)
+                    cmbServer.SelectedIndex = 0;
             }
-		}
+            catch (Exception ex)
+            {
+                Log("Error populating servers.");
+                Log(ex.Message);
+            }
+        }
 
-		private void populateServers() {
-			try {
-				cmbServer.Items.Clear();
-				cmbChan.Items.Clear();
-				foreach (SocketGuild g in bot.Guilds)
-					cmbServer.Items.Add(g);
-				if (cmbServer.Items.Count > 0)
-					cmbServer.SelectedIndex = 0;
-			} catch (Exception ex) {
-				Log("Error populating servers.");
-				Log(ex.Message);
-			}
-		}
+        private void populateChannels(string server)
+        {
+            try
+            {
+                cmbChan.Items.Clear();
+                cmbChan.Items.AddRange(DiscordClient.getChannels(server));
+                if (cmbChan.Items.Count > 0)
+                    cmbChan.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                Log("Error populating channels.");
+                Log(ex.Message);
+            }
+        }
+        #endregion
 
-		private void populateChannels(SocketGuild g) {
-			try {
-				cmbChan.Items.Clear();
-				var channels = new List<SocketVoiceChannel>(g.VoiceChannels);
-				channels.Sort((x, y) => x.Position.CompareTo(y.Position));
-				cmbChan.Items.AddRange(channels.ToArray());
-				if (cmbChan.Items.Count > 0)
-					cmbChan.SelectedIndex = 0;
-			} catch (Exception ex) {
-				Log("Error populating channels.");
-				Log(ex.Message);
-			}
-		}
-		#endregion
+        #region UI Events
+        private async void btnJoin_Click(object sender, EventArgs e) {
 
-		#region UI Events
-		private async void btnJoin_Click(object sender, EventArgs e) {
-			btnJoin.Enabled = false;
-			SocketVoiceChannel chan = (SocketVoiceChannel) cmbChan.SelectedItem;
-			try {
-				audioClient = await chan.ConnectAsync();
-				Log("Joined channel: " + chan.Name);
-				btnLeave.Enabled = true;
-				ActGlobals.oFormActMain.PlayTtsMethod = ParseTrigger;
-				ActGlobals.oFormActMain.PlaySoundMethod = speakFile;
-				speak(" ");
-			} catch (Exception ex) {
-				Log("Unable to join channel. Does your bot have permission to join this channel?");
-				btnJoin.Enabled = true;
-				populateServers();
-				Log(ex.Message);
-				return;
-			}
-		}
+            btnJoin.Enabled = false;
+            if (await DiscordClient.JoinChannel(cmbServer.SelectedItem.ToString(), cmbChan.SelectedItem.ToString()))
+            {
+                btnLeave.Enabled = true;
+                ActGlobals.oFormActMain.PlayTtsMethod = ParseTrigger;
+                ActGlobals.oFormActMain.PlaySoundMethod = speakFile;
+            }
+            else
+            {
+                Log("Unable to join channel. Does your bot have permission to join this channel?");
+                btnJoin.Enabled = true;
+                populateServers();
+            }
+        }
 
 		private void btnLeave_Click(object sender, EventArgs e) {
 			btnLeave.Enabled = false;
 			try {
-				bot.SetStatusAsync(UserStatus.Offline);
-				voiceStream?.Close();
-				voiceStream = null;
-				audioClient.StopAsync();
+                DiscordClient.LeaveChannel();
 				btnJoin.Enabled = true;
 				btnLeave.Enabled = false;
 				Log("Left channel.");
@@ -889,25 +889,17 @@ namespace ACT_DiscordTriggers
 			}
 		}
 
-		private void cmbServer_SelectedIndexChanged(object sender, EventArgs e) {
-			populateChannels((SocketGuild) cmbServer.SelectedItem);
-		}
-		#endregion
+        private void cmbServer_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            populateChannels(cmbServer.SelectedItem.ToString());
+        }
+        #endregion
 
-		#region Discord Events
-		private async Task Bot_Ready() {
-			btnJoin.Enabled = true;
-			await bot.SetGameAsync("with ACT Triggers");
-			populateServers();
-		}
+        #region Discord Events
+
         public void Log(string text)
         {
             logBox.AppendText(text + "\n");
-        }
-
-        public bool IsConnected()
-        {
-            return audioClient?.ConnectionState == ConnectionState.Connected;
         }
 
         private string activePlayer = "You";
@@ -917,7 +909,7 @@ namespace ACT_DiscordTriggers
         {
             try
             {
-                if (!IsConnected())
+                if (!DiscordClient.IsConnected())
                     return;
 
                 string text = triggerText;
@@ -931,7 +923,7 @@ namespace ACT_DiscordTriggers
 
                 switch (text)
                 {
-                    case "vault key":
+                    case "canalkey":
                         text = CreateQoute();
                         break;
                     case "canalnormal":
@@ -968,7 +960,7 @@ namespace ACT_DiscordTriggers
 
         public void SetGameAsync(string text)
         {
-            bot.SetGameAsync(text);
+            DiscordClient.SetGameAsync(text);
         }
 
         public string CreateQoute()
@@ -997,13 +989,8 @@ namespace ACT_DiscordTriggers
         #region Parses
         private void OFormActMain_OnCombatEnd(bool isImport, CombatToggleEventArgs encounterInfo)
         {
-            var channel = bot.GetChannel(ulong.Parse(txtDiscordID.ToString())) as SocketTextChannel;
-
             StringBuilder text = new StringBuilder();
             TimeSpan totalTime = encounterInfo.encounter.EndTime - encounterInfo.encounter.StartTime;
-
-            if (totalTime < new TimeSpan(0, 3, 0))
-                return;
 
             //title
             text.AppendLine(encounterInfo.encounter.StartTime.ToShortDateString() + " " + encounterInfo.encounter.StartTime.ToLongTimeString());
@@ -1030,8 +1017,6 @@ namespace ACT_DiscordTriggers
             string limitbreak = " Limit Break: ";
             bool usedLimitBreak = false;
 
-            if (playerData.Count < 4)
-                return;
             int parselogged = 0;
             for (int i = 0; i < playerData.Count; i++)
             {
@@ -1071,9 +1056,17 @@ namespace ACT_DiscordTriggers
 
             text.AppendLine(parsedata.ToString());
 
-            channel.SendMessageAsync(text.ToString());
+            if (chkParseFilter.Checked)
+            {
+                if (totalTime < new TimeSpan(0, 3, 0) || playerData.Count < 4)
+                    return;
+            }
 
-            Log("Parse Posted.");
+            if (DiscordClient.SendChannelMessage(text.ToString(), ulong.Parse(txtDiscordID.Text)))
+                Log("Parse Posted.");
+            else
+                Log("Parse channel not found.");
+
 
         }
 
@@ -1121,35 +1114,6 @@ namespace ACT_DiscordTriggers
         }
         #endregion
 
-        #region Commands
-
-        private CommandService commands;
-        private IServiceProvider services;
-        char prefix = '!';
-
-        private async Task Bot_MessageReceived(SocketMessage arg)
-        {
-            SocketUserMessage msg = arg as SocketUserMessage;
-
-            if (msg == null)
-                return;
-
-            int pos = 0;
-
-            if (!(msg.HasCharPrefix(prefix, ref pos) || msg.HasMentionPrefix(bot.CurrentUser, ref pos)))
-                return;
-
-            var content = new CommandContext(bot, msg);
-
-            var result = await commands.ExecuteAsync(content, pos, services);
-#if DEBUG
-            if (!result.IsSuccess)
-                Log(result.ErrorReason + " : " + msg.Content);
-#endif
-            await msg.DeleteAsync();
-        }
-        #endregion
-
 
         #region Settings
         public void LoadSettings() {
@@ -1158,6 +1122,7 @@ namespace ACT_DiscordTriggers
 			xmlSettings.AddControlSetting(sliderTTSVol.Name, sliderTTSVol);
 			xmlSettings.AddControlSetting(sliderTTSSpeed.Name, sliderTTSSpeed);
             xmlSettings.AddControlSetting(txtDiscordID.Name, txtDiscordID);
+            xmlSettings.AddControlSetting(chkParseFilter.Name, chkParseFilter);
             xmlSettings.AddControlSetting(txtFFXIVName.Name, txtFFXIVName);
             xmlSettings.AddControlSetting(chkAutoConnect.Name, chkAutoConnect);
             xmlSettings.AddControlSetting(lstTwoDirections.Name, lstTwoDirections);
@@ -1179,21 +1144,29 @@ namespace ACT_DiscordTriggers
 			}
 		}
 
-		public void SaveSettings() {
-			FileStream fs = new FileStream(settingsFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-			XmlTextWriter xWriter = new XmlTextWriter(fs, Encoding.UTF8);
-			xWriter.Formatting = Formatting.Indented;
-			xWriter.Indentation = 1;
-			xWriter.IndentChar = '\t';
-			xWriter.WriteStartDocument(true);
-			xWriter.WriteStartElement("Config");
-			xWriter.WriteStartElement("SettingsSerializer");
-			xmlSettings.ExportToXml(xWriter);
-			xWriter.WriteEndElement();
-			xWriter.WriteEndElement();
-			xWriter.WriteEndDocument();
-			xWriter.Flush();
-			xWriter.Close();
+		public bool SaveSettings() {
+            try
+            {
+                FileStream fs = new FileStream(settingsFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                XmlTextWriter xWriter = new XmlTextWriter(fs, Encoding.UTF8);
+                xWriter.Formatting = Formatting.Indented;
+                xWriter.Indentation = 1;
+                xWriter.IndentChar = '\t';
+                xWriter.WriteStartDocument(true);
+                xWriter.WriteStartElement("Config");
+                xWriter.WriteStartElement("SettingsSerializer");
+                xmlSettings.ExportToXml(xWriter);
+                xWriter.WriteEndElement();
+                xWriter.WriteEndElement();
+                xWriter.WriteEndDocument();
+                xWriter.Flush();
+                xWriter.Close();
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
 		}
         #endregion
 
@@ -1244,45 +1217,43 @@ namespace ACT_DiscordTriggers
 
         private void discordConnectbtn_Click(object sender, EventArgs e)
         {
-            if (bot != null)
+
+            if (DiscordClient.IsConnected())
             {
-                if (bot.ConnectionState == ConnectionState.Connected)
-                {
-                    Log("Already connected to Discord.");
-                    return;
-                }
+                Log("Already connected to Discord.");
+                return;
             }
-            try
+
+            if (DiscordClient.InIt(txtToken.Text,txtFFLogsToken.Text))
             {
-                bot = new DiscordSocketClient();
-                commands = new CommandService();
-                services = new ServiceCollection().BuildServiceProvider();
-            }
-            catch (PlatformNotSupportedException)
-            {
-                Log("Unsupported Operating System. Bot may not work correctly.");
-                bot = new DiscordSocketClient(new DiscordSocketConfig
-                {
-                    WebSocketProvider = WS4NetProvider.Instance,
-                    UdpSocketProvider = UDPClientProvider.Instance,
-                });
-            }
-            try
-            {
-                bot.Ready += Bot_Ready;
                 ActGlobals.oFormActMain.OnCombatEnd += OFormActMain_OnCombatEnd;
-                commands.AddModuleAsync(typeof(DiscordTriggers));
-                bot.LoginAsync(TokenType.Bot, txtToken.Text);
-                bot.StartAsync();
-                DiscordTriggers.Init(this);
-                bot.MessageReceived += Bot_MessageReceived;
                 Log("Connected to Discord.");
             }
-            catch (Exception ex)
-            {
+            else
                 Log("Error connecting to Discord. Discord may be down or key is incorrect.");
-                Log(ex.Message);
-            }
+
+
+        }
+
+        private void btnAddTriggers_Click(object sender, EventArgs e)
+        {
+            ActGlobals.oFormActMain.AddEditCustomTrigger(new CustomTrigger("A teleportation ward leading into the Hidden Canals of Uznair has appeared.", 3 , "canalhard", false,string.Empty,false));
+            ActGlobals.oFormActMain.AddEditCustomTrigger(new CustomTrigger("A teleportation ward leading into the Lost Canals of Uznair has appeared.", 3, "canalnormal", false, string.Empty, false));
+            ActGlobals.oFormActMain.AddEditCustomTrigger(new CustomTrigger("The Hidden Canals of Uznair has ended.", 3, "canalend", false, string.Empty, false));
+            ActGlobals.oFormActMain.AddEditCustomTrigger(new CustomTrigger("The Lost Canals of Uznair has ended.", 3, "canalend", false, string.Empty, false));
+            ActGlobals.oFormActMain.AddEditCustomTrigger(new CustomTrigger("You obtain a vault key.", 3, "canalkey", false, string.Empty, false));
+            ActGlobals.oFormActMain.AddEditCustomTrigger(new CustomTrigger("(?<first>\\w+) (?<last>\\w+) use Dig.", 3, "#${first}", false, string.Empty, false));
+            ActGlobals.oFormActMain.AddEditCustomTrigger(new CustomTrigger("(?<first>\\w+) (?<last>\\w+) uses Dig.", 3, "#${first}", false, string.Empty, false));
+            SaveSettings();
+            MessageBox.Show("Triggers Added.");
+        }
+
+        private void btnSaveSettings_Click(object sender, EventArgs e)
+        {
+            if (SaveSettings())
+                MessageBox.Show("Saved.");
+            else
+                MessageBox.Show("Failed to save.");
         }
     }
 }

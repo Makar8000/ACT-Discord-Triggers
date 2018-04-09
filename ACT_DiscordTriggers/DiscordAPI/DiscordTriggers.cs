@@ -1,6 +1,6 @@
-﻿using ACT_DiscordTriggers.JsonWrappers;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
+using DiscordAPI.JsonWrappers;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -11,17 +11,10 @@ using System.Text;
 using System.Threading.Tasks;
 using XivDB;
 
-namespace ACT_DiscordTriggers
+namespace DiscordAPI
 {
     public class DiscordTriggers : ModuleBase
     {
-        private static DiscordPlugin Bot { get; set; }
-
-        public static void Init(DiscordPlugin bot)
-        {
-            if(Bot == null)
-                Bot = bot;
-        }
 
         private static HttpClient NewClient()
         {
@@ -119,7 +112,7 @@ namespace ACT_DiscordTriggers
 
 
 
-            url = new Uri($"https://www.fflogs.com/v1/parses/character/{character}/{world.Name}/{world.Region}/?api_key={Bot.txtFFLogsToken.Text}");
+            url = new Uri($"https://www.fflogs.com/v1/parses/character/{character}/{world.Name}/{world.Region}/?api_key={DiscordClient.FFLogsToken}");
             try
             {
                 responseBody = await client.GetStringAsync(url);
@@ -185,7 +178,7 @@ namespace ACT_DiscordTriggers
         [Summary("Drellis speciality")]
         public async Task Status([Remainder] string text)
         {
-            Bot.SetGameAsync(text);
+            DiscordClient.SetGameAsync(text);
             await Context.Channel.SendMessageAsync($"Status updated to - Playing {text}");
         }
 

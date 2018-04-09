@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 
-namespace ACT_DiscordTriggers
+namespace DiscordAPI
 {
     public class World
     {

@@ -1,4 +1,4 @@
-namespace ACT_DiscordTriggers.JsonWrappers
+namespace DiscordAPI.JsonWrappers
 {
     public class CharacterResult {
         public string Name { get; set; }
