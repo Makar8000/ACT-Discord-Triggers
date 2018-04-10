@@ -58,12 +58,12 @@ namespace ACT_DiscordTriggers {
 			// 
 			// logBox
 			// 
-			this.logBox.BackColor = System.Drawing.SystemColors.Control;
-			this.logBox.Location = new System.Drawing.Point(251, 41);
+			this.logBox.BackColor = System.Drawing.SystemColors.Window;
+			this.logBox.Location = new System.Drawing.Point(21, 262);
 			this.logBox.Multiline = true;
 			this.logBox.Name = "logBox";
 			this.logBox.ReadOnly = true;
-			this.logBox.Size = new System.Drawing.Size(436, 348);
+			this.logBox.Size = new System.Drawing.Size(461, 170);
 			this.logBox.TabIndex = 44;
 			// 
 			// chkAutoConnect
@@ -88,7 +88,7 @@ namespace ACT_DiscordTriggers {
 			// 
 			// sliderTTSSpeed
 			// 
-			this.sliderTTSSpeed.Location = new System.Drawing.Point(21, 363);
+			this.sliderTTSSpeed.Location = new System.Drawing.Point(289, 154);
 			this.sliderTTSSpeed.Maximum = 20;
 			this.sliderTTSSpeed.Name = "sliderTTSSpeed";
 			this.sliderTTSSpeed.Size = new System.Drawing.Size(193, 45);
@@ -98,7 +98,7 @@ namespace ACT_DiscordTriggers {
 			// lblTTSSpeed
 			// 
 			this.lblTTSSpeed.AutoSize = true;
-			this.lblTTSSpeed.Location = new System.Drawing.Point(22, 345);
+			this.lblTTSSpeed.Location = new System.Drawing.Point(290, 136);
 			this.lblTTSSpeed.Name = "lblTTSSpeed";
 			this.lblTTSSpeed.Size = new System.Drawing.Size(62, 13);
 			this.lblTTSSpeed.TabIndex = 56;
@@ -106,7 +106,7 @@ namespace ACT_DiscordTriggers {
 			// 
 			// sliderTTSVol
 			// 
-			this.sliderTTSVol.Location = new System.Drawing.Point(21, 296);
+			this.sliderTTSVol.Location = new System.Drawing.Point(289, 87);
 			this.sliderTTSVol.Maximum = 20;
 			this.sliderTTSVol.Name = "sliderTTSVol";
 			this.sliderTTSVol.Size = new System.Drawing.Size(193, 45);
@@ -116,7 +116,7 @@ namespace ACT_DiscordTriggers {
 			// lblTTSVol
 			// 
 			this.lblTTSVol.AutoSize = true;
-			this.lblTTSVol.Location = new System.Drawing.Point(18, 276);
+			this.lblTTSVol.Location = new System.Drawing.Point(286, 67);
 			this.lblTTSVol.Name = "lblTTSVol";
 			this.lblTTSVol.Size = new System.Drawing.Size(66, 13);
 			this.lblTTSVol.TabIndex = 54;
@@ -163,7 +163,7 @@ namespace ACT_DiscordTriggers {
 			// 
 			this.cmbTTS.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.cmbTTS.FormattingEnabled = true;
-			this.cmbTTS.Location = new System.Drawing.Point(21, 242);
+			this.cmbTTS.Location = new System.Drawing.Point(289, 33);
 			this.cmbTTS.Name = "cmbTTS";
 			this.cmbTTS.Size = new System.Drawing.Size(193, 21);
 			this.cmbTTS.TabIndex = 49;
@@ -171,7 +171,7 @@ namespace ACT_DiscordTriggers {
 			// lblTTS
 			// 
 			this.lblTTS.AutoSize = true;
-			this.lblTTS.Location = new System.Drawing.Point(18, 227);
+			this.lblTTS.Location = new System.Drawing.Point(286, 18);
 			this.lblTTS.Name = "lblTTS";
 			this.lblTTS.Size = new System.Drawing.Size(58, 13);
 			this.lblTTS.TabIndex = 48;
@@ -202,7 +202,7 @@ namespace ACT_DiscordTriggers {
 			// lblLog
 			// 
 			this.lblLog.AutoSize = true;
-			this.lblLog.Location = new System.Drawing.Point(248, 18);
+			this.lblLog.Location = new System.Drawing.Point(18, 239);
 			this.lblLog.Name = "lblLog";
 			this.lblLog.Size = new System.Drawing.Size(60, 13);
 			this.lblLog.TabIndex = 45;
@@ -248,7 +248,7 @@ namespace ACT_DiscordTriggers {
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
-			this.Size = new System.Drawing.Size(722, 439);
+			this.Size = new System.Drawing.Size(505, 455);
 			((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
 			this.ResumeLayout(false);
@@ -259,15 +259,8 @@ namespace ACT_DiscordTriggers {
 		#endregion
 
 		#endregion
-		public DiscordPlugin() {
-			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
-			InitializeComponent();
-			var tts = new SpeechSynthesizer();
-			foreach (InstalledVoice v in tts.GetInstalledVoices())
-				cmbTTS.Items.Add(v.VoiceInfo.Name);
-			cmbTTS.SelectedIndex = 0;
-		}
 
+		#region Init Variables
 		Label lblStatus;
 		string settingsFile;
 		SettingsSerializer xmlSettings;
@@ -289,7 +282,19 @@ namespace ACT_DiscordTriggers {
 		private Label lblLog;
 		private TextBox txtToken;
 		private Label lblBotTok;
-		private Random ran = new Random();
+		#endregion
+
+		public DiscordPlugin() {
+			//Load UI Components and Assemblies
+			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+			InitializeComponent();
+
+			//Add installed voices to dropdown
+			var tts = new SpeechSynthesizer();
+			foreach (InstalledVoice v in tts.GetInstalledVoices())
+				cmbTTS.Items.Add(v.VoiceInfo.Name);
+			cmbTTS.SelectedIndex = 0;
+		}
 
 		#region IActPluginV1 Members
 		public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
@@ -347,8 +352,6 @@ namespace ACT_DiscordTriggers {
 			return null;
 		}
 		#endregion
-
-		private object speaklock = new object();
 
 		#region Discord Methods
 		private void speak(string text) {
@@ -433,15 +436,25 @@ namespace ACT_DiscordTriggers {
 		private void cmbServer_SelectedIndexChanged(object sender, EventArgs e) {
 			populateChannels(cmbServer.SelectedItem.ToString());
 		}
-		#endregion
 
-		#region Discord Events
-		public void Log(string text) {
-			logBox.AppendText(text + "\n");
+		private void discordConnectbtn_Click(object sender, EventArgs e) {
+
+			if (DiscordClient.IsConnected()) {
+				Log("Already connected to Discord.");
+				return;
+			}
+			if (DiscordClient.InIt(txtToken.Text))
+				Log("Connected to Discord.");
+			else
+				Log("Error connecting to Discord. Discord may be down or key is incorrect.");
 		}
 		#endregion
 
 		#region Settings
+		public void Log(string text) {
+			logBox.AppendText(text + "\n");
+		}
+
 		public void LoadSettings() {
 			xmlSettings.AddControlSetting(txtToken.Name, txtToken);
 			xmlSettings.AddControlSetting(sliderTTSVol.Name, sliderTTSVol);
@@ -485,16 +498,6 @@ namespace ACT_DiscordTriggers {
 		}
 		#endregion
 
-		private void discordConnectbtn_Click(object sender, EventArgs e) {
 
-			if (DiscordClient.IsConnected()) {
-				Log("Already connected to Discord.");
-				return;
-			}
-			if (DiscordClient.InIt(txtToken.Text)) 
-				Log("Connected to Discord.");
-			else
-				Log("Error connecting to Discord. Discord may be down or key is incorrect.");
-		}
 	}
 }
