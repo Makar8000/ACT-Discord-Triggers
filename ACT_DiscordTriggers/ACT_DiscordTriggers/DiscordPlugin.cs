@@ -968,8 +968,8 @@ namespace ACT_DiscordTriggers
             try
             {
                 string dir = PickDirection();
-                string q = lstMapTriggers.Items[ran.Next(lstMapTriggers.Items.Count)].ToString();
-                string f = lstFriends.Items[ran.Next(lstFriends.Items.Count)].ToString();
+                string q = lstMapTriggers.Items[ran.Next(lstMapTriggers.Items.Count + 1)].ToString();
+                string f = lstFriends.Items[ran.Next(lstFriends.Items.Count + 1)].ToString();
                 return string.Format(q, dir, f);
             }
             catch
@@ -980,7 +980,7 @@ namespace ACT_DiscordTriggers
 
         private string PickDirection()
         {
-            return normalCanals ? lstTwoDirections.Items[ran.Next(lstTwoDirections.Items.Count)].ToString() : lstThreeDirections.Items[ran.Next(lstThreeDirections.Items.Count)].ToString();
+            return normalCanals ? lstTwoDirections.Items[ran.Next(lstTwoDirections.Items.Count + 1)].ToString() : lstThreeDirections.Items[ran.Next(lstThreeDirections.Items.Count + 1)].ToString();
 
         }
 
