@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ACT_DiscordTriggers")]
-[assembly: AssemblyCopyright("Copyright © Makar 2017")]
+[assembly: AssemblyCopyright("Copyright © Makar 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
