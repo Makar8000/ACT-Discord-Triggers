@@ -261,6 +261,8 @@ namespace ACT_DiscordTriggers {
 		#endregion
 
 		#region Init Variables
+		FormActMain.PlayTtsDelegate oldTTS;
+		FormActMain.PlaySoundDelegate oldSound;
 		Label lblStatus;
 		string settingsFile;
 		SettingsSerializer xmlSettings;
@@ -299,6 +301,8 @@ namespace ACT_DiscordTriggers {
 		#region IActPluginV1 Members
 		public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
 			//ACT Stuff
+			oldTTS = ActGlobals.oFormActMain.PlayTtsMethod;
+			oldSound = ActGlobals.oFormActMain.PlaySoundMethod;
 			lblStatus = pluginStatusText;
 			settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Config\\ACT_DiscordTriggers.config.xml");
 			pluginScreenSpace.Controls.Add(this);
@@ -318,8 +322,8 @@ namespace ACT_DiscordTriggers {
 		}
 
 		public async void DeInitPlugin() {
-			ActGlobals.oFormActMain.PlayTtsMethod = ActGlobals.oFormActMain.TTS;
-			ActGlobals.oFormActMain.PlaySoundMethod = ActGlobals.oFormActMain.PlaySoundWmpApi;
+			ActGlobals.oFormActMain.PlayTtsMethod = oldTTS;
+			ActGlobals.oFormActMain.PlaySoundMethod = oldSound;
 			SaveSettings();
 			try {
 				await DiscordClient.deInIt();
@@ -423,8 +427,8 @@ namespace ACT_DiscordTriggers {
 				btnJoin.Enabled = true;
 				btnLeave.Enabled = false;
 				Log("Left channel.");
-				ActGlobals.oFormActMain.PlayTtsMethod = ActGlobals.oFormActMain.TTS;
-				ActGlobals.oFormActMain.PlaySoundMethod = ActGlobals.oFormActMain.PlaySoundWmpApi;
+				ActGlobals.oFormActMain.PlayTtsMethod = oldTTS;
+				ActGlobals.oFormActMain.PlaySoundMethod = oldSound;
 				btnJoin.Enabled = true;
 			} catch (Exception ex) {
 				Log("Error leaving channel. Possible connection issue.");
