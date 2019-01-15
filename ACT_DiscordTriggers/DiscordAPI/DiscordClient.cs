@@ -22,25 +22,25 @@ namespace DiscordAPI {
 		public delegate void BotMessage(string message);
 		public static BotMessage Log;
 
-		public static bool InIt(string logintoken) {
+		public static async void InIt(string logintoken) {
 			try {
 				bot = new DiscordSocketClient(new DiscordSocketConfig {
 					WebSocketProvider = WS4NetProvider.Instance
 				});
 			} catch (NotSupportedException) {
 				Log("Unsupported Operating System.");
-				return false;
 			}
 
 			try {
+				bot.Ready -= Bot_Ready;
 				bot.Ready += Bot_Ready;
-				bot.LoginAsync(TokenType.Bot, logintoken);
-				bot.StartAsync();
+				await bot.LoginAsync(TokenType.Bot, logintoken);
+				await bot.StartAsync();
 			} catch (Exception ex) {
 				Log(ex.Message);
-				return false;
+				Log("Error connecting to Discord. Discord may be down or key is incorrect.");
 			}
-			return true;
+			Log("Connected to Discord.");
 		}
 
 		public static async Task deInIt() {

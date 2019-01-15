@@ -443,10 +443,7 @@ namespace ACT_DiscordTriggers {
 				Log("Already connected to Discord.");
 				return;
 			}
-			if (DiscordClient.InIt(txtToken.Text))
-				Log("Connected to Discord.");
-			else
-				Log("Error connecting to Discord. Discord may be down or key is incorrect.");
+			DiscordClient.InIt(txtToken.Text);
 		}
 		#endregion
 
