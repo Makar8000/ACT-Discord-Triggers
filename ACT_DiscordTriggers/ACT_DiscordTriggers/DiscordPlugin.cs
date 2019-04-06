@@ -34,7 +34,6 @@ namespace ACT_DiscordTriggers {
 		/// the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent() {
-			this.logBox = new System.Windows.Forms.TextBox();
 			this.chkAutoConnect = new System.Windows.Forms.CheckBox();
 			this.discordConnectbtn = new System.Windows.Forms.Button();
 			this.sliderTTSSpeed = new System.Windows.Forms.TrackBar();
@@ -52,19 +51,12 @@ namespace ACT_DiscordTriggers {
 			this.lblLog = new System.Windows.Forms.Label();
 			this.txtToken = new System.Windows.Forms.TextBox();
 			this.lblBotTok = new System.Windows.Forms.Label();
+			this.logList = new System.Windows.Forms.ListView();
+			this.listColTim = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.listColMsg = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
 			this.SuspendLayout();
-			// 
-			// logBox
-			// 
-			this.logBox.BackColor = System.Drawing.SystemColors.Window;
-			this.logBox.Location = new System.Drawing.Point(21, 262);
-			this.logBox.Multiline = true;
-			this.logBox.Name = "logBox";
-			this.logBox.ReadOnly = true;
-			this.logBox.Size = new System.Drawing.Size(461, 170);
-			this.logBox.TabIndex = 44;
 			// 
 			// chkAutoConnect
 			// 
@@ -225,11 +217,37 @@ namespace ACT_DiscordTriggers {
 			this.lblBotTok.TabIndex = 42;
 			this.lblBotTok.Text = "Discord Bot Token";
 			// 
+			// logList
+			// 
+			this.logList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.logList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.listColTim,
+            this.listColMsg});
+			this.logList.FullRowSelect = true;
+			this.logList.Location = new System.Drawing.Point(21, 255);
+			this.logList.Name = "logList";
+			this.logList.Size = new System.Drawing.Size(461, 124);
+			this.logList.TabIndex = 61;
+			this.logList.UseCompatibleStateImageBehavior = false;
+			this.logList.View = System.Windows.Forms.View.Details;
+			// 
+			// listColTim
+			// 
+			this.listColTim.Text = "Timestamp";
+			this.listColTim.Width = 120;
+			// 
+			// listColMsg
+			// 
+			this.listColMsg.Text = "Message";
+			this.listColMsg.Width = 315;
+			// 
 			// DiscordPlugin
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.Controls.Add(this.logBox);
+			this.Controls.Add(this.logList);
 			this.Controls.Add(this.chkAutoConnect);
 			this.Controls.Add(this.discordConnectbtn);
 			this.Controls.Add(this.sliderTTSSpeed);
@@ -248,7 +266,7 @@ namespace ACT_DiscordTriggers {
 			this.Controls.Add(this.txtToken);
 			this.Controls.Add(this.lblBotTok);
 			this.Name = "DiscordPlugin";
-			this.Size = new System.Drawing.Size(505, 455);
+			this.Size = new System.Drawing.Size(506, 395);
 			((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
 			this.ResumeLayout(false);
@@ -266,7 +284,6 @@ namespace ACT_DiscordTriggers {
 		Label lblStatus;
 		string settingsFile;
 		SettingsSerializer xmlSettings;
-		private TextBox logBox;
 		private CheckBox chkAutoConnect;
 		private Button discordConnectbtn;
 		private TrackBar sliderTTSSpeed;
@@ -283,6 +300,9 @@ namespace ACT_DiscordTriggers {
 		private Button btnJoin;
 		private Label lblLog;
 		private TextBox txtToken;
+		private ListView logList;
+		private ColumnHeader listColTim;
+		private ColumnHeader listColMsg;
 		private Label lblBotTok;
 		#endregion
 
@@ -359,10 +379,12 @@ namespace ACT_DiscordTriggers {
 
 		#region Discord Methods
 		private void speak(string text) {
+			Log("Playing TTS for text: " + text);
 			DiscordClient.Speak(text, cmbTTS.SelectedItem.ToString(), sliderTTSVol.Value, sliderTTSSpeed.Value);
 		}
 
 		private void speakFile(string path, int volume) {
+			Log("Playing Audio file: " + path);
 			DiscordClient.SpeakFile(path);
 		}
 
@@ -453,7 +475,10 @@ namespace ACT_DiscordTriggers {
 
 		#region Settings
 		public void Log(string text) {
-			logBox.AppendText(text + "\n");
+			string[] row = new string[2];
+			row[0] = DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToLongTimeString();
+			row[1] = text;
+			logList.Items.Add(new ListViewItem(row));
 		}
 
 		public void LoadSettings() {
@@ -498,7 +523,6 @@ namespace ACT_DiscordTriggers {
 			return true;
 		}
 		#endregion
-
 
 	}
 }

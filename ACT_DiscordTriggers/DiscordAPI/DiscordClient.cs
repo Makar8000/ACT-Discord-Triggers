@@ -28,7 +28,7 @@ namespace DiscordAPI {
 					WebSocketProvider = WS4NetProvider.Instance
 				});
 			} catch (NotSupportedException) {
-				Log("Unsupported Operating System.");
+				Log?.Invoke("Unsupported Operating System.");
 			}
 
 			try {
@@ -37,10 +37,10 @@ namespace DiscordAPI {
 				await bot.LoginAsync(TokenType.Bot, logintoken);
 				await bot.StartAsync();
 			} catch (Exception ex) {
-				Log(ex.Message);
-				Log("Error connecting to Discord. Discord may be down or key is incorrect.");
+				Log?.Invoke(ex.Message);
+				Log?.Invoke("Error connecting to Discord. Discord API may be down or key is incorrect.");
 			}
-			Log("Connected to Discord.");
+			Log?.Invoke("Connected to Discord.");
 		}
 
 		public static async Task deInIt() {
@@ -123,7 +123,7 @@ namespace DiscordAPI {
 					audioClient = await chan.ConnectAsync();
 					Log?.Invoke("Joined channel: " + chan.Name);
 				} catch (Exception e) {
-					Log(e.Message);
+					Log?.Invoke(e.Message);
 					return false;
 				}
 			}
@@ -175,7 +175,7 @@ namespace DiscordAPI {
 					output.CopyTo(voiceStream);
 					voiceStream.Flush();
 				} catch (Exception ex) {
-					Log("Unable to read file: " + ex.Message);
+					Log?.Invoke("Unable to read file: " + ex.Message);
 				}
 			}
 		}
