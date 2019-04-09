@@ -390,7 +390,6 @@ namespace ACT_DiscordTriggers {
 
 		private void BotReady() {
 			btnJoin.Enabled = true;
-			DiscordClient.SetGameAsync("with ACT Triggers");
 			populateServers();
 		}
 
@@ -398,6 +397,7 @@ namespace ACT_DiscordTriggers {
 		private void populateServers() {
 			try {
 				string[] servers = DiscordClient.getServers();
+        Log("Found " + servers.Length + " discord server(s).");
 
 				cmbServer.Items.Clear();
 				cmbChan.Items.Clear();
@@ -417,8 +417,12 @@ namespace ACT_DiscordTriggers {
 			try {
 				cmbChan.Items.Clear();
 				cmbChan.Items.AddRange(DiscordClient.getChannels(server));
-				if (cmbChan.Items.Count > 0)
-					cmbChan.SelectedIndex = 0;
+        if (cmbChan.Items.Count > 0) {
+          cmbChan.SelectedIndex = 0;
+          Log("Found " + cmbChan.Items.Count + " available voice channel(s) for " + server);
+        } else {
+          Log("Error: Could not find any available voice channels for " + server);
+        }
 			} catch (Exception ex) {
 				Log("Error populating channels.");
 				Log(ex.Message);

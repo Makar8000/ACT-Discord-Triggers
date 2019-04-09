@@ -27,8 +27,9 @@ namespace DiscordAPI {
 				bot = new DiscordSocketClient(new DiscordSocketConfig {
 					WebSocketProvider = WS4NetProvider.Instance
 				});
-			} catch (NotSupportedException) {
+			} catch (NotSupportedException ex) {
 				Log?.Invoke("Unsupported Operating System.");
+        Log?.Invoke(ex.Message);
 			}
 
 			try {
@@ -36,11 +37,11 @@ namespace DiscordAPI {
 				bot.Ready += Bot_Ready;
 				await bot.LoginAsync(TokenType.Bot, logintoken);
 				await bot.StartAsync();
-			} catch (Exception ex) {
+        Log?.Invoke("Connected to Discord.");
+      } catch (Exception ex) {
 				Log?.Invoke(ex.Message);
 				Log?.Invoke("Error connecting to Discord. Discord API may be down or key is incorrect.");
 			}
-			Log?.Invoke("Connected to Discord.");
 		}
 
 		public static async Task deInIt() {
@@ -60,19 +61,22 @@ namespace DiscordAPI {
 
 		private static async Task Bot_Ready() {
 			await bot.SetGameAsync("with ACT Triggers");
+      Log?.Invoke("Bot in ready state. Populating servers...");
 			BotReady?.Invoke();
 		}
 
 		public static string[] getServers() {
-			try {
-				List<string> servers = new List<string>();
+      List<string> servers = new List<string>();
+
+      try {
 				foreach (SocketGuild g in bot.Guilds)
 					servers.Add(g.Name);
-
-				return servers.ToArray();
-			} catch (Exception) {
-				return new string[0];
+			} catch (Exception ex) {
+        Log?.Invoke("Error loading servers in DiscordAPI#getServers().");
+        Log?.Invoke(ex.Message);
 			}
+
+      return servers.ToArray();
 		}
 
 		public static string[] getChannels(string server) {
@@ -84,12 +88,12 @@ namespace DiscordAPI {
 					channels.Sort((x, y) => x.Position.CompareTo(y.Position));
 					foreach (SocketVoiceChannel channel in channels)
 						discordchannels.Add(channel.Name);
-					return discordchannels.ToArray();
+          break;
 				}
 			}
 
-			return new string[0];
-		}
+      return discordchannels.ToArray();
+    }
 
 		private static SocketVoiceChannel[] getSocketChannels(string server) {
 			List<SocketVoiceChannel> discordchannels = new List<SocketVoiceChannel>();
@@ -100,12 +104,12 @@ namespace DiscordAPI {
 					channels.Sort((x, y) => x.Position.CompareTo(y.Position));
 					foreach (SocketVoiceChannel channel in channels)
 						discordchannels.Add(channel);
-					return discordchannels.ToArray();
+          break;
 				}
 			}
 
-			return null;
-		}
+      return discordchannels.ToArray();
+    }
 
 		public static void SetGameAsync(string text) {
 			bot.SetGameAsync(text);
@@ -122,8 +126,9 @@ namespace DiscordAPI {
 				try {
 					audioClient = await chan.ConnectAsync();
 					Log?.Invoke("Joined channel: " + chan.Name);
-				} catch (Exception e) {
-					Log?.Invoke(e.Message);
+				} catch (Exception ex) {
+          Log?.Invoke("Error joining channel.");
+					Log?.Invoke(ex.Message);
 					return false;
 				}
 			}
@@ -134,12 +139,6 @@ namespace DiscordAPI {
 			voiceStream?.Close();
 			voiceStream = null;
 			await audioClient.StopAsync();
-		}
-
-		public static async void SendChannelMessage(ulong id, string message) {
-			var channel = bot.GetChannel(id) as SocketTextChannel;
-
-			await channel.SendMessageAsync(message);
 		}
 
 		private static object speaklock = new object();
@@ -178,20 +177,6 @@ namespace DiscordAPI {
 					Log?.Invoke("Unable to read file: " + ex.Message);
 				}
 			}
-		}
-
-		public static bool SendChannelMessage(string message, ulong channelID) {
-			try {
-				var channel = bot.GetChannel(channelID) as SocketTextChannel;
-				if (channel != null)
-					channel.SendMessageAsync(message);
-				else
-					return false;
-			} catch {
-				return false;
-			}
-
-			return true;
 		}
 	}
 }
