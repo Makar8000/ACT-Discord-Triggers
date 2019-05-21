@@ -232,6 +232,7 @@ namespace ACT_DiscordTriggers {
       this.logList.TabIndex = 61;
       this.logList.UseCompatibleStateImageBehavior = false;
       this.logList.View = System.Windows.Forms.View.Details;
+      this.logList.KeyUp += new System.Windows.Forms.KeyEventHandler(this.LogList_KeyUp);
       // 
       // listColTim
       // 
@@ -474,6 +475,22 @@ namespace ACT_DiscordTriggers {
       }
       DiscordClient.InIt(txtToken.Text);
     }
+
+    private void LogList_KeyUp(object sender, KeyEventArgs e) {
+      if (sender != logList)
+        return;
+
+
+      if (e.Control && e.KeyCode == Keys.C && logList.SelectedItems.Count > 0) {
+        var builder = new StringBuilder();
+        foreach (ListViewItem item in logList.SelectedItems)
+          builder.AppendLine(item.SubItems[1].Text);
+
+        string clipboard = builder.ToString();
+        if (clipboard.Length > 0)
+          Clipboard.SetText(builder.ToString());
+      }
+    }
     #endregion
 
     #region Settings
@@ -526,6 +543,5 @@ namespace ACT_DiscordTriggers {
       return true;
     }
     #endregion
-
   }
 }
