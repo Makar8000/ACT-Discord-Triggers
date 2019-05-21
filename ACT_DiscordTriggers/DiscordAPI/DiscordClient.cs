@@ -33,14 +33,13 @@ namespace DiscordAPI {
       }
 
       try {
-        bot.Ready -= Bot_Ready;
+        bot.Log += Bot_Log;
         bot.Ready += Bot_Ready;
         await bot.LoginAsync(TokenType.Bot, logintoken);
         await bot.StartAsync();
-        Log?.Invoke("Connected to Discord.");
       } catch (Exception ex) {
         Log?.Invoke(ex.Message);
-        Log?.Invoke("Error connecting to Discord. Discord API may be down or key is incorrect.");
+        Log?.Invoke("Error connecting to Discord.");
       }
     }
 
@@ -57,6 +56,11 @@ namespace DiscordAPI {
 
     public static bool IsConnected() {
       return bot?.ConnectionState == ConnectionState.Connected;
+    }
+
+    private static Task Bot_Log(LogMessage arg) {
+      Log?.Invoke($"[{arg.Source}] {arg.Message}");
+      return Task.CompletedTask;
     }
 
     private static async Task Bot_Ready() {
