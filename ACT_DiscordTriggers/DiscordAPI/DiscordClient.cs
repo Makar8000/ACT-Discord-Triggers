@@ -44,7 +44,6 @@ namespace DiscordAPI {
     }
 
     public static async Task deInIt() {
-      voiceStream = null;
       bot.Ready -= Bot_Ready;
       if (audioClient?.ConnectionState == ConnectionState.Connected) {
         voiceStream?.Close();
