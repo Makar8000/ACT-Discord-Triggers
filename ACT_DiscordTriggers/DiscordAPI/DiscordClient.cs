@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Audio;
-using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
 using NAudio.Wave;
 using System;
@@ -24,9 +23,7 @@ namespace DiscordAPI {
 
     public static async void InIt(string logintoken) {
       try {
-        bot = new DiscordSocketClient(new DiscordSocketConfig {
-          WebSocketProvider = WS4NetProvider.Instance
-        });
+        bot = new DiscordSocketClient();
       } catch (NotSupportedException ex) {
         Log?.Invoke("Unsupported Operating System.");
         Log?.Invoke(ex.Message);
