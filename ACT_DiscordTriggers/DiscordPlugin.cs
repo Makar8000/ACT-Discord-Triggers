@@ -381,12 +381,22 @@ namespace ACT_DiscordTriggers {
     #region Discord Methods
     private void speak(string text) {
       Log("Playing TTS for text: " + text);
-      DiscordClient.Speak(text, cmbTTS.SelectedItem.ToString(), sliderTTSVol.Value, sliderTTSSpeed.Value);
+      try {
+        DiscordClient.Speak(text, cmbTTS.SelectedItem.ToString(), sliderTTSVol.Value, sliderTTSSpeed.Value);
+      } catch (Exception ex) {
+        Log("Error playing TTS");
+        Log(ex.Message);
+      }
     }
 
     private void speakFile(string path, int volume) {
       Log("Playing Audio file: " + path);
-      DiscordClient.SpeakFile(path);
+      try {
+        DiscordClient.SpeakFile(path);
+      } catch (Exception ex) {
+        Log("Error playing File");
+        Log(ex.Message);
+      }
     }
 
     private void BotReady() {
