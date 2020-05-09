@@ -1,0 +1,28 @@
+name: Build Plugin
+on: [push]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup Nuget
+      uses: nuget/setup-nuget@v1
+      with:
+        nuget-version: 'latest'
+    - name: Restore Nuget Packages
+      run: nuget restore ACT_DiscordTriggers.sln
+    - name: Download ACT Binaries
+      shell: powershell
+      run: |
+        Invoke-WebRequest https://advancedcombattracker.com/includes/page-download.php?id=57 -OutFile packages/act.zip
+        Expand-Archive -Path packages/act.zip -DestinationPath packages
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
+    - name: Build
+      run: msbuild ACT_DiscordTriggers.sln -p:Configuration=Release
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ACT_DiscordTriggers-Prerelease
+        path: './ACT_DiscordTriggers/bin/Release/net462/ACT_DiscordTriggers.dll'
