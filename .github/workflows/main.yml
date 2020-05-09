@@ -26,7 +26,7 @@ jobs:
       with:
         pathSource: './packages/act.zip'
         pathTarget: './packages/'
-    - name: setup-msbuild
+    - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1
     - name: Build
       run: msbuild ACT_DiscordTriggers.sln -p:Configuration=Release
