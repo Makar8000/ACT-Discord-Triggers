@@ -330,17 +330,16 @@ namespace ACT_DiscordTriggers {
       Dock = DockStyle.Fill;
 
       //Get plugin name
-      string pluginName = "ACT_DiscordTriggers";
-      foreach (ActPluginData p in ActGlobals.oFormActMain.ActPlugins) {
-        if (p.pluginObj == this) {
-          if (Path.GetFileNameWithoutExtension(p.pluginFile.FullName).Trim().Length > 0)
-            pluginName = Path.GetFileNameWithoutExtension(p.pluginFile.FullName).Trim();
-          break;
-        }
-      }
+      string configName = "ACT_DiscordTriggers";
+      try {
+        string pluginName = ActGlobals.oFormActMain.PluginGetSelfData(this).pluginFile.FullName;
+        pluginName = Path.GetFileNameWithoutExtension(pluginName).Trim();
+        if (pluginName.Length >= 0)
+          configName = pluginName;
+      } catch (Exception) { }
 
       //Load Settings file
-      settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, $"Config\\{pluginName}.config.xml");
+      settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, $"Config\\{configName}.config.xml");
       xmlSettings = new SettingsSerializer(this);
       LoadSettings();
 

@@ -1,0 +1,17 @@
+﻿<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
+  <Costura IncludeDebugSymbols="false">
+    <ExcludeAssemblies>
+      Advanced Combat Tracker
+      GammaJul.LgLcd
+      ICSharpCode.SharpZipLib
+    </ExcludeAssemblies>
+    <Unmanaged32Assemblies>
+      libsodium
+      opus
+    </Unmanaged32Assemblies>
+    <Unmanaged64Assemblies>
+      libsodium
+      opus
+    </Unmanaged64Assemblies>
+  </Costura>
+</Weavers>
