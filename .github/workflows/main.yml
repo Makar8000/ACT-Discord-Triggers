@@ -1,4 +1,4 @@
-name: ACT_DiscordTriggers.NetFramework.CI
+name: CI
 
 on: [push]
 
