@@ -28,3 +28,8 @@ jobs:
         pathTarget: './packages/'
     - name: Build
       run: dotnet build --configuration Release --no-restore
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ACT_DiscordTriggers
+        path: './ACT_DiscordTriggers/bin/Release/net462/ACT_DiscordTriggers.dll'
