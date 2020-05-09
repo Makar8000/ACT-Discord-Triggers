@@ -13,5 +13,18 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.201
+    - name: Restore NuGet Packages
+      run: dotnet restore
+    - name: Download ACT Binaries
+      uses: carlosperate/download-file-action@v1.0.3
+      with:
+        file-url: 'https://advancedcombattracker.com/includes/page-download.php?id=57'
+        file-name: 'act.zip'
+        location: './packages'
+    - name: Extract ACT Binaries
+      uses: DuckSoft/extract-7z-action@v1.0
+      with:
+        pathSource: './packages/act.zip'
+        pathTarget: './packages/'
     - name: Build
-      run: dotnet build --configuration Release
+      run: dotnet build --configuration Release --no-restore
