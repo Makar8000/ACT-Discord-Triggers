@@ -26,12 +26,12 @@ jobs:
       with:
         pathSource: './packages/act.zip'
         pathTarget: './packages/'
-    - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
-    - name: Build with MSBuild
+    - name: setup-msbuild
+      uses: microsoft/setup-msbuild@v1
+    - name: Build
       run: msbuild ACT_DiscordTriggers.sln -p:Configuration=Release
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: ACT_DiscordTriggers
+        name: ACT_DiscordTriggers-Prerelease
         path: './ACT_DiscordTriggers/bin/Release/net462/ACT_DiscordTriggers.dll'
