@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ACT_DiscordTriggers", "ACT_DiscordTriggers\ACT_DiscordTriggers.csproj", "{000FFFC0-8D23-4476-B312-0438655973A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ACT_DiscordTriggers", "ACT_DiscordTriggers\ACT_DiscordTriggers.csproj", "{000FFFC0-8D23-4476-B312-0438655973A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordAPI", "DiscordAPI\DiscordAPI.csproj", "{E725B455-5E43-4980-BC12-0AC99963C7E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordAPI", "DiscordAPI\DiscordAPI.csproj", "{E725B455-5E43-4980-BC12-0AC99963C7E0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
