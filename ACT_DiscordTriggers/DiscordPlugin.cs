@@ -52,10 +52,10 @@ namespace ACT_DiscordTriggers {
       this.txtToken = new System.Windows.Forms.TextBox();
       this.lblBotTok = new System.Windows.Forms.Label();
       this.logList = new System.Windows.Forms.ListView();
-      this.listColTim = ((System.Windows.Forms.ColumnHeader) (new System.Windows.Forms.ColumnHeader()));
-      this.listColMsg = ((System.Windows.Forms.ColumnHeader) (new System.Windows.Forms.ColumnHeader()));
-      ((System.ComponentModel.ISupportInitialize) (this.sliderTTSSpeed)).BeginInit();
-      ((System.ComponentModel.ISupportInitialize) (this.sliderTTSVol)).BeginInit();
+      this.listColTim = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+      this.listColMsg = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+      ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
+      ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
       this.SuspendLayout();
       // 
       // chkAutoConnect
@@ -219,7 +219,7 @@ namespace ACT_DiscordTriggers {
       // 
       // logList
       // 
-      this.logList.Anchor = ((System.Windows.Forms.AnchorStyles) ((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+      this.logList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
             | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
       this.logList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
@@ -268,8 +268,8 @@ namespace ACT_DiscordTriggers {
       this.Controls.Add(this.lblBotTok);
       this.Name = "DiscordPlugin";
       this.Size = new System.Drawing.Size(506, 395);
-      ((System.ComponentModel.ISupportInitialize) (this.sliderTTSSpeed)).EndInit();
-      ((System.ComponentModel.ISupportInitialize) (this.sliderTTSVol)).EndInit();
+      ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
+      ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
       this.ResumeLayout(false);
       this.PerformLayout();
 
@@ -325,10 +325,22 @@ namespace ACT_DiscordTriggers {
       oldTTS = ActGlobals.oFormActMain.PlayTtsMethod;
       oldSound = ActGlobals.oFormActMain.PlaySoundMethod;
       lblStatus = pluginStatusText;
-      settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Config\\ACT_DiscordTriggers.config.xml");
       pluginScreenSpace.Controls.Add(this);
       pluginScreenSpace.Text = "Discord Triggers";
       Dock = DockStyle.Fill;
+
+      //Get plugin name
+      string pluginName = "ACT_DiscordTriggers";
+      foreach (ActPluginData p in ActGlobals.oFormActMain.ActPlugins) {
+        if (p.pluginObj == this) {
+          if (Path.GetFileNameWithoutExtension(p.pluginFile.FullName).Trim().Length > 0)
+            pluginName = Path.GetFileNameWithoutExtension(p.pluginFile.FullName).Trim();
+          break;
+        }
+      }
+
+      //Load Settings file
+      settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, $"Config\\{pluginName}.config.xml");
       xmlSettings = new SettingsSerializer(this);
       LoadSettings();
 
