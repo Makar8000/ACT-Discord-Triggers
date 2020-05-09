@@ -55,6 +55,8 @@ namespace DiscordAPI {
     }
 
     private static Task Bot_Log(LogMessage arg) {
+      if (arg.Message.Equals("Unknown OpCode (Hello)"))
+        return Task.CompletedTask;
       Log?.Invoke($"[{arg.Source}] {arg.Message}");
       return Task.CompletedTask;
     }
