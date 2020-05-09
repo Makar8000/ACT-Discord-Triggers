@@ -26,8 +26,10 @@ jobs:
       with:
         pathSource: './packages/act.zip'
         pathTarget: './packages/'
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: Build with MSBuild
+      run: msbuild ACT_DiscordTriggers.sln -p:Configuration=Release
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
