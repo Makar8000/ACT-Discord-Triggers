@@ -15,6 +15,7 @@ jobs:
     - name: Download ACT Binaries
       shell: powershell
       run: |
+        New-Item -ItemType Directory packages
         Invoke-WebRequest https://advancedcombattracker.com/includes/page-download.php?id=57 -OutFile packages/act.zip
         Expand-Archive -Path packages/act.zip -DestinationPath packages
     - name: Setup MSBuild
