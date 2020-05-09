@@ -29,8 +29,8 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Advanced Combat Tracker">
-      <HintPath>D:\Program Files (x86)\Advanced Combat Tracker\Advanced Combat Tracker.exe</HintPath>
-      <Private>false</Private>
+      <HintPath Condition="Exists('..\packages\Advanced Combat Tracker.exe')">..\packages\Advanced Combat Tracker.exe</HintPath>
+      <HintPath Condition="Exists('D:\Program Files (x86)\Advanced Combat Tracker\')">D:\Program Files (x86)\Advanced Combat Tracker\Advanced Combat Tracker.exe</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Management" />
