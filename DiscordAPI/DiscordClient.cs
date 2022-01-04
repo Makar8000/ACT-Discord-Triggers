@@ -11,9 +11,10 @@ using System.Threading.Tasks;
 
 namespace DiscordAPI {
   public static class DiscordClient {
-    private static DiscordSocketClient bot;
-    private static IAudioClient audioClient;
-    private static AudioOutStream voiceStream;
+    private static DiscordSocketClient  bot;
+    private static IAudioClient         audioClient;
+    private static AudioOutStream       voiceStream;
+    private static SocketVoiceChannel   voiceChannel;
 
     public delegate void BotLoaded();
     public static BotLoaded BotReady;
@@ -47,9 +48,9 @@ namespace DiscordAPI {
 
     public static async Task deInIt() {
       bot.Ready -= Bot_Ready;
-      if (audioClient?.ConnectionState == ConnectionState.Connected) {
-        voiceStream?.Close();
-        await audioClient.StopAsync();
+      if (audioClient?.ConnectionState == ConnectionState.Connected)
+      {
+        LeaveChannel();
       }
       await bot.StopAsync();
       await bot.LogoutAsync();
@@ -132,6 +133,7 @@ namespace DiscordAPI {
       if (chan != null) {
         try {
           audioClient = await chan.ConnectAsync();
+          voiceChannel = chan;
           Log?.Invoke("Joined channel: " + chan.Name);
         } catch (Exception ex) {
           Log?.Invoke("Error joining channel.");
@@ -146,6 +148,7 @@ namespace DiscordAPI {
       voiceStream?.Close();
       voiceStream = null;
       await audioClient.StopAsync();
+      await voiceChannel.DisconnectAsync();
     }
 
     private static object speaklock = new object();
