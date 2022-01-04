@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <AssemblyTitle>DiscordAPI</AssemblyTitle>
     <Product>DiscordAPI</Product>
     <Copyright></Copyright>
     <AssemblyVersion>1.2.2.0</AssemblyVersion>
     <FileVersion>1.2.2.0</FileVersion>
     <OutputPath>bin\$(Configuration)\</OutputPath>
+    <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -21,7 +22,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="2.2.0" />
-    <PackageReference Include="NAudio" Version="1.10.0" />
+    <PackageReference Include="Discord.Net" Version="3.1.0" />
+    <PackageReference Include="NAudio" Version="2.0.1" />
   </ItemGroup>
 </Project>
