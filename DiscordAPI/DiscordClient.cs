@@ -23,7 +23,12 @@ namespace DiscordAPI {
 
     public static async void InIt(string logintoken) {
       try {
-        bot = new DiscordSocketClient();
+        DiscordSocketConfig config = new DiscordSocketConfig
+        {
+            GatewayIntents =   Discord.GatewayIntents.Guilds
+                             | Discord.GatewayIntents.GuildVoiceStates
+        };
+        bot = new DiscordSocketClient( config );
       } catch (NotSupportedException ex) {
         Log?.Invoke("Unsupported Operating System.");
         Log?.Invoke(ex.Message);
