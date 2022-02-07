@@ -10,6 +10,6 @@ See the [releases](https://github.com/Makar8000/ACT-Discord-Triggers/releases)
 See the [wiki](https://github.com/Makar8000/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
 
 ## Software Used
- * [Microsoft .NET Framework 4.6.2](https://dotnet.microsoft.com/download/dotnet-framework)
+ * [Microsoft .NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework)
  * [NAudio](https://github.com/naudio/NAudio)
  * [Discord.Net](https://github.com/RogueException/Discord.Net)
