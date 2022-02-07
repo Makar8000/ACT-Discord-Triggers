@@ -11,10 +11,10 @@ using System.Threading.Tasks;
 
 namespace DiscordAPI {
   public static class DiscordClient {
-    private static DiscordSocketClient  bot;
-    private static IAudioClient         audioClient;
-    private static AudioOutStream       voiceStream;
-    private static SocketVoiceChannel   voiceChannel;
+    private static DiscordSocketClient bot;
+    private static IAudioClient audioClient;
+    private static AudioOutStream voiceStream;
+    private static SocketVoiceChannel voiceChannel;
 
     public delegate void BotLoaded();
     public static BotLoaded BotReady;
@@ -24,12 +24,11 @@ namespace DiscordAPI {
 
     public static async void InIt(string logintoken) {
       try {
-        DiscordSocketConfig config = new DiscordSocketConfig
-        {
-            GatewayIntents =   Discord.GatewayIntents.Guilds
+        DiscordSocketConfig config = new DiscordSocketConfig {
+          GatewayIntents = Discord.GatewayIntents.Guilds
                              | Discord.GatewayIntents.GuildVoiceStates
         };
-        bot = new DiscordSocketClient( config );
+        bot = new DiscordSocketClient(config);
       } catch (NotSupportedException ex) {
         Log?.Invoke("Unsupported Operating System.");
         Log?.Invoke(ex.Message);
@@ -48,8 +47,7 @@ namespace DiscordAPI {
 
     public static async Task deInIt() {
       bot.Ready -= Bot_Ready;
-      if (audioClient?.ConnectionState == ConnectionState.Connected)
-      {
+      if (audioClient?.ConnectionState == ConnectionState.Connected) {
         LeaveChannel();
       }
       await bot.StopAsync();

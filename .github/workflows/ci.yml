@@ -26,4 +26,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ACT_DiscordTriggers-Prerelease
-        path: './ACT_DiscordTriggers/bin/Release/net462/ACT_DiscordTriggers.dll'
+        path: './ACT_DiscordTriggers/bin/Release/net48/ACT_DiscordTriggers.dll'
