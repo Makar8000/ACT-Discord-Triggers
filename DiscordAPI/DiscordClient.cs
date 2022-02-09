@@ -24,9 +24,8 @@ namespace DiscordAPI {
 
     public static async void InIt(string logintoken) {
       try {
-        DiscordSocketConfig config = new DiscordSocketConfig {
-          GatewayIntents = Discord.GatewayIntents.Guilds
-                             | Discord.GatewayIntents.GuildVoiceStates
+        var config = new DiscordSocketConfig {
+          GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildVoiceStates
         };
         bot = new DiscordSocketClient(config);
       } catch (NotSupportedException ex) {
