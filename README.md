@@ -1,5 +1,5 @@
 # ACT Discord Triggers
-![CI](https://github.com/Makar8000/ACT-Discord-Triggers/workflows/CI/badge.svg)
+[![Build Plugin](https://github.com/Makar8000/ACT-Discord-Triggers/actions/workflows/ci.yml/badge.svg)](https://github.com/Makar8000/ACT-Discord-Triggers/actions/workflows/ci.yml)
 
 An ACT plugin for using Custom Triggers and/or Triggernometry with Discord bots.
 
