@@ -2,16 +2,13 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <AssemblyTitle>ACT_DiscordTriggers</AssemblyTitle>
-    <Product></Product>
-    <Copyright>© Makar 2022</Copyright>
-    <AssemblyVersion>1.0.2.1</AssemblyVersion>
-    <FileVersion>1.0.2.1</FileVersion>
-    <Authors></Authors>
-    <Version>1.0.2.1</Version>
+    <AssemblyVersion>1.0.2.2</AssemblyVersion>
+    <FileVersion>1.0.2.2</FileVersion>
+    <Authors>Makar</Authors>
+    <Version>1.0.2.2</Version>
     <RepositoryUrl>https://github.com/Makar8000/ACT-Discord-Triggers</RepositoryUrl>
     <PackageProjectUrl>https://github.com/Makar8000/ACT-Discord-Triggers</PackageProjectUrl>
     <Description>An ACT plugin for routing audio to discord</Description>
-    <Company />
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -26,7 +23,7 @@
     <PackageReference Include="Costura.Fody" Version="5.7.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Fody" Version="6.6.0">
+    <PackageReference Include="Fody" Version="6.6.3">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
