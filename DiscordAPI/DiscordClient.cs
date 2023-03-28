@@ -46,6 +46,7 @@ namespace DiscordAPI {
 
     public static async Task deInIt() {
       bot.Ready -= Bot_Ready;
+      bot.Log -= Bot_Log;
       if (audioClient?.ConnectionState == ConnectionState.Connected) {
         LeaveChannel();
       }
