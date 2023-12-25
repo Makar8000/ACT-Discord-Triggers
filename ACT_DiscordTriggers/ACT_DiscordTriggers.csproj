@@ -2,10 +2,10 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <AssemblyTitle>ACT_DiscordTriggers</AssemblyTitle>
-    <AssemblyVersion>1.0.2.3</AssemblyVersion>
-    <FileVersion>1.0.2.3</FileVersion>
+    <AssemblyVersion>1.0.2.4</AssemblyVersion>
+    <FileVersion>1.0.2.4</FileVersion>
     <Authors>Makar</Authors>
-    <Version>1.0.2.3</Version>
+    <Version>1.0.2.4</Version>
     <RepositoryUrl>https://github.com/Makar8000/ACT-Discord-Triggers</RepositoryUrl>
     <PackageProjectUrl>https://github.com/Makar8000/ACT-Discord-Triggers</PackageProjectUrl>
     <Description>An ACT plugin for routing audio to discord</Description>
@@ -30,7 +30,7 @@
   <ItemGroup>
     <Reference Include="Advanced Combat Tracker">
       <HintPath Condition="Exists('..\packages\Advanced Combat Tracker.exe')">..\packages\Advanced Combat Tracker.exe</HintPath>
-      <HintPath Condition="Exists('D:\Program Files (x86)\Advanced Combat Tracker\')">D:\Program Files (x86)\Advanced Combat Tracker\Advanced Combat Tracker.exe</HintPath>
+      <HintPath Condition="Exists('C:\Program Files (x86)\Advanced Combat Tracker\')">C:\Program Files (x86)\Advanced Combat Tracker\Advanced Combat Tracker.exe</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Management" />
