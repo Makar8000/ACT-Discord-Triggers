@@ -5,13 +5,13 @@
       GammaJul.LgLcd
       ICSharpCode.SharpZipLib
     </ExcludeAssemblies>
-    <Unmanaged32Assemblies>
+	<UnmanagedWinX86Assemblies>
       libsodium
       opus
-    </Unmanaged32Assemblies>
-    <Unmanaged64Assemblies>
+    </UnmanagedWinX86Assemblies>
+	<UnmanagedWinX64Assemblies>
       libsodium
       opus
-    </Unmanaged64Assemblies>
+    </UnmanagedWinX64Assemblies>
   </Costura>
 </Weavers>
