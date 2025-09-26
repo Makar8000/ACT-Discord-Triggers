@@ -10,7 +10,6 @@
     <PackageProjectUrl>https://github.com/Makar8000/ACT-Discord-Triggers</PackageProjectUrl>
     <Description>An ACT plugin for routing audio to discord</Description>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
-    <Copyright>2017-2025</Copyright>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
