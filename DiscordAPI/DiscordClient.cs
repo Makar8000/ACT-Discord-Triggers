@@ -15,6 +15,7 @@ namespace DiscordAPI {
     private static IAudioClient audioClient;
     private static AudioOutStream voiceStream;
     private static SocketVoiceChannel voiceChannel;
+    private static string statusMsg;
 
     public delegate void BotLoaded();
     public static BotLoaded BotReady;
@@ -22,7 +23,7 @@ namespace DiscordAPI {
     public delegate void BotMessage(string message);
     public static BotMessage Log;
 
-    public static async void InIt(string logintoken) {
+    public static async void InIt(string logintoken, string botstatus) {
       try {
         var config = new DiscordSocketConfig {
           GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildVoiceStates
@@ -36,6 +37,7 @@ namespace DiscordAPI {
       try {
         bot.Log += Bot_Log;
         bot.Ready += Bot_Ready;
+        statusMsg = botstatus;
         await bot.LoginAsync(TokenType.Bot, logintoken);
         await bot.StartAsync();
       } catch (Exception ex) {
@@ -66,7 +68,7 @@ namespace DiscordAPI {
     }
 
     private static async Task Bot_Ready() {
-      await bot.SetGameAsync("with ACT Triggers");
+      await SetGameAsync(statusMsg);
       Log?.Invoke("Bot in ready state. Populating servers...");
       BotReady?.Invoke();
     }
@@ -117,16 +119,23 @@ namespace DiscordAPI {
       return discordchannels.ToArray();
     }
 
-    public static void SetGameAsync(string text) {
-      bot.SetGameAsync(text);
+    public static async Task SetGameAsync(string text) {
+      await bot?.SetGameAsync(string.IsNullOrWhiteSpace(text)
+                              ? "Playing with ACT Triggers"
+                              : text.Trim(),
+                              null,
+                              ActivityType.CustomStatus );
     }
 
     public static async Task<bool> JoinChannel(string server, string channel) {
       SocketVoiceChannel chan = null;
 
-      foreach (SocketVoiceChannel vchannel in getSocketChannels(server))
-        if (vchannel.Name == channel)
+      foreach (SocketVoiceChannel vchannel in getSocketChannels(server)) {
+        if (vchannel.Name == channel) {
           chan = vchannel;
+          break;
+        }
+      }
 
       if (chan != null) {
         try {

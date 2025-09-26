@@ -7,6 +7,7 @@ using System.Xml;
 using System.Speech.Synthesis;
 using System.Reflection;
 using DiscordAPI;
+using System.Windows.Threading;
 
 namespace ACT_DiscordTriggers {
   public class DiscordPlugin : UserControl, IActPluginV1 {
@@ -54,6 +55,8 @@ namespace ACT_DiscordTriggers {
       this.logList = new System.Windows.Forms.ListView();
       this.listColTim = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
       this.listColMsg = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+      this.txtBotStatus = new System.Windows.Forms.TextBox();
+      this.lblBotStatus = new System.Windows.Forms.Label();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
       this.SuspendLayout();
@@ -61,18 +64,20 @@ namespace ACT_DiscordTriggers {
       // chkAutoConnect
       // 
       this.chkAutoConnect.AutoSize = true;
-      this.chkAutoConnect.Location = new System.Drawing.Point(120, 64);
+      this.chkAutoConnect.Location = new System.Drawing.Point(180, 98);
+      this.chkAutoConnect.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.chkAutoConnect.Name = "chkAutoConnect";
-      this.chkAutoConnect.Size = new System.Drawing.Size(91, 17);
+      this.chkAutoConnect.Size = new System.Drawing.Size(133, 24);
       this.chkAutoConnect.TabIndex = 59;
       this.chkAutoConnect.Text = "Auto Connect";
       this.chkAutoConnect.UseVisualStyleBackColor = true;
       // 
       // discordConnectbtn
       // 
-      this.discordConnectbtn.Location = new System.Drawing.Point(21, 60);
+      this.discordConnectbtn.Location = new System.Drawing.Point(32, 92);
+      this.discordConnectbtn.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.discordConnectbtn.Name = "discordConnectbtn";
-      this.discordConnectbtn.Size = new System.Drawing.Size(93, 23);
+      this.discordConnectbtn.Size = new System.Drawing.Size(140, 35);
       this.discordConnectbtn.TabIndex = 58;
       this.discordConnectbtn.Text = "Connect";
       this.discordConnectbtn.UseVisualStyleBackColor = true;
@@ -80,37 +85,41 @@ namespace ACT_DiscordTriggers {
       // 
       // sliderTTSSpeed
       // 
-      this.sliderTTSSpeed.Location = new System.Drawing.Point(289, 154);
+      this.sliderTTSSpeed.Location = new System.Drawing.Point(432, 177);
+      this.sliderTTSSpeed.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.sliderTTSSpeed.Maximum = 20;
       this.sliderTTSSpeed.Name = "sliderTTSSpeed";
-      this.sliderTTSSpeed.Size = new System.Drawing.Size(193, 45);
+      this.sliderTTSSpeed.Size = new System.Drawing.Size(290, 69);
       this.sliderTTSSpeed.TabIndex = 57;
       this.sliderTTSSpeed.Value = 10;
       // 
       // lblTTSSpeed
       // 
       this.lblTTSSpeed.AutoSize = true;
-      this.lblTTSSpeed.Location = new System.Drawing.Point(290, 136);
+      this.lblTTSSpeed.Location = new System.Drawing.Point(428, 152);
+      this.lblTTSSpeed.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.lblTTSSpeed.Name = "lblTTSSpeed";
-      this.lblTTSSpeed.Size = new System.Drawing.Size(62, 13);
+      this.lblTTSSpeed.Size = new System.Drawing.Size(89, 20);
       this.lblTTSSpeed.TabIndex = 56;
       this.lblTTSSpeed.Text = "TTS Speed";
       // 
       // sliderTTSVol
       // 
-      this.sliderTTSVol.Location = new System.Drawing.Point(289, 87);
+      this.sliderTTSVol.Location = new System.Drawing.Point(432, 103);
+      this.sliderTTSVol.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.sliderTTSVol.Maximum = 20;
       this.sliderTTSVol.Name = "sliderTTSVol";
-      this.sliderTTSVol.Size = new System.Drawing.Size(193, 45);
+      this.sliderTTSVol.Size = new System.Drawing.Size(290, 69);
       this.sliderTTSVol.TabIndex = 55;
       this.sliderTTSVol.Value = 10;
       // 
       // lblTTSVol
       // 
       this.lblTTSVol.AutoSize = true;
-      this.lblTTSVol.Location = new System.Drawing.Point(286, 67);
+      this.lblTTSVol.Location = new System.Drawing.Point(428, 83);
+      this.lblTTSVol.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.lblTTSVol.Name = "lblTTSVol";
-      this.lblTTSVol.Size = new System.Drawing.Size(66, 13);
+      this.lblTTSVol.Size = new System.Drawing.Size(96, 20);
       this.lblTTSVol.TabIndex = 54;
       this.lblTTSVol.Text = "TTS Volume";
       // 
@@ -118,17 +127,19 @@ namespace ACT_DiscordTriggers {
       // 
       this.cmbChan.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
       this.cmbChan.FormattingEnabled = true;
-      this.cmbChan.Location = new System.Drawing.Point(21, 159);
+      this.cmbChan.Location = new System.Drawing.Point(32, 245);
+      this.cmbChan.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.cmbChan.Name = "cmbChan";
-      this.cmbChan.Size = new System.Drawing.Size(193, 21);
+      this.cmbChan.Size = new System.Drawing.Size(288, 28);
       this.cmbChan.TabIndex = 53;
       // 
       // lblChan
       // 
       this.lblChan.AutoSize = true;
-      this.lblChan.Location = new System.Drawing.Point(18, 141);
+      this.lblChan.Location = new System.Drawing.Point(27, 217);
+      this.lblChan.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.lblChan.Name = "lblChan";
-      this.lblChan.Size = new System.Drawing.Size(46, 13);
+      this.lblChan.Size = new System.Drawing.Size(68, 20);
       this.lblChan.TabIndex = 52;
       this.lblChan.Text = "Channel";
       // 
@@ -136,18 +147,20 @@ namespace ACT_DiscordTriggers {
       // 
       this.cmbServer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
       this.cmbServer.FormattingEnabled = true;
-      this.cmbServer.Location = new System.Drawing.Point(21, 113);
+      this.cmbServer.Location = new System.Drawing.Point(32, 174);
+      this.cmbServer.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.cmbServer.Name = "cmbServer";
-      this.cmbServer.Size = new System.Drawing.Size(193, 21);
+      this.cmbServer.Size = new System.Drawing.Size(288, 28);
       this.cmbServer.TabIndex = 51;
       this.cmbServer.SelectedValueChanged += new System.EventHandler(this.cmbServer_SelectedIndexChanged);
       // 
       // lblServer
       // 
       this.lblServer.AutoSize = true;
-      this.lblServer.Location = new System.Drawing.Point(18, 99);
+      this.lblServer.Location = new System.Drawing.Point(27, 152);
+      this.lblServer.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.lblServer.Name = "lblServer";
-      this.lblServer.Size = new System.Drawing.Size(38, 13);
+      this.lblServer.Size = new System.Drawing.Size(55, 20);
       this.lblServer.TabIndex = 50;
       this.lblServer.Text = "Server";
       // 
@@ -155,26 +168,29 @@ namespace ACT_DiscordTriggers {
       // 
       this.cmbTTS.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
       this.cmbTTS.FormattingEnabled = true;
-      this.cmbTTS.Location = new System.Drawing.Point(289, 33);
+      this.cmbTTS.Location = new System.Drawing.Point(432, 50);
+      this.cmbTTS.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.cmbTTS.Name = "cmbTTS";
-      this.cmbTTS.Size = new System.Drawing.Size(193, 21);
+      this.cmbTTS.Size = new System.Drawing.Size(288, 28);
       this.cmbTTS.TabIndex = 49;
       // 
       // lblTTS
       // 
       this.lblTTS.AutoSize = true;
-      this.lblTTS.Location = new System.Drawing.Point(286, 18);
+      this.lblTTS.Location = new System.Drawing.Point(428, 28);
+      this.lblTTS.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.lblTTS.Name = "lblTTS";
-      this.lblTTS.Size = new System.Drawing.Size(58, 13);
+      this.lblTTS.Size = new System.Drawing.Size(82, 20);
       this.lblTTS.TabIndex = 48;
       this.lblTTS.Text = "TTS Voice";
       // 
       // btnLeave
       // 
       this.btnLeave.Enabled = false;
-      this.btnLeave.Location = new System.Drawing.Point(120, 186);
+      this.btnLeave.Location = new System.Drawing.Point(180, 286);
+      this.btnLeave.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.btnLeave.Name = "btnLeave";
-      this.btnLeave.Size = new System.Drawing.Size(94, 23);
+      this.btnLeave.Size = new System.Drawing.Size(141, 35);
       this.btnLeave.TabIndex = 47;
       this.btnLeave.Text = "Leave Channel";
       this.btnLeave.UseVisualStyleBackColor = true;
@@ -183,9 +199,10 @@ namespace ACT_DiscordTriggers {
       // btnJoin
       // 
       this.btnJoin.Enabled = false;
-      this.btnJoin.Location = new System.Drawing.Point(21, 185);
+      this.btnJoin.Location = new System.Drawing.Point(32, 285);
+      this.btnJoin.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.btnJoin.Name = "btnJoin";
-      this.btnJoin.Size = new System.Drawing.Size(93, 23);
+      this.btnJoin.Size = new System.Drawing.Size(140, 35);
       this.btnJoin.TabIndex = 46;
       this.btnJoin.Text = "Join Channel";
       this.btnJoin.UseVisualStyleBackColor = true;
@@ -194,26 +211,29 @@ namespace ACT_DiscordTriggers {
       // lblLog
       // 
       this.lblLog.AutoSize = true;
-      this.lblLog.Location = new System.Drawing.Point(18, 239);
+      this.lblLog.Location = new System.Drawing.Point(27, 368);
+      this.lblLog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.lblLog.Name = "lblLog";
-      this.lblLog.Size = new System.Drawing.Size(60, 13);
+      this.lblLog.Size = new System.Drawing.Size(88, 20);
       this.lblLog.TabIndex = 45;
       this.lblLog.Text = "Debug Log";
       // 
       // txtToken
       // 
-      this.txtToken.Location = new System.Drawing.Point(21, 34);
+      this.txtToken.Location = new System.Drawing.Point(32, 52);
+      this.txtToken.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.txtToken.Name = "txtToken";
-      this.txtToken.Size = new System.Drawing.Size(193, 20);
+      this.txtToken.Size = new System.Drawing.Size(288, 26);
       this.txtToken.TabIndex = 43;
       this.txtToken.UseSystemPasswordChar = true;
       // 
       // lblBotTok
       // 
       this.lblBotTok.AutoSize = true;
-      this.lblBotTok.Location = new System.Drawing.Point(18, 18);
+      this.lblBotTok.Location = new System.Drawing.Point(27, 28);
+      this.lblBotTok.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.lblBotTok.Name = "lblBotTok";
-      this.lblBotTok.Size = new System.Drawing.Size(96, 13);
+      this.lblBotTok.Size = new System.Drawing.Size(140, 20);
       this.lblBotTok.TabIndex = 42;
       this.lblBotTok.Text = "Discord Bot Token";
       // 
@@ -226,9 +246,11 @@ namespace ACT_DiscordTriggers {
             this.listColTim,
             this.listColMsg});
       this.logList.FullRowSelect = true;
-      this.logList.Location = new System.Drawing.Point(21, 255);
+      this.logList.HideSelection = false;
+      this.logList.Location = new System.Drawing.Point(32, 392);
+      this.logList.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.logList.Name = "logList";
-      this.logList.Size = new System.Drawing.Size(461, 124);
+      this.logList.Size = new System.Drawing.Size(690, 189);
       this.logList.TabIndex = 61;
       this.logList.UseCompatibleStateImageBehavior = false;
       this.logList.View = System.Windows.Forms.View.Details;
@@ -244,10 +266,30 @@ namespace ACT_DiscordTriggers {
       this.listColMsg.Text = "Message";
       this.listColMsg.Width = 315;
       // 
+      // txtBotStatus
+      // 
+      this.txtBotStatus.Location = new System.Drawing.Point(432, 254);
+      this.txtBotStatus.Name = "txtBotStatus";
+      this.txtBotStatus.Size = new System.Drawing.Size(289, 26);
+      this.txtBotStatus.TabIndex = 62;
+      this.txtBotStatus.Text = "Playing with ACT Triggers";
+      this.txtBotStatus.TextChanged += new System.EventHandler(this.txtBotStatus_TextChanged);
+      // 
+      // lblBotStatus
+      // 
+      this.lblBotStatus.AutoSize = true;
+      this.lblBotStatus.Location = new System.Drawing.Point(428, 226);
+      this.lblBotStatus.Name = "lblBotStatus";
+      this.lblBotStatus.Size = new System.Drawing.Size(85, 20);
+      this.lblBotStatus.TabIndex = 63;
+      this.lblBotStatus.Text = "Bot Status";
+      // 
       // DiscordPlugin
       // 
-      this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+      this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+      this.Controls.Add(this.lblBotStatus);
+      this.Controls.Add(this.txtBotStatus);
       this.Controls.Add(this.logList);
       this.Controls.Add(this.chkAutoConnect);
       this.Controls.Add(this.discordConnectbtn);
@@ -266,13 +308,13 @@ namespace ACT_DiscordTriggers {
       this.Controls.Add(this.lblLog);
       this.Controls.Add(this.txtToken);
       this.Controls.Add(this.lblBotTok);
+      this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.Name = "DiscordPlugin";
-      this.Size = new System.Drawing.Size(506, 395);
+      this.Size = new System.Drawing.Size(759, 608);
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
       this.ResumeLayout(false);
       this.PerformLayout();
-
     }
 
     #endregion
@@ -304,19 +346,33 @@ namespace ACT_DiscordTriggers {
     private ListView logList;
     private ColumnHeader listColTim;
     private ColumnHeader listColMsg;
+    private TextBox txtBotStatus;
+    private Label lblBotStatus;
     private Label lblBotTok;
+    private readonly DispatcherTimer statusDebounceTimer = new DispatcherTimer();
     #endregion
 
     public DiscordPlugin() {
       //Load UI Components and Assemblies
       AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
       InitializeComponent();
+      InitializeDebounceTimer();
 
       //Add installed voices to dropdown
       var tts = new SpeechSynthesizer();
       foreach (InstalledVoice v in tts.GetInstalledVoices())
         cmbTTS.Items.Add(v.VoiceInfo.Name);
       cmbTTS.SelectedIndex = 0;
+    }
+
+    private void InitializeDebounceTimer() {
+      statusDebounceTimer.Interval = TimeSpan.FromMilliseconds(10000);
+      statusDebounceTimer.Tick += DebounceTimer_Tick;
+    }
+
+    private async void DebounceTimer_Tick(object sender, EventArgs e) {
+      statusDebounceTimer.Stop();
+      await DiscordClient.SetGameAsync(txtBotStatus.Text);
     }
 
     #region IActPluginV1 Members
@@ -454,7 +510,6 @@ namespace ACT_DiscordTriggers {
 
     #region UI Events
     private async void btnJoin_Click(object sender, EventArgs e) {
-
       btnJoin.Enabled = false;
       if (await DiscordClient.JoinChannel(cmbServer.SelectedItem.ToString(), cmbChan.SelectedItem.ToString())) {
         btnLeave.Enabled = true;
@@ -489,18 +544,16 @@ namespace ACT_DiscordTriggers {
     }
 
     private void discordConnectbtn_Click(object sender, EventArgs e) {
-
       if (DiscordClient.IsConnected()) {
         Log("Already connected to Discord.");
         return;
       }
-      DiscordClient.InIt(txtToken.Text);
+      DiscordClient.InIt(txtToken.Text, txtBotStatus.Text);
     }
 
     private void LogList_KeyUp(object sender, KeyEventArgs e) {
       if (sender != logList)
         return;
-
 
       if (e.Control && e.KeyCode == Keys.C && logList.SelectedItems.Count > 0) {
         var builder = new StringBuilder();
@@ -511,6 +564,11 @@ namespace ACT_DiscordTriggers {
         if (clipboard.Length > 0)
           Clipboard.SetText(builder.ToString());
       }
+    }
+
+    private void txtBotStatus_TextChanged(object sender, EventArgs e) {
+       statusDebounceTimer.Stop();
+       statusDebounceTimer.Start();
     }
     #endregion
 
@@ -527,6 +585,7 @@ namespace ACT_DiscordTriggers {
       xmlSettings.AddControlSetting(sliderTTSVol.Name, sliderTTSVol);
       xmlSettings.AddControlSetting(sliderTTSSpeed.Name, sliderTTSSpeed);
       xmlSettings.AddControlSetting(chkAutoConnect.Name, chkAutoConnect);
+      xmlSettings.AddControlSetting(txtBotStatus.Name, txtBotStatus);
       if (File.Exists(settingsFile)) {
         FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         XmlTextReader xReader = new XmlTextReader(fs);
