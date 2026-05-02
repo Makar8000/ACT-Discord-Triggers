@@ -20,6 +20,12 @@ Write-Host "==> Cleaning dist\"
 if (Test-Path dist) { Remove-Item -Recurse -Force dist }
 New-Item -ItemType Directory dist | Out-Null
 
+Write-Host "==> Type-checking (tsc --noEmit)"
+# --no-install: fail loudly if `typescript` devDep is missing instead of silently
+# fetching from the registry mid-build.
+npx --no-install tsc --noEmit
+if ($LASTEXITCODE -ne 0) { Write-Error "Type check failed"; exit 1 }
+
 Write-Host "==> Bundling JS (esbuild)"
 node esbuild.config.mjs
 

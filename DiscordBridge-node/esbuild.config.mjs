@@ -21,11 +21,20 @@ const banner = `
 `;
 
 await esbuild.build({
-    entryPoints: [path.join(__dirname, 'src/bridge.js')],
+    entryPoints: [path.join(__dirname, 'src/bridge.ts')],
     bundle: true,
     platform: 'node',
     target: 'node22',
     format: 'cjs',
+    // Force CJS-flavoured resolution of conditional exports. The TS source uses
+    // ESM `import` syntax, which by default makes esbuild walk into each dep's
+    // `import` condition (e.g. @discordjs/voice's `dist/index.mjs`). Those .mjs
+    // files use `createRequire(import.meta.url)`, but in CJS output `import.meta`
+    // is `{}`, so `createRequire(undefined)` throws ERR_INVALID_ARG_VALUE at
+    // startup. The original JS source happened to use `require()`, which got the
+    // `require` condition and dodged the trap. Keep the dodge under TS by asking
+    // for it explicitly.
+    conditions: ['node', 'require'],
     outfile: path.join(__dirname, 'dist/bundle.js'),
     banner: { js: banner },
     // Native modules and packages with __dirname / require.resolve runtime tricks

@@ -4,9 +4,9 @@
   "description": "Out-of-process Discord voice bridge for ACT-Discord-Triggers (replaces .NET bridge to support DAVE E2EE)",
   "private": true,
   "type": "commonjs",
-  "main": "src/bridge.js",
+  "main": "src/bridge.ts",
   "scripts": {
-    "start": "node src/bridge.js",
+    "typecheck": "tsc --noEmit",
     "bundle": "node esbuild.config.mjs",
     "build": "powershell -ExecutionPolicy Bypass -File ./build.ps1"
   },
@@ -17,6 +17,8 @@
     "opusscript": "^0.1.1"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0"
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.3"
   }
 }
