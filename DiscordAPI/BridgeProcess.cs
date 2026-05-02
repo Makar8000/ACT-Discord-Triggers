@@ -5,6 +5,13 @@ using System.IO.Pipes;
 using System.Threading.Tasks;
 
 namespace DiscordAPI {
+    // Spawns the node bridge directly: node.exe bundle.js <pipe-name>.
+    //
+    // Lifecycle: when this process dies (clean or hard kill), the OS closes the
+    // pipe client handle, the bridge's net.Server sees socket close, and the
+    // bridge calls process.exit(0) (see DiscordBridge-node/src/bridge.ts). No
+    // intermediate launcher / Win32 Job Object is needed because there's only
+    // one child process to coordinate.
     internal class BridgeProcess : IDisposable {
         private Process process;
 
@@ -13,24 +20,29 @@ namespace DiscordAPI {
         public event Action<string> OnStderr;
         public event Action<int> OnExited;
 
-        public async Task<NamedPipeClientStream> StartAndConnectAsync(string exePath, TimeSpan? handshakeTimeout = null) {
-            if (string.IsNullOrEmpty(exePath)) {
-                throw new ArgumentException("exePath is required.", nameof(exePath));
+        public async Task<NamedPipeClientStream> StartAndConnectAsync(string bridgeDir, TimeSpan? handshakeTimeout = null) {
+            if (string.IsNullOrEmpty(bridgeDir)) {
+                throw new ArgumentException("bridgeDir is required.", nameof(bridgeDir));
             }
-            if (!File.Exists(exePath)) {
-                throw new FileNotFoundException("DiscordBridge.exe not found at: " + exePath, exePath);
+            string nodeExe = Path.Combine(bridgeDir, "node.exe");
+            string bundleJs = Path.Combine(bridgeDir, "bundle.js");
+            if (!File.Exists(nodeExe)) {
+                throw new FileNotFoundException("node.exe not found at: " + nodeExe, nodeExe);
+            }
+            if (!File.Exists(bundleJs)) {
+                throw new FileNotFoundException("bundle.js not found at: " + bundleJs, bundleJs);
             }
 
             PipeName = "act-discord-bridge-" + Guid.NewGuid().ToString("N").Substring(0, 16);
 
             var psi = new ProcessStartInfo {
-                FileName = exePath,
-                Arguments = QuoteArg(PipeName),
+                FileName = nodeExe,
+                Arguments = QuoteArg(bundleJs) + " " + QuoteArg(PipeName),
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                WorkingDirectory = Path.GetDirectoryName(exePath),
+                WorkingDirectory = bridgeDir,
             };
 
             process = new Process { StartInfo = psi, EnableRaisingEvents = true };
@@ -46,7 +58,7 @@ namespace DiscordAPI {
             };
 
             if (!process.Start()) {
-                throw new InvalidOperationException("Failed to start DiscordBridge.exe");
+                throw new InvalidOperationException("Failed to start node.exe");
             }
             process.BeginErrorReadLine();
 
@@ -58,13 +70,13 @@ namespace DiscordAPI {
                 if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
                 var done = await Task.WhenAny(lineTask, Task.Delay(remaining));
                 if (done != lineTask) {
-                    throw new TimeoutException("DiscordBridge.exe did not signal ready within " + to.TotalSeconds + "s.");
+                    throw new TimeoutException("Bridge did not signal ready within " + to.TotalSeconds + "s.");
                 }
                 string line = await lineTask;
                 if (line == null) {
                     int code = -1;
                     try { code = process.ExitCode; } catch { }
-                    throw new IOException("DiscordBridge.exe exited before handshake. Exit code: " + code);
+                    throw new IOException("Bridge exited before handshake. Exit code: " + code);
                 }
                 if (line.StartsWith("BRIDGE_READY", StringComparison.Ordinal)) {
                     var client = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
@@ -73,7 +85,7 @@ namespace DiscordAPI {
                 }
                 try { OnStderr?.Invoke(line); } catch { }
             }
-            throw new TimeoutException("DiscordBridge.exe did not signal ready within " + to.TotalSeconds + "s.");
+            throw new TimeoutException("Bridge did not signal ready within " + to.TotalSeconds + "s.");
         }
 
         public async Task WaitForExitAsync(TimeSpan timeout) {

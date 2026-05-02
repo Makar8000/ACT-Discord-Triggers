@@ -8,23 +8,25 @@ using Xunit;
 
 namespace ActDiscordTriggers.Tests {
     public class BridgeIntegrationTests {
-        private static string FindBridgeExe() {
+        private static string FindBridgeDir() {
             string testDir = Path.GetDirectoryName(typeof(BridgeIntegrationTests).Assembly.Location);
             string solDir = Path.GetFullPath(Path.Combine(testDir, "..", "..", "..", ".."));
-            string p = Path.Combine(solDir, "DiscordBridge-node", "dist", "DiscordBridge.exe");
-            if (File.Exists(p)) return p;
+            string dir = Path.Combine(solDir, "DiscordBridge-node", "dist");
+            if (File.Exists(Path.Combine(dir, "node.exe")) && File.Exists(Path.Combine(dir, "bundle.js"))) {
+                return dir;
+            }
             throw new FileNotFoundException(
-                "DiscordBridge.exe not built. Run `pwsh DiscordBridge-node\\build.ps1` first. Looked in: " + p);
+                "Bridge not built. Run `pwsh DiscordBridge-node\\build.ps1` first. Looked in: " + dir);
         }
 
         [Fact]
         public async Task Bridge_handshake_succeeds_against_real_exe() {
-            string exe = FindBridgeExe();
+            string dir = FindBridgeDir();
             using var bp = new BridgeProcess();
             var stderr = new List<string>();
             bp.OnStderr += s => { lock (stderr) stderr.Add(s); };
 
-            var pipe = await bp.StartAndConnectAsync(exe, TimeSpan.FromSeconds(15));
+            var pipe = await bp.StartAndConnectAsync(dir, TimeSpan.FromSeconds(15));
             using var pc = new PipeClient(pipe);
             pc.Start();
 
@@ -45,9 +47,9 @@ namespace ActDiscordTriggers.Tests {
 
         [Fact]
         public async Task Bridge_IsConnected_returns_false_before_Init() {
-            string exe = FindBridgeExe();
+            string dir = FindBridgeDir();
             using var bp = new BridgeProcess();
-            var pipe = await bp.StartAndConnectAsync(exe, TimeSpan.FromSeconds(15));
+            var pipe = await bp.StartAndConnectAsync(dir, TimeSpan.FromSeconds(15));
             using var pc = new PipeClient(pipe);
             pc.Start();
 
@@ -72,9 +74,9 @@ namespace ActDiscordTriggers.Tests {
 
         [Fact]
         public async Task Bridge_handshake_rejects_wrong_protocol_version() {
-            string exe = FindBridgeExe();
+            string dir = FindBridgeDir();
             using var bp = new BridgeProcess();
-            var pipe = await bp.StartAndConnectAsync(exe, TimeSpan.FromSeconds(15));
+            var pipe = await bp.StartAndConnectAsync(dir, TimeSpan.FromSeconds(15));
             using var pc = new PipeClient(pipe);
             pc.Start();
 
@@ -92,15 +94,15 @@ namespace ActDiscordTriggers.Tests {
         }
 
         [Fact]
-        public async Task BridgeProcess_with_missing_exe_throws_FileNotFoundException() {
+        public async Task BridgeProcess_with_missing_dir_throws_FileNotFoundException() {
             using var bp = new BridgeProcess();
             await Assert.ThrowsAsync<FileNotFoundException>(() =>
-                bp.StartAndConnectAsync(@"C:\definitely-not-here\DiscordBridge.exe"));
+                bp.StartAndConnectAsync(@"C:\definitely-not-here\bridge"));
         }
 
         private static async Task<(BridgeProcess bp, PipeClient pc)> StartBridgeAndHelloAsync() {
             var bp = new BridgeProcess();
-            var pipe = await bp.StartAndConnectAsync(FindBridgeExe(), TimeSpan.FromSeconds(15));
+            var pipe = await bp.StartAndConnectAsync(FindBridgeDir(), TimeSpan.FromSeconds(15));
             var pc = new PipeClient(pipe);
             pc.Start();
             await pc.SendAsync<HelloResponse>(
@@ -200,9 +202,9 @@ namespace ActDiscordTriggers.Tests {
 
         [Fact]
         public async Task Killing_bridge_breaks_pipe_and_fails_pending_requests() {
-            string exe = FindBridgeExe();
+            string dir = FindBridgeDir();
             using var bp = new BridgeProcess();
-            var pipe = await bp.StartAndConnectAsync(exe, TimeSpan.FromSeconds(15));
+            var pipe = await bp.StartAndConnectAsync(dir, TimeSpan.FromSeconds(15));
             using var pc = new PipeClient(pipe);
             pc.Start();
 

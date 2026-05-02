@@ -6,8 +6,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Banner runs before any bundled code. Teaches Node to resolve `external`
 // requires (the ones we left out of the bundle) from the node_modules folder
-// we copy next to DiscordBridge.exe at build time. Without this, SEA mode
-// treats the externals as built-in modules and throws ERR_UNKNOWN_BUILTIN_MODULE.
+// we copy next to node.exe at build time. process.execPath is dist\node.exe,
+// so dist\node_modules ends up on NODE_PATH and Node's CJS resolver finds the
+// externals there.
 const banner = `
 "use strict";
 (() => {

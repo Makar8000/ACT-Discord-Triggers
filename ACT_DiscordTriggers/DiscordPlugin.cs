@@ -400,7 +400,7 @@ namespace ACT_DiscordTriggers {
       LoadSettings();
 
       //Locate the out-of-process Discord bridge so DiscordClient knows where to spawn it
-      DiscordClient.SetBridgePath(FindBridgePath());
+      DiscordClient.SetBridgePath(FindBridgeDir());
 
       //Discord Bot Stuff
       DiscordClient.BotReady += BotReady;
@@ -424,16 +424,20 @@ namespace ACT_DiscordTriggers {
       lblStatus.Text = "Plugin Exited";
     }
 
-    private string FindBridgePath() {
+    private string FindBridgeDir() {
+      // The bridge ships as node.exe + bundle.js + node_modules/ next to the
+      // plugin DLL. We return the directory; BridgeProcess derives the two
+      // file paths from it.
       try {
         var plugin = ActGlobals.oFormActMain.PluginGetSelfData(this);
         if (plugin != null) {
           string dir = plugin.pluginFile.DirectoryName;
-          string p = Path.Combine(dir, "DiscordBridge.exe");
-          if (File.Exists(p)) return p;
+          if (File.Exists(Path.Combine(dir, "node.exe")) && File.Exists(Path.Combine(dir, "bundle.js"))) {
+            return dir;
+          }
         }
       } catch { }
-      return Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Plugins\\Discord", "DiscordBridge.exe");
+      return Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Plugins\\Discord");
     }
 
     private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args) {

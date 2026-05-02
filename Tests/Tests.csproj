@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
@@ -9,14 +9,20 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <!-- xunit 2.x line: xunit 2.9.x and xunit.runner.visualstudio 2.8.x both ship
+         net4x targets. xunit.runner.visualstudio 3.x dropped Framework support. -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <!-- DiscordAPI references System.Text.Json 10.0.7 on net48 already; match
+         it here so the linked source files use the same JSON types. -->
+    <PackageReference Include="System.Text.Json" Version="10.0.7" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="..\DiscordAPI\Protocol.cs" Link="Protocol.cs" />
     <Compile Include="..\DiscordAPI\PipeClient.cs" Link="PipeClient.cs" />
     <Compile Include="..\DiscordAPI\BridgeProcess.cs" Link="BridgeProcess.cs" />

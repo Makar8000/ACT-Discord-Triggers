@@ -1,9 +1,10 @@
 // integration_test.js — drive the built bridge via IPC against a real Discord bot.
 //
-// Spawns dist/DiscordBridge.exe, connects to its named pipe, runs through the
-// full op set (Hello/Init/GetServers/GetChannels/JoinChannel/SpeakPcm/Leave/Shutdown),
-// asserts each response shape is correct, and verifies the bot stays connected
-// for the regression-test window (60+ seconds with audio firing).
+// Spawns dist/node.exe with dist/bundle.js, connects to its named pipe, runs
+// through the full op set (Hello/Init/GetServers/GetChannels/JoinChannel/
+// SpeakPcm/Leave/Shutdown), asserts each response shape is correct, and verifies
+// the bot stays connected for the regression-test window (60+ seconds with
+// audio firing).
 //
 // Required env: BOT_TOKEN, GUILD_NAME, CHANNEL_NAME (note: NAMES, not IDs —
 // the IPC contract speaks in human-readable names like the plugin UI).
@@ -26,7 +27,8 @@ if (!TOKEN || !GUILD || !CHANNEL) {
     process.exit(1);
 }
 
-const EXE = path.resolve(__dirname, '..', 'dist', 'DiscordBridge.exe');
+const NODE_EXE = path.resolve(__dirname, '..', 'dist', 'node.exe');
+const BUNDLE_JS = path.resolve(__dirname, '..', 'dist', 'bundle.js');
 const PIPE_NAME = 'integration-test-' + Math.floor(Math.random() * 1e9);
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
 
@@ -105,8 +107,8 @@ function assertEq(label, actual, expected) {
 }
 
 (async () => {
-    log('Spawning bridge:', EXE, PIPE_NAME);
-    const proc = spawn(EXE, [PIPE_NAME], { stdio: ['ignore', 'pipe', 'pipe'] });
+    log('Spawning bridge:', NODE_EXE, BUNDLE_JS, PIPE_NAME);
+    const proc = spawn(NODE_EXE, [BUNDLE_JS, PIPE_NAME], { stdio: ['ignore', 'pipe', 'pipe'] });
 
     const stderr = readline.createInterface({ input: proc.stderr });
     stderr.on('line', (line) => log('bridge stderr:', line));

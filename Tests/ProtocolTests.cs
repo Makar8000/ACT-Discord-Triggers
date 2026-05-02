@@ -100,10 +100,10 @@ namespace ActDiscordTriggers.Tests {
 
         [Fact]
         public void Every_request_op_has_a_paired_result_op() {
-            var ops = typeof(Op).GetFields()
-                .Where(f => f.IsLiteral && f.FieldType == typeof(string))
-                .Select(f => (string)f.GetValue(null))
-                .ToHashSet();
+            var ops = new System.Collections.Generic.HashSet<string>(
+                typeof(Op).GetFields()
+                    .Where(f => f.IsLiteral && f.FieldType == typeof(string))
+                    .Select(f => (string)f.GetValue(null)));
             string[] requestsExpectingResult = {
                 Op.Hello, Op.Init, Op.Deinit, Op.IsConnected,
                 Op.GetServers, Op.GetChannels, Op.SetGame,

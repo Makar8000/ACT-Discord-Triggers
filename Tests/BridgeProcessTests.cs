@@ -6,19 +6,21 @@ using Xunit;
 
 namespace ActDiscordTriggers.Tests {
     public class BridgeProcessTests {
-        private static string FindBridgeExe() {
+        private static string FindBridgeDir() {
             string testDir = Path.GetDirectoryName(typeof(BridgeProcessTests).Assembly.Location);
             string solDir = Path.GetFullPath(Path.Combine(testDir, "..", "..", "..", ".."));
-            string p = Path.Combine(solDir, "DiscordBridge-node", "dist", "DiscordBridge.exe");
-            if (File.Exists(p)) return p;
+            string dir = Path.Combine(solDir, "DiscordBridge-node", "dist");
+            if (File.Exists(Path.Combine(dir, "node.exe")) && File.Exists(Path.Combine(dir, "bundle.js"))) {
+                return dir;
+            }
             throw new FileNotFoundException(
-                "DiscordBridge.exe not built. Run `pwsh DiscordBridge-node\\build.ps1` first. Looked in: " + p);
+                "Bridge not built. Run `pwsh DiscordBridge-node\\build.ps1` first. Looked in: " + dir);
         }
 
         [Fact]
         public async Task Kill_is_idempotent() {
             using var bp = new BridgeProcess();
-            await bp.StartAndConnectAsync(FindBridgeExe(), TimeSpan.FromSeconds(15));
+            await bp.StartAndConnectAsync(FindBridgeDir(), TimeSpan.FromSeconds(15));
 
             bp.Kill();
             await bp.WaitForExitAsync(TimeSpan.FromSeconds(5));
@@ -33,7 +35,7 @@ namespace ActDiscordTriggers.Tests {
         [Fact]
         public async Task HasExited_returns_true_after_Kill() {
             using var bp = new BridgeProcess();
-            await bp.StartAndConnectAsync(FindBridgeExe(), TimeSpan.FromSeconds(15));
+            await bp.StartAndConnectAsync(FindBridgeDir(), TimeSpan.FromSeconds(15));
             Assert.False(bp.HasExited);
 
             bp.Kill();
@@ -44,7 +46,7 @@ namespace ActDiscordTriggers.Tests {
         [Fact]
         public async Task WaitForExitAsync_returns_immediately_when_already_exited() {
             using var bp = new BridgeProcess();
-            await bp.StartAndConnectAsync(FindBridgeExe(), TimeSpan.FromSeconds(15));
+            await bp.StartAndConnectAsync(FindBridgeDir(), TimeSpan.FromSeconds(15));
             bp.Kill();
             await bp.WaitForExitAsync(TimeSpan.FromSeconds(5));
 
@@ -63,7 +65,7 @@ namespace ActDiscordTriggers.Tests {
             var tcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
             bp.OnExited += code => { exitCode = code; tcs.TrySetResult(code); };
 
-            await bp.StartAndConnectAsync(FindBridgeExe(), TimeSpan.FromSeconds(15));
+            await bp.StartAndConnectAsync(FindBridgeDir(), TimeSpan.FromSeconds(15));
             bp.Kill();
 
             int got = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -75,8 +77,8 @@ namespace ActDiscordTriggers.Tests {
             using var bp1 = new BridgeProcess();
             using var bp2 = new BridgeProcess();
             try {
-                await bp1.StartAndConnectAsync(FindBridgeExe(), TimeSpan.FromSeconds(15));
-                await bp2.StartAndConnectAsync(FindBridgeExe(), TimeSpan.FromSeconds(15));
+                await bp1.StartAndConnectAsync(FindBridgeDir(), TimeSpan.FromSeconds(15));
+                await bp2.StartAndConnectAsync(FindBridgeDir(), TimeSpan.FromSeconds(15));
                 Assert.NotNull(bp1.PipeName);
                 Assert.NotNull(bp2.PipeName);
                 Assert.NotEqual(bp1.PipeName, bp2.PipeName);

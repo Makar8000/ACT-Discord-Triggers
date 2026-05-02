@@ -11,7 +11,7 @@ namespace DiscordAPI {
     public static class DiscordClient {
         private static PipeClient pipeClient;
         private static BridgeProcess bridge;
-        private static string bridgePath;
+        private static string bridgeDir;
         private static readonly object lifecycleLock = new object();
 
         private static readonly SpeechAudioFormatInfo formatInfo =
@@ -23,8 +23,8 @@ namespace DiscordAPI {
         public delegate void BotMessage(string message);
         public static BotMessage Log;
 
-        public static void SetBridgePath(string path) {
-            bridgePath = path;
+        public static void SetBridgePath(string dir) {
+            bridgeDir = dir;
         }
 
         public static async void InIt(string logintoken, string botstatus) {
@@ -35,23 +35,23 @@ namespace DiscordAPI {
                         return;
                     }
                 }
-                if (string.IsNullOrEmpty(bridgePath)) {
-                    Log?.Invoke("DiscordBridge.exe path not configured. Internal error.");
+                if (string.IsNullOrEmpty(bridgeDir)) {
+                    Log?.Invoke("Bridge directory not configured. Internal error.");
                     return;
                 }
 
                 BridgeProcess localBridge = new BridgeProcess();
                 localBridge.OnStderr += msg => Log?.Invoke("[bridge] " + msg);
                 localBridge.OnExited += code => {
-                    Log?.Invoke($"DiscordBridge.exe exited (code {code}).");
+                    Log?.Invoke($"Bridge process exited (code {code}).");
                     CleanupAfterPipeBroken();
                 };
 
                 NamedPipeClientStream pipe;
                 try {
-                    pipe = await localBridge.StartAndConnectAsync(bridgePath);
+                    pipe = await localBridge.StartAndConnectAsync(bridgeDir);
                 } catch (Exception ex) {
-                    Log?.Invoke("Failed to start DiscordBridge: " + ex.Message);
+                    Log?.Invoke("Failed to start bridge: " + ex.Message);
                     try { localBridge.Dispose(); } catch { }
                     return;
                 }

@@ -8,7 +8,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "bundle": "node esbuild.config.mjs",
-    "build": "powershell -ExecutionPolicy Bypass -File ./build.ps1",
     "test": "node --import tsx --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
