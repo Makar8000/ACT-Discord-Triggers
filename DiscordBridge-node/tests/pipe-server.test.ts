@@ -7,7 +7,7 @@ import { PROTOCOL_VERSION, MAX_FRAME_BYTES } from '../src/protocol.js';
 import pkg from '../package.json' with { type: 'json' };
 import { FakeSocket } from './helpers/fake-socket.js';
 import { FakeHost } from './helpers/fake-host.js';
-import { encodeFrame, decodeFrames, lenPrefix } from './helpers/frame.js';
+import { encodeFrame, decodeFrames, lenPrefix, encodeBinarySpeakPcmFrame } from './helpers/frame.js';
 
 interface Harness {
     sock: FakeSocket;
@@ -281,20 +281,56 @@ test('LeaveChannel: invokes host.leaveChannel; LeaveChannelResult ok=true', asyn
     assert.ok(host.calls.some((c) => c.method === 'leaveChannel'));
 });
 
-test('SpeakPcm: base64 payload decodes to byte-equal Buffer at host', async () => {
+test('SpeakPcm: binary frame decodes to byte-equal Buffer at host', async () => {
     const { sock, host } = makeHarness();
     host.nextSpeakPcm({ ok: true, error: '' });
     const pcm = Buffer.from([0xde, 0xad, 0xbe, 0xef, 0x00, 0x01, 0x02, 0x03]);
-    sock.emit('data', encodeFrame({
-        op: Op.SpeakPcm, reqId: 130, pcm: pcm.toString('base64'),
-    }));
+    sock.emit('data', encodeBinarySpeakPcmFrame(130, pcm));
     const [frame] = await waitForFrames(sock, 1);
     assert.equal(frame!['op'], Op.SpeakResult);
+    assert.equal(frame!['reqId'], 130);
     assert.equal(frame!['ok'], true);
     const call = host.calls.find((c) => c.method === 'speakPcm');
     assert.ok(call);
     assert.ok(Buffer.isBuffer(call.args[0]));
     assert.equal(Buffer.compare(call.args[0] as Buffer, pcm), 0);
+});
+
+test('SpeakPcm: binary frame split byte-by-byte still dispatches correctly', async () => {
+    const { sock, host } = makeHarness();
+    host.nextSpeakPcm({ ok: true, error: '' });
+    const pcm = Buffer.from([0x11, 0x22, 0x33, 0x44]);
+    const wire = encodeBinarySpeakPcmFrame(7, pcm);
+    for (const b of wire) sock.emit('data', Buffer.from([b]));
+    const [frame] = await waitForFrames(sock, 1);
+    assert.equal(frame!['op'], Op.SpeakResult);
+    assert.equal(frame!['reqId'], 7);
+    const call = host.calls.find((c) => c.method === 'speakPcm');
+    assert.ok(call);
+    assert.equal(Buffer.compare(call.args[0] as Buffer, pcm), 0);
+});
+
+test('SpeakFile: path passes through to host; SpeakResult ok=true', async () => {
+    const { sock, host } = makeHarness();
+    host.nextSpeakFile({ ok: true, error: '' });
+    sock.emit('data', encodeFrame({ op: Op.SpeakFile, reqId: 140, path: 'C:\\sounds\\beep.wav' }));
+    const [frame] = await waitForFrames(sock, 1);
+    assert.equal(frame!['op'], Op.SpeakResult);
+    assert.equal(frame!['reqId'], 140);
+    assert.equal(frame!['ok'], true);
+    const call = host.calls.find((c) => c.method === 'speakFile');
+    assert.ok(call);
+    assert.deepEqual(call.args, ['C:\\sounds\\beep.wav']);
+});
+
+test('SpeakFile: host error echoed via SpeakResult', async () => {
+    const { sock, host } = makeHarness();
+    host.nextSpeakFile({ ok: false, error: 'WAV must be 48 kHz / 16-bit / stereo PCM' });
+    sock.emit('data', encodeFrame({ op: Op.SpeakFile, reqId: 141, path: 'bad.wav' }));
+    const [frame] = await waitForFrames(sock, 1);
+    assert.equal(frame!['op'], Op.SpeakResult);
+    assert.equal(frame!['ok'], false);
+    assert.match(String(frame!['error']), /48 kHz/);
 });
 
 test('Unknown op: emits Log notification with no reqId, level=Error', async () => {
@@ -344,16 +380,13 @@ test('Handler throws: emits Log + synthesized {Op}Result with ok=false', async (
     assert.equal(frames[1]!['error'], 'init blew up');
 });
 
-test('Handler throws on SpeakPcm: synthesized error frame uses Op.SpeakResult, not SpeakPcmResult', async () => {
-    // SpeakPcm is the only request whose success op (SpeakResult) doesn't follow
-    // the `<Request>Result` pattern. The catch path must mirror that, otherwise
-    // any future op-keyed dispatcher (instead of reqId-keyed) silently breaks.
+test('Handler throws on SpeakPcm binary frame: synthesized error frame uses Op.SpeakResult', async () => {
+    // SpeakPcm responds with SpeakResult (not "SpeakPcmResult") on both success
+    // and error paths. The binary-frame catch must keep that asymmetry so any
+    // op-keyed dispatcher (instead of reqId-keyed) still matches.
     const { sock, host } = makeHarness();
     host.speakPcmThrows(new Error('player crashed'));
-    sock.emit('data', encodeFrame({
-        op: Op.SpeakPcm, reqId: 300,
-        pcm: Buffer.from('ignored').toString('base64'),
-    }));
+    sock.emit('data', encodeBinarySpeakPcmFrame(300, Buffer.from('ignored')));
     const frames = await waitForFrames(sock, 2);
     assert.equal(frames[0]!['op'], Op.Log);
     assert.equal(frames[0]!['level'], 'Error');
@@ -362,6 +395,32 @@ test('Handler throws on SpeakPcm: synthesized error frame uses Op.SpeakResult, n
     assert.equal(frames[1]!['reqId'], 300);
     assert.equal(frames[1]!['ok'], false);
     assert.equal(frames[1]!['error'], 'player crashed');
+});
+
+test('Handler throws on SpeakFile: synthesized error frame uses Op.SpeakResult, not SpeakFileResult', async () => {
+    const { sock, host } = makeHarness();
+    host.speakFileThrows(new Error('disk on fire'));
+    sock.emit('data', encodeFrame({ op: Op.SpeakFile, reqId: 301, path: 'whatever.wav' }));
+    const frames = await waitForFrames(sock, 2);
+    assert.equal(frames[0]!['op'], Op.Log);
+    assert.equal(frames[1]!['op'], Op.SpeakResult);
+    assert.notEqual(frames[1]!['op'], 'SpeakFileResult');
+    assert.equal(frames[1]!['reqId'], 301);
+    assert.equal(frames[1]!['ok'], false);
+    assert.equal(frames[1]!['error'], 'disk on fire');
+});
+
+test('Frame parser: unknown frame marker is dropped without tearing the pipe down', async () => {
+    const { sock, host } = makeHarness();
+    // Length=4, payload starts with 0xFF — neither JSON nor binary SpeakPcm.
+    const bad = Buffer.concat([lenPrefix(4), Buffer.from([0xff, 0x00, 0x00, 0x00])]);
+    const good = encodeFrame({ op: Op.Hello, reqId: 1, protocolVersion: PROTOCOL_VERSION });
+    sock.emit('data', Buffer.concat([bad, good]));
+    const [frame] = await waitForFrames(sock, 1);
+    assert.equal(frame!['op'], Op.HelloResult);
+    assert.equal(sock.destroyed, false);
+    // host should NOT have received a speakPcm call from the dropped frame
+    assert.equal(host.calls.find((c) => c.method === 'speakPcm'), undefined);
 });
 
 test('Handler throws with reqId=null: only Log frame, no synthesized result', async () => {

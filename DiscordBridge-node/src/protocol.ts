@@ -1,8 +1,30 @@
 // Wire protocol mirror of DiscordAPI/Protocol.cs. Keep both sides in sync.
 // PROTOCOL_VERSION here must match ProtocolConstants.Version on the C# side.
+//
+// Two frame shapes share the outer 4-byte LE length prefix; the first byte of
+// the payload tells them apart:
+//
+//   0x7B ('{')  → UTF-8 JSON, dispatched by op string. Used for everything
+//                 except SpeakPcm.
+//   0x01        → Binary SpeakPcm, plugin → bridge only:
+//                   [0x01]
+//                   [reqId u32 LE]
+//                   [sampleRate u32 LE]
+//                   [bits u8]
+//                   [channels u8]
+//                   [raw PCM bytes...]   // remainder of payload
+//                 Header is 11 bytes. Response is JSON `SpeakResult` with the
+//                 matching reqId.
+//
+// SpeakFile is a normal JSON op carrying a file path; the bridge opens and
+// streams the file itself (must be 48 kHz / 16-bit / stereo PCM WAV).
 
 export const PROTOCOL_VERSION = 1 as const;
 export const MAX_FRAME_BYTES = 64 * 1024 * 1024;
+
+export const FRAME_JSON_MARKER = 0x7B; // '{'
+export const FRAME_BINARY_SPEAK_PCM = 0x01;
+export const BINARY_SPEAK_PCM_HEADER_BYTES = 11;
 
 export const Op = {
     Hello: 'Hello', HelloResult: 'HelloResult',
@@ -14,7 +36,9 @@ export const Op = {
     SetGame: 'SetGame', SetGameResult: 'SetGameResult',
     JoinChannel: 'JoinChannel', JoinChannelResult: 'JoinChannelResult',
     LeaveChannel: 'LeaveChannel', LeaveChannelResult: 'LeaveChannelResult',
-    SpeakPcm: 'SpeakPcm', SpeakResult: 'SpeakResult',
+    SpeakPcm: 'SpeakPcm',
+    SpeakFile: 'SpeakFile',
+    SpeakResult: 'SpeakResult',
     Shutdown: 'Shutdown',
     BotReady: 'BotReady', Log: 'Log', Disconnected: 'Disconnected',
 } as const;
@@ -36,19 +60,13 @@ export interface GetChannelsRequest  extends BaseRequest { op: 'GetChannels'; se
 export interface SetGameRequest      extends BaseRequest { op: 'SetGame'; text: string }
 export interface JoinChannelRequest  extends BaseRequest { op: 'JoinChannel'; server: string; channel: string }
 export interface LeaveChannelRequest extends BaseRequest { op: 'LeaveChannel' }
-export interface SpeakPcmRequest     extends BaseRequest {
-    op: 'SpeakPcm';
-    pcm: string;
-    sampleRate?: number;
-    bits?: number;
-    channels?: number;
-}
+export interface SpeakFileRequest    extends BaseRequest { op: 'SpeakFile'; path: string }
 export interface ShutdownRequest     extends BaseRequest { op: 'Shutdown' }
 
 export type Request =
     | HelloRequest | InitRequest | DeinitRequest | IsConnectedRequest
     | GetServersRequest | GetChannelsRequest | SetGameRequest
-    | JoinChannelRequest | LeaveChannelRequest | SpeakPcmRequest | ShutdownRequest;
+    | JoinChannelRequest | LeaveChannelRequest | SpeakFileRequest | ShutdownRequest;
 
 export interface HelloResponse        { op: 'HelloResult';        reqId: ReqId; ok: boolean; bridgeVersion: string; error: string }
 export interface InitResponse         { op: 'InitResult';         reqId: ReqId; ok: boolean; error: string }

@@ -1,6 +1,6 @@
 using DiscordBridge.Protocol;
-using NAudio.Wave;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Speech.AudioFormat;
@@ -226,6 +226,7 @@ namespace DiscordAPI {
         }
 
         public static void Speak(string text, string voice, int vol, int speed) {
+            var swSynth = Stopwatch.StartNew();
             byte[] pcm;
             try {
                 using (var tts = new SpeechSynthesizer())
@@ -241,24 +242,34 @@ namespace DiscordAPI {
                 Log?.Invoke("TTS synthesis failed: " + ex.Message);
                 return;
             }
+            swSynth.Stop();
+            var swIpc = Stopwatch.StartNew();
             SendSpeakPcm(pcm);
+            swIpc.Stop();
+            Log?.Invoke($"Speak timing: synth={swSynth.ElapsedMilliseconds}ms ipc={swIpc.ElapsedMilliseconds}ms bytes={pcm.Length}");
         }
 
         public static void SpeakFile(string path) {
-            byte[] pcm;
-            try {
-                using (var wav = new WaveFileReader(path))
-                using (var pcmStream = WaveFormatConversionStream.CreatePcmStream(wav))
-                using (var resampled = new WaveFormatConversionStream(new WaveFormat(48000, 16, 2), pcmStream))
-                using (var ms = new MemoryStream()) {
-                    resampled.CopyTo(ms);
-                    pcm = ms.ToArray();
-                }
-            } catch (Exception ex) {
-                Log?.Invoke("Unable to read file: " + ex.Message);
+            var pc = pipeClient;
+            if (pc == null) {
+                Log?.Invoke("Cannot play file: bridge not connected.");
                 return;
             }
-            SendSpeakPcm(pcm);
+            var sw = Stopwatch.StartNew();
+            try {
+                var resp = Task.Run(() => pc.SendAsync<OkResponse>(
+                    new SpeakFileRequest { Path = path },
+                    TimeSpan.FromSeconds(30)))
+                    .GetAwaiter().GetResult();
+                sw.Stop();
+                if (!resp.Ok && !string.IsNullOrEmpty(resp.Error)) {
+                    Log?.Invoke("Bridge file rejected: " + resp.Error);
+                } else {
+                    Log?.Invoke($"SpeakFile timing: ipc={sw.ElapsedMilliseconds}ms");
+                }
+            } catch (Exception ex) {
+                Log?.Invoke("SpeakFile error: " + ex.Message);
+            }
         }
 
         private static void SendSpeakPcm(byte[] pcm) {
@@ -268,9 +279,7 @@ namespace DiscordAPI {
                 return;
             }
             try {
-                var resp = Task.Run(() => pc.SendAsync<OkResponse>(
-                    new SpeakPcmRequest { Pcm = Convert.ToBase64String(pcm) },
-                    TimeSpan.FromSeconds(30)))
+                var resp = Task.Run(() => pc.SendSpeakPcmAsync(pcm, 48000, 16, 2, TimeSpan.FromSeconds(30)))
                     .GetAwaiter().GetResult();
                 if (!resp.Ok && !string.IsNullOrEmpty(resp.Error)) {
                     Log?.Invoke("Bridge audio rejected: " + resp.Error);

@@ -5,6 +5,9 @@ import {
     Op,
     PROTOCOL_VERSION,
     MAX_FRAME_BYTES,
+    FRAME_JSON_MARKER,
+    FRAME_BINARY_SPEAK_PCM,
+    BINARY_SPEAK_PCM_HEADER_BYTES,
     type Notification,
     type OpName,
     type OutboundFrame,
@@ -32,6 +35,7 @@ export interface Host {
     joinChannel(serverName: string, channelName: string): Promise<OpResult>;
     leaveChannel(): Promise<void>;
     speakPcm(pcmBuffer: Buffer): OpResult;
+    speakFile(path: string): Promise<OpResult>;
 }
 
 interface IncomingMessage {
@@ -99,13 +103,46 @@ export class PipeServer {
             if (this.readBuf.length < 4 + len) return;
             const payload = this.readBuf.subarray(4, 4 + len);
             this.readBuf = this.readBuf.subarray(4 + len);
-            const json = payload.toString('utf8');
+            const first = payload[0];
             // Fire-and-forget so a slow handler doesn't block reads.
-            this._handleFrame(json).catch((e: unknown) => log.error('handler crash', e));
+            if (first === FRAME_JSON_MARKER) {
+                this._handleJsonFrame(payload.toString('utf8'))
+                    .catch((e: unknown) => log.error('json handler crash', e));
+            } else if (first === FRAME_BINARY_SPEAK_PCM) {
+                // Copy out of the read buffer slice so subsequent reads don't
+                // overwrite the bytes the audio player is holding onto.
+                const frame = Buffer.from(payload);
+                this._handleBinarySpeakPcm(frame)
+                    .catch((e: unknown) => log.error('binary handler crash', e));
+            } else {
+                log.error(`unknown frame marker 0x${(first ?? 0).toString(16)}; dropping`);
+            }
         }
     }
 
-    private async _handleFrame(json: string): Promise<void> {
+    private async _handleBinarySpeakPcm(payload: Buffer): Promise<void> {
+        if (payload.length < BINARY_SPEAK_PCM_HEADER_BYTES) {
+            log.error(`binary SpeakPcm frame too short: ${payload.length} bytes`);
+            return;
+        }
+        const reqId = payload.readUInt32LE(1);
+        const sampleRate = payload.readUInt32LE(5);
+        const bits = payload.readUInt8(9);
+        const channels = payload.readUInt8(10);
+        const pcm = payload.subarray(BINARY_SPEAK_PCM_HEADER_BYTES);
+        log.info(`--> SpeakPcm reqId=${reqId} pcmBytes=${pcm.length} fmt=${sampleRate}/${bits}/${channels}`);
+        try {
+            const r = this.host.speakPcm(pcm);
+            await this._sendFrame({ op: Op.SpeakResult, reqId, ok: r.ok, error: r.error });
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            log.error(`SpeakPcm handler threw: ${message}`);
+            await this._sendFrame({ op: Op.Log, level: 'Error', message: `Handler 'SpeakPcm' threw: ${message}` });
+            await this._sendFrame({ op: Op.SpeakResult, reqId, ok: false, error: message });
+        }
+    }
+
+    private async _handleJsonFrame(json: string): Promise<void> {
         let op = '?';
         let reqId: ReqId = null;
         try {
@@ -170,9 +207,8 @@ export class PipeServer {
                     await this._sendFrame({ op: Op.LeaveChannelResult, reqId, ok: true, error: '' });
                     break;
                 }
-                case Op.SpeakPcm: {
-                    const pcm = Buffer.from(asString(parsed['pcm']), 'base64');
-                    const r = this.host.speakPcm(pcm);
+                case Op.SpeakFile: {
+                    const r = await this.host.speakFile(asString(parsed['path']));
                     await this._sendFrame({ op: Op.SpeakResult, reqId, ok: r.ok, error: r.error });
                     break;
                 }
@@ -194,10 +230,10 @@ export class PipeServer {
                 const message = e instanceof Error ? e.message : String(e);
                 await this._sendFrame({ op: Op.Log, level: 'Error', message: `Handler '${op}' threw: ${message}` });
                 if (reqId !== null) {
-                    // SpeakPcm's success op is `SpeakResult`, not `SpeakPcmResult`. Keep the
+                    // SpeakFile's success op is `SpeakResult`, not `SpeakFileResult`. Keep the
                     // error frame symmetric with the success path so dispatchers that key on
                     // `op` (not just reqId) still match.
-                    const resultOp: OpName = op === Op.SpeakPcm ? Op.SpeakResult : ((op + 'Result') as OpName);
+                    const resultOp: OpName = op === Op.SpeakFile ? Op.SpeakResult : ((op + 'Result') as OpName);
                     await this._sendFrame({ op: resultOp, reqId, ok: false, error: message });
                 }
             } catch { /* ignore */ }

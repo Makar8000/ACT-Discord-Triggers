@@ -149,8 +149,20 @@ namespace ActDiscordTriggers.Tests {
             var (bp, pc) = await StartBridgeAndHelloAsync();
             try {
                 byte[] pcm = new byte[1024];
+                var resp = await pc.SendSpeakPcmAsync(pcm, 48000, 16, 2, TimeSpan.FromSeconds(3));
+                Assert.False(resp.Ok);
+                Assert.Contains("Not connected", resp.Error, StringComparison.OrdinalIgnoreCase);
+            } finally {
+                await ShutdownBridgeAsync(bp, pc);
+            }
+        }
+
+        [Fact]
+        public async Task SpeakFile_without_join_returns_not_connected_error() {
+            var (bp, pc) = await StartBridgeAndHelloAsync();
+            try {
                 var resp = await pc.SendAsync<OkResponse>(
-                    new SpeakPcmRequest { Pcm = Convert.ToBase64String(pcm) },
+                    new SpeakFileRequest { Path = @"C:\does-not-matter.wav" },
                     TimeSpan.FromSeconds(3));
                 Assert.False(resp.Ok);
                 Assert.Contains("Not connected", resp.Error, StringComparison.OrdinalIgnoreCase);

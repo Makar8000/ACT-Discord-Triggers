@@ -26,6 +26,7 @@ namespace DiscordBridge.Protocol {
         public const string LeaveChannel = "LeaveChannel";
         public const string LeaveChannelResult = "LeaveChannelResult";
         public const string SpeakPcm = "SpeakPcm";
+        public const string SpeakFile = "SpeakFile";
         public const string SpeakResult = "SpeakResult";
         public const string Shutdown = "Shutdown";
 
@@ -124,13 +125,15 @@ namespace DiscordBridge.Protocol {
         [JsonPropertyName("error")] public string Error { get; set; } = "";
     }
 
-    public class SpeakPcmRequest {
-        [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.SpeakPcm;
+    // SpeakPcm is sent as a length-prefixed BINARY frame, not JSON.
+    // See PipeClient.SendSpeakPcmAsync / pipe-server.ts _handleBinarySpeakPcm.
+    // Layout (after the outer 4-byte LE length): [0x01][reqId u32 LE][sampleRate u32 LE][bits u8][channels u8][raw PCM...]
+    // Response stays JSON: { op:"SpeakResult", reqId, ok, error }.
+
+    public class SpeakFileRequest {
+        [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.SpeakFile;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
-        [JsonPropertyName("pcm")] public string Pcm { get; set; } = "";
-        [JsonPropertyName("sampleRate")] public int SampleRate { get; set; } = 48000;
-        [JsonPropertyName("bits")] public int Bits { get; set; } = 16;
-        [JsonPropertyName("channels")] public int Channels { get; set; } = 2;
+        [JsonPropertyName("path")] public string Path { get; set; } = "";
     }
 
     public class OkResponse {
