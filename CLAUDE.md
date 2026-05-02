@@ -17,6 +17,13 @@ pwsh ./build.ps1
 ```
 `build.ps1` runs `tsc --noEmit` first as a type-check gate (fails fast on type errors before paying for bundle/publish), then bundles TS via esbuild, publishes the launcher (self-contained single-file, **not** AOT — see `launcher/launcher.csproj`), copies `node.exe` from the current PATH, stages externals into `dist/node_modules/`, then spawns the bridge and asserts `BRIDGE_READY` appears on stdout. The self-test catches packaging regressions; **do not skip or weaken it**.
 
+Bridge tests (Node, `node:test` via `tsx`):
+```
+cd DiscordBridge-node
+npm test
+```
+Covers protocol invariants, frame parsing, op dispatch (against a `FakeHost` and a `FakeSocket`), and a Windows-only lifecycle suite that spawns `tsx src/bridge.ts` and exercises the real handshake/Shutdown/peer-disconnect paths. Independent of `build.ps1` — does not need `dist/`. The lifecycle tests no-op (skip) on non-Windows because the bridge uses Windows named pipes.
+
 Tests (net10, xUnit):
 ```
 dotnet test Tests/Tests.csproj

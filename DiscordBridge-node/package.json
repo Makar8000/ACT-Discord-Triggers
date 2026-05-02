@@ -8,7 +8,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "bundle": "node esbuild.config.mjs",
-    "build": "powershell -ExecutionPolicy Bypass -File ./build.ps1"
+    "build": "powershell -ExecutionPolicy Bypass -File ./build.ps1",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "esbuild": "^0.24.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.6.3"
   }
 }
