@@ -486,6 +486,9 @@ namespace ACT_DiscordTriggers {
     }
 
     private void BotReady() {
+      // PipeClient delivers notifications on a thread-pool thread (see PipeClient.DispatchFrame).
+      // Marshal back to the UI thread before touching controls.
+      if (InvokeRequired) { BeginInvoke(new Action(BotReady)); return; }
       btnJoin.Enabled = true;
       populateServers();
     }
@@ -593,6 +596,8 @@ namespace ACT_DiscordTriggers {
 
     #region Settings
     public void Log(string text) {
+      // Bridge log/disconnect/exit callbacks all funnel here from a thread-pool thread.
+      if (InvokeRequired) { BeginInvoke(new Action<string>(Log), text); return; }
       string[] row = new string[2];
       row[0] = DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToLongTimeString();
       row[1] = text;

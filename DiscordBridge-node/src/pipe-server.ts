@@ -194,9 +194,11 @@ export class PipeServer {
                 const message = e instanceof Error ? e.message : String(e);
                 await this._sendFrame({ op: Op.Log, level: 'Error', message: `Handler '${op}' threw: ${message}` });
                 if (reqId !== null) {
-                    // Synthesize *Result op for the catch-all error response. The wire shape
-                    // matches OkResponse on the C# side regardless of which op produced it.
-                    await this._sendFrame({ op: (op + 'Result') as OpName, reqId, ok: false, error: message });
+                    // SpeakPcm's success op is `SpeakResult`, not `SpeakPcmResult`. Keep the
+                    // error frame symmetric with the success path so dispatchers that key on
+                    // `op` (not just reqId) still match.
+                    const resultOp: OpName = op === Op.SpeakPcm ? Op.SpeakResult : ((op + 'Result') as OpName);
+                    await this._sendFrame({ op: resultOp, reqId, ok: false, error: message });
                 }
             } catch { /* ignore */ }
         }

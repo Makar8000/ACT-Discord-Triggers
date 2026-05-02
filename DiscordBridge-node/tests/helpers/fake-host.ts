@@ -24,6 +24,7 @@ export class FakeHost implements Host {
     private _initThrows: Error | null = null;
     private _joinThrows: Error | null = null;
     private _setGameThrows: Error | null = null;
+    private _speakPcmThrows: Error | null = null;
 
     setNotifier(fn: Notifier): void {
         this.calls.push({ method: 'setNotifier', args: [] });
@@ -72,6 +73,7 @@ export class FakeHost implements Host {
 
     speakPcm(pcmBuffer: Buffer): OpResult {
         this.calls.push({ method: 'speakPcm', args: [pcmBuffer] });
+        if (this._speakPcmThrows) throw this._speakPcmThrows;
         return this._nextSpeakPcm;
     }
 
@@ -85,6 +87,7 @@ export class FakeHost implements Host {
     initThrows(err: Error): void { this._initThrows = err; }
     joinChannelThrows(err: Error): void { this._joinThrows = err; }
     setGameThrows(err: Error): void { this._setGameThrows = err; }
+    speakPcmThrows(err: Error): void { this._speakPcmThrows = err; }
 
     fireNotification(n: Notification): void {
         if (this.notify) this.notify(n);

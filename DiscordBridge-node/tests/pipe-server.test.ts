@@ -344,6 +344,26 @@ test('Handler throws: emits Log + synthesized {Op}Result with ok=false', async (
     assert.equal(frames[1]!['error'], 'init blew up');
 });
 
+test('Handler throws on SpeakPcm: synthesized error frame uses Op.SpeakResult, not SpeakPcmResult', async () => {
+    // SpeakPcm is the only request whose success op (SpeakResult) doesn't follow
+    // the `<Request>Result` pattern. The catch path must mirror that, otherwise
+    // any future op-keyed dispatcher (instead of reqId-keyed) silently breaks.
+    const { sock, host } = makeHarness();
+    host.speakPcmThrows(new Error('player crashed'));
+    sock.emit('data', encodeFrame({
+        op: Op.SpeakPcm, reqId: 300,
+        pcm: Buffer.from('ignored').toString('base64'),
+    }));
+    const frames = await waitForFrames(sock, 2);
+    assert.equal(frames[0]!['op'], Op.Log);
+    assert.equal(frames[0]!['level'], 'Error');
+    assert.equal(frames[1]!['op'], Op.SpeakResult);
+    assert.notEqual(frames[1]!['op'], 'SpeakPcmResult');
+    assert.equal(frames[1]!['reqId'], 300);
+    assert.equal(frames[1]!['ok'], false);
+    assert.equal(frames[1]!['error'], 'player crashed');
+});
+
 test('Handler throws with reqId=null: only Log frame, no synthesized result', async () => {
     const { sock, host } = makeHarness();
     host.initThrows(new Error('boom'));
