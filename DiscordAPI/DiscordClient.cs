@@ -1,199 +1,283 @@
-﻿using Discord;
-using Discord.Audio;
-using Discord.WebSocket;
+using DiscordBridge.Protocol;
 using NAudio.Wave;
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipes;
 using System.Speech.AudioFormat;
 using System.Speech.Synthesis;
 using System.Threading.Tasks;
 
 namespace DiscordAPI {
-  public static class DiscordClient {
-    private static DiscordSocketClient bot;
-    private static IAudioClient audioClient;
-    private static AudioOutStream voiceStream;
-    private static SocketVoiceChannel voiceChannel;
-    private static string statusMsg;
+    public static class DiscordClient {
+        private static PipeClient pipeClient;
+        private static BridgeProcess bridge;
+        private static string bridgePath;
+        private static readonly object lifecycleLock = new object();
 
-    public delegate void BotLoaded();
-    public static BotLoaded BotReady;
+        private static readonly SpeechAudioFormatInfo formatInfo =
+            new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 
-    public delegate void BotMessage(string message);
-    public static BotMessage Log;
+        public delegate void BotLoaded();
+        public static BotLoaded BotReady;
 
-    public static async void InIt(string logintoken, string botstatus) {
-      try {
-        var config = new DiscordSocketConfig {
-          GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildVoiceStates
-        };
-        bot = new DiscordSocketClient(config);
-      } catch (NotSupportedException ex) {
-        Log?.Invoke("Unsupported Operating System.");
-        Log?.Invoke(ex.Message);
-      }
+        public delegate void BotMessage(string message);
+        public static BotMessage Log;
 
-      try {
-        bot.Log += Bot_Log;
-        bot.Ready += Bot_Ready;
-        statusMsg = botstatus;
-        await bot.LoginAsync(TokenType.Bot, logintoken);
-        await bot.StartAsync();
-      } catch (Exception ex) {
-        Log?.Invoke(ex.Message);
-        Log?.Invoke("Error connecting to Discord.");
-      }
-    }
-
-    public static async Task deInIt() {
-      bot.Ready -= Bot_Ready;
-      bot.Log -= Bot_Log;
-      if (audioClient?.ConnectionState == ConnectionState.Connected) {
-        LeaveChannel();
-      }
-      await bot.StopAsync();
-      await bot.LogoutAsync();
-    }
-
-    public static bool IsConnected() {
-      return bot?.ConnectionState == ConnectionState.Connected;
-    }
-
-    private static Task Bot_Log(LogMessage arg) {
-      if (arg.Message.Equals("Unknown OpCode (Hello)"))
-        return Task.CompletedTask;
-      Log?.Invoke($"[{arg.Source}] {arg.Message}");
-      return Task.CompletedTask;
-    }
-
-    private static async Task Bot_Ready() {
-      await SetGameAsync(statusMsg);
-      Log?.Invoke("Bot in ready state. Populating servers...");
-      BotReady?.Invoke();
-    }
-
-    public static string[] getServers() {
-      List<string> servers = new List<string>();
-
-      try {
-        foreach (SocketGuild g in bot.Guilds)
-          servers.Add(g.Name);
-      } catch (Exception ex) {
-        Log?.Invoke("Error loading servers in DiscordAPI#getServers().");
-        Log?.Invoke(ex.Message);
-      }
-
-      return servers.ToArray();
-    }
-
-    public static string[] getChannels(string server) {
-      List<string> discordchannels = new List<string>();
-
-      foreach (SocketGuild g in bot.Guilds) {
-        if (g.Name == server) {
-          var channels = new List<SocketVoiceChannel>(g.VoiceChannels);
-          channels.Sort((x, y) => x.Position.CompareTo(y.Position));
-          foreach (SocketVoiceChannel channel in channels)
-            discordchannels.Add(channel.Name);
-          break;
+        public static void SetBridgePath(string path) {
+            bridgePath = path;
         }
-      }
 
-      return discordchannels.ToArray();
-    }
+        public static async void InIt(string logintoken, string botstatus) {
+            try {
+                lock (lifecycleLock) {
+                    if (pipeClient != null) {
+                        Log?.Invoke("Already initialized.");
+                        return;
+                    }
+                }
+                if (string.IsNullOrEmpty(bridgePath)) {
+                    Log?.Invoke("DiscordBridge.exe path not configured. Internal error.");
+                    return;
+                }
 
-    private static SocketVoiceChannel[] getSocketChannels(string server) {
-      List<SocketVoiceChannel> discordchannels = new List<SocketVoiceChannel>();
+                BridgeProcess localBridge = new BridgeProcess();
+                localBridge.OnStderr += msg => Log?.Invoke("[bridge] " + msg);
+                localBridge.OnExited += code => {
+                    Log?.Invoke($"DiscordBridge.exe exited (code {code}).");
+                    CleanupAfterPipeBroken();
+                };
 
-      foreach (SocketGuild g in bot.Guilds) {
-        if (g.Name == server) {
-          var channels = new List<SocketVoiceChannel>(g.VoiceChannels);
-          channels.Sort((x, y) => x.Position.CompareTo(y.Position));
-          foreach (SocketVoiceChannel channel in channels)
-            discordchannels.Add(channel);
-          break;
+                NamedPipeClientStream pipe;
+                try {
+                    pipe = await localBridge.StartAndConnectAsync(bridgePath);
+                } catch (Exception ex) {
+                    Log?.Invoke("Failed to start DiscordBridge: " + ex.Message);
+                    try { localBridge.Dispose(); } catch { }
+                    return;
+                }
+
+                PipeClient localClient = new PipeClient(pipe);
+                localClient.OnLog += (msg, lvl) => Log?.Invoke(msg);
+                localClient.OnBotReady += () => BotReady?.Invoke();
+                localClient.OnDisconnected += reason => Log?.Invoke("Discord disconnected: " + reason);
+                localClient.OnPipeBroken += reason => {
+                    Log?.Invoke("Bridge connection lost: " + reason);
+                    CleanupAfterPipeBroken();
+                };
+                localClient.Start();
+
+                lock (lifecycleLock) {
+                    bridge = localBridge;
+                    pipeClient = localClient;
+                }
+
+                HelloResponse hello;
+                try {
+                    hello = await localClient.SendAsync<HelloResponse>(
+                        new HelloRequest { ProtocolVersion = ProtocolConstants.Version },
+                        TimeSpan.FromSeconds(10));
+                } catch (Exception ex) {
+                    Log?.Invoke("Bridge handshake error: " + ex.Message);
+                    CleanupAfterPipeBroken();
+                    return;
+                }
+                if (!hello.Ok) {
+                    Log?.Invoke("Bridge handshake failed: " + hello.Error);
+                    CleanupAfterPipeBroken();
+                    return;
+                }
+
+                try {
+                    var init = await localClient.SendAsync<OkResponse>(
+                        new InitRequest { Token = logintoken, Status = botstatus },
+                        TimeSpan.FromSeconds(20));
+                    if (!init.Ok) {
+                        Log?.Invoke("Discord login failed: " + init.Error);
+                    }
+                } catch (Exception ex) {
+                    Log?.Invoke("Discord login error: " + ex.Message);
+                }
+            } catch (Exception ex) {
+                Log?.Invoke("InIt error: " + ex.Message);
+            }
         }
-      }
 
-      return discordchannels.ToArray();
-    }
+        public static async Task deInIt() {
+            PipeClient localClient;
+            BridgeProcess localBridge;
+            lock (lifecycleLock) {
+                localClient = pipeClient;
+                localBridge = bridge;
+                pipeClient = null;
+                bridge = null;
+            }
+            if (localClient == null && localBridge == null) return;
 
-    public static async Task SetGameAsync(string text) {
-      await bot?.SetGameAsync(string.IsNullOrWhiteSpace(text)
-                              ? "Playing with ACT Triggers"
-                              : text.Trim(),
-                              null,
-                              ActivityType.CustomStatus );
-    }
-
-    public static async Task<bool> JoinChannel(string server, string channel) {
-      SocketVoiceChannel chan = null;
-
-      foreach (SocketVoiceChannel vchannel in getSocketChannels(server)) {
-        if (vchannel.Name == channel) {
-          chan = vchannel;
-          break;
+            try {
+                if (localClient != null) {
+                    try {
+                        await localClient.SendAsync<OkResponse>(
+                            new ShutdownRequest(), TimeSpan.FromSeconds(3));
+                    } catch { }
+                }
+                if (localBridge != null) {
+                    await localBridge.WaitForExitAsync(TimeSpan.FromSeconds(3));
+                    if (!localBridge.HasExited) {
+                        localBridge.Kill();
+                    }
+                }
+            } finally {
+                try { localClient?.Dispose(); } catch { }
+                try { localBridge?.Dispose(); } catch { }
+            }
         }
-      }
 
-      if (chan != null) {
-        try {
-          audioClient = await chan.ConnectAsync();
-          voiceChannel = chan;
-          Log?.Invoke("Joined channel: " + chan.Name);
-        } catch (Exception ex) {
-          Log?.Invoke("Error joining channel.");
-          Log?.Invoke(ex.Message);
-          return false;
+        private static void CleanupAfterPipeBroken() {
+            PipeClient localClient;
+            BridgeProcess localBridge;
+            lock (lifecycleLock) {
+                localClient = pipeClient;
+                localBridge = bridge;
+                pipeClient = null;
+                bridge = null;
+            }
+            try { localClient?.Dispose(); } catch { }
+            try { localBridge?.Dispose(); } catch { }
         }
-      }
-      return true;
-    }
 
-    public static async void LeaveChannel() {
-      voiceStream?.Close();
-      voiceStream = null;
-      await audioClient.StopAsync();
-      await voiceChannel.DisconnectAsync();
-    }
-
-    private static object speaklock = new object();
-    private static SpeechAudioFormatInfo formatInfo = new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
-
-    public static void Speak(string text, string voice, int vol, int speed) {
-      lock (speaklock) {
-        if (voiceStream == null)
-          voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
-        SpeechSynthesizer tts = new SpeechSynthesizer();
-        tts.SelectVoice(voice);
-        tts.Volume = vol * 5;
-        tts.Rate = speed - 10;
-        MemoryStream ms = new MemoryStream();
-        tts.SetOutputToAudioStream(ms, formatInfo);
-
-        tts.Speak(text);
-        ms.Seek(0, SeekOrigin.Begin);
-        ms.CopyTo(voiceStream);
-        voiceStream.Flush();
-      }
-    }
-
-    public static void SpeakFile(string path) {
-      lock (speaklock) {
-        if (voiceStream == null)
-          voiceStream = audioClient.CreatePCMStream(AudioApplication.Voice, 128 * 1024);
-        try {
-          WaveFileReader wav = new WaveFileReader(path);
-          WaveFormat waveFormat = new WaveFormat(48000, 16, 2);
-          WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(wav);
-          WaveFormatConversionStream output = new WaveFormatConversionStream(waveFormat, pcm);
-          output.CopyTo(voiceStream);
-          voiceStream.Flush();
-        } catch (Exception ex) {
-          Log?.Invoke("Unable to read file: " + ex.Message);
+        public static bool IsConnected() {
+            var pc = pipeClient;
+            if (pc == null) return false;
+            try {
+                return Task.Run(async () =>
+                    (await pc.SendAsync<IsConnectedResponse>(new IsConnectedRequest(), TimeSpan.FromSeconds(3))).Connected
+                ).GetAwaiter().GetResult();
+            } catch {
+                return false;
+            }
         }
-      }
+
+        public static string[] getServers() {
+            var pc = pipeClient;
+            if (pc == null) return new string[0];
+            try {
+                var resp = Task.Run(() => pc.SendAsync<GetServersResponse>(new GetServersRequest()))
+                    .GetAwaiter().GetResult();
+                return resp.Servers ?? new string[0];
+            } catch (Exception ex) {
+                Log?.Invoke("getServers failed: " + ex.Message);
+                return new string[0];
+            }
+        }
+
+        public static string[] getChannels(string server) {
+            var pc = pipeClient;
+            if (pc == null) return new string[0];
+            try {
+                var resp = Task.Run(() => pc.SendAsync<GetChannelsResponse>(
+                    new GetChannelsRequest { Server = server }))
+                    .GetAwaiter().GetResult();
+                return resp.Channels ?? new string[0];
+            } catch (Exception ex) {
+                Log?.Invoke("getChannels failed: " + ex.Message);
+                return new string[0];
+            }
+        }
+
+        public static async Task SetGameAsync(string text) {
+            var pc = pipeClient;
+            if (pc == null) return;
+            try {
+                await pc.SendAsync<OkResponse>(new SetGameRequest { Text = text ?? "" });
+            } catch (Exception ex) {
+                Log?.Invoke("SetGameAsync failed: " + ex.Message);
+            }
+        }
+
+        public static async Task<bool> JoinChannel(string server, string channel) {
+            var pc = pipeClient;
+            if (pc == null) {
+                Log?.Invoke("Cannot join channel: bridge not connected.");
+                return false;
+            }
+            try {
+                var resp = await pc.SendAsync<JoinChannelResponse>(
+                    new JoinChannelRequest { Server = server, Channel = channel },
+                    TimeSpan.FromSeconds(15));
+                if (!resp.Ok && !string.IsNullOrEmpty(resp.Error)) {
+                    Log?.Invoke("JoinChannel failed: " + resp.Error);
+                }
+                return resp.Ok;
+            } catch (Exception ex) {
+                Log?.Invoke("JoinChannel error: " + ex.Message);
+                return false;
+            }
+        }
+
+        public static void LeaveChannel() {
+            var pc = pipeClient;
+            if (pc == null) return;
+            try {
+                Task.Run(() => pc.SendAsync<OkResponse>(new LeaveChannelRequest(), TimeSpan.FromSeconds(10)))
+                    .GetAwaiter().GetResult();
+            } catch (Exception ex) {
+                Log?.Invoke("LeaveChannel failed: " + ex.Message);
+            }
+        }
+
+        public static void Speak(string text, string voice, int vol, int speed) {
+            byte[] pcm;
+            try {
+                using (var tts = new SpeechSynthesizer())
+                using (var ms = new MemoryStream()) {
+                    tts.SelectVoice(voice);
+                    tts.Volume = vol * 5;
+                    tts.Rate = speed - 10;
+                    tts.SetOutputToAudioStream(ms, formatInfo);
+                    tts.Speak(text);
+                    pcm = ms.ToArray();
+                }
+            } catch (Exception ex) {
+                Log?.Invoke("TTS synthesis failed: " + ex.Message);
+                return;
+            }
+            SendSpeakPcm(pcm);
+        }
+
+        public static void SpeakFile(string path) {
+            byte[] pcm;
+            try {
+                using (var wav = new WaveFileReader(path))
+                using (var pcmStream = WaveFormatConversionStream.CreatePcmStream(wav))
+                using (var resampled = new WaveFormatConversionStream(new WaveFormat(48000, 16, 2), pcmStream))
+                using (var ms = new MemoryStream()) {
+                    resampled.CopyTo(ms);
+                    pcm = ms.ToArray();
+                }
+            } catch (Exception ex) {
+                Log?.Invoke("Unable to read file: " + ex.Message);
+                return;
+            }
+            SendSpeakPcm(pcm);
+        }
+
+        private static void SendSpeakPcm(byte[] pcm) {
+            var pc = pipeClient;
+            if (pc == null) {
+                Log?.Invoke("Cannot send audio: bridge not connected.");
+                return;
+            }
+            try {
+                var resp = Task.Run(() => pc.SendAsync<OkResponse>(
+                    new SpeakPcmRequest { Pcm = Convert.ToBase64String(pcm) },
+                    TimeSpan.FromSeconds(30)))
+                    .GetAwaiter().GetResult();
+                if (!resp.Ok && !string.IsNullOrEmpty(resp.Error)) {
+                    Log?.Invoke("Bridge audio rejected: " + resp.Error);
+                }
+            } catch (Exception ex) {
+                Log?.Invoke("SpeakPcm error: " + ex.Message);
+            }
+        }
     }
-  }
 }

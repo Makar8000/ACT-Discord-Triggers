@@ -5,13 +5,21 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
     - name: Setup Nuget
-      uses: nuget/setup-nuget@v1
+      uses: nuget/setup-nuget@v2
       with:
         nuget-version: 'latest'
+    - name: Setup .NET 10 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+    - name: Setup Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
     - name: Restore Nuget Packages
       run: nuget restore ACT_DiscordTriggers.sln
     - name: Download ACT Binaries
@@ -20,10 +28,29 @@ jobs:
         New-Item -ItemType Directory packages
         Invoke-WebRequest https://advancedcombattracker.com/includes/page-download.php?id=57 -OutFile packages/act.zip
         Expand-Archive -Path packages/act.zip -DestinationPath packages
-    - name: Build
-      run: msbuild ACT_DiscordTriggers.sln -p:Configuration=Release
+    - name: Build plugin (net48)
+      run: msbuild ACT_DiscordTriggers\ACT_DiscordTriggers.csproj -p:Configuration=Release
+    - name: Install bridge npm deps
+      working-directory: DiscordBridge-node
+      run: npm ci
+    - name: Build bridge (Node + launcher)
+      working-directory: DiscordBridge-node
+      shell: pwsh
+      run: ./build.ps1
+    - name: Run tests
+      run: dotnet test Tests/Tests.csproj -c Release --nologo
+    - name: Assemble release archive
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory release | Out-Null
+        Copy-Item ACT_DiscordTriggers\bin\Release\net48\ACT_DiscordTriggers.dll release\
+        Copy-Item DiscordBridge-node\dist\DiscordBridge.exe release\
+        Copy-Item DiscordBridge-node\dist\node.exe release\
+        Copy-Item DiscordBridge-node\dist\bundle.js release\
+        Copy-Item -Recurse DiscordBridge-node\dist\node_modules release\node_modules
+        Compress-Archive -Path release\* -DestinationPath ACT_DiscordTriggers.zip
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ACT_DiscordTriggers-Prerelease
-        path: './ACT_DiscordTriggers/bin/Release/net48/ACT_DiscordTriggers.dll'
+        path: ACT_DiscordTriggers.zip

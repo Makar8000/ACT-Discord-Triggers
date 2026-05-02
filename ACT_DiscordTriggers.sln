@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
@@ -6,6 +6,10 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ACT_DiscordTriggers", "ACT_DiscordTriggers\ACT_DiscordTriggers.csproj", "{000FFFC0-8D23-4476-B312-0438655973A1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordAPI", "DiscordAPI\DiscordAPI.csproj", "{E725B455-5E43-4980-BC12-0AC99963C7E0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{C7E94A1F-3B6D-4F2E-8A9F-1D5E6F7B8A2C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordBridge.Launcher", "DiscordBridge-node\launcher\launcher.csproj", "{F4A1B2C3-D5E6-4789-9ABC-DEF012345678}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{E725B455-5E43-4980-BC12-0AC99963C7E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E725B455-5E43-4980-BC12-0AC99963C7E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E725B455-5E43-4980-BC12-0AC99963C7E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7E94A1F-3B6D-4F2E-8A9F-1D5E6F7B8A2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7E94A1F-3B6D-4F2E-8A9F-1D5E6F7B8A2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7E94A1F-3B6D-4F2E-8A9F-1D5E6F7B8A2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7E94A1F-3B6D-4F2E-8A9F-1D5E6F7B8A2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4A1B2C3-D5E6-4789-9ABC-DEF012345678}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4A1B2C3-D5E6-4789-9ABC-DEF012345678}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4A1B2C3-D5E6-4789-9ABC-DEF012345678}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4A1B2C3-D5E6-4789-9ABC-DEF012345678}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

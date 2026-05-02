@@ -390,7 +390,7 @@ namespace ACT_DiscordTriggers {
       try {
         string pluginName = ActGlobals.oFormActMain.PluginGetSelfData(this).pluginFile.FullName;
         pluginName = Path.GetFileNameWithoutExtension(pluginName).Trim();
-        if (pluginName.Length >= 0)
+        if (pluginName.Length > 0)
           configName = pluginName;
       } catch (Exception) { }
 
@@ -398,6 +398,9 @@ namespace ACT_DiscordTriggers {
       settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, $"Config\\{configName}.config.xml");
       xmlSettings = new SettingsSerializer(this);
       LoadSettings();
+
+      //Locate the out-of-process Discord bridge so DiscordClient knows where to spawn it
+      DiscordClient.SetBridgePath(FindBridgePath());
 
       //Discord Bot Stuff
       DiscordClient.BotReady += BotReady;
@@ -419,6 +422,18 @@ namespace ACT_DiscordTriggers {
         ActGlobals.oFormActMain.WriteExceptionLog(ex, "Error with DeInit of Discord Plugin.");
       }
       lblStatus.Text = "Plugin Exited";
+    }
+
+    private string FindBridgePath() {
+      try {
+        var plugin = ActGlobals.oFormActMain.PluginGetSelfData(this);
+        if (plugin != null) {
+          string dir = plugin.pluginFile.DirectoryName;
+          string p = Path.Combine(dir, "DiscordBridge.exe");
+          if (File.Exists(p)) return p;
+        }
+      } catch { }
+      return Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, "Plugins\\Discord", "DiscordBridge.exe");
     }
 
     private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args) {
