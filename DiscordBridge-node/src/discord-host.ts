@@ -237,6 +237,11 @@ export class DiscordHost implements Host {
             return { ok: true, error: '' };
         } catch (e) {
             log.error('joinChannel failed', e);
+            // entersState timeout (or any partial-init throw) leaves a live
+            // VoiceConnection registered with @discordjs/voice. leaveChannel
+            // is idempotent and tolerates partial state — it'll find the
+            // orphan via getVoiceConnection(currentGuildId) and destroy it.
+            try { await this.leaveChannel(); } catch { /* ignore */ }
             return { ok: false, error: log.errMsg(e) };
         }
     }
@@ -263,7 +268,8 @@ export class DiscordHost implements Host {
     speakPcm(pcmBuffer: Buffer): OpResult {
         const guard = this._guardPlayback();
         if (!guard.ok) return guard;
-        this.mixer!.addVoice(pcmBuffer);
+        const r = this.mixer!.addVoice(pcmBuffer);
+        if (r.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${r.dropped} voice(s)`);
         return { ok: true, error: '' };
     }
 
@@ -284,7 +290,8 @@ export class DiscordHost implements Host {
         const cachedPcm = this.wavCache.get(path, mtimeMs);
         if (cachedPcm) {
             log.info(`SpeakFile cache hit: ${path} (${cachedPcm.length} bytes)`);
-            this.mixer!.addVoice(cachedPcm);
+            const r = this.mixer!.addVoice(cachedPcm);
+            if (r.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${r.dropped} voice(s)`);
             return { ok: true, error: '' };
         }
 
@@ -327,13 +334,17 @@ export class DiscordHost implements Host {
             if (format.channels !== 1 && format.channels !== 2) {
                 return { ok: false, error: `WAV must be mono or stereo (got ${format.channels} channels)` };
             }
+            if (!Number.isFinite(format.sampleRate) || format.sampleRate <= 0 || format.sampleRate > 192000) {
+                return { ok: false, error: `WAV sample rate ${format.sampleRate} is out of supported range (1-192000 Hz)` };
+            }
 
             // Channel + sample-rate conversion to the format the bridge feeds Discord.
             const stereoPcm = format.channels === 1 ? upmixMonoToStereo16(pcm) : pcm;
             const finalPcm = resampleStereo16(stereoPcm, format.sampleRate, TARGET_SAMPLE_RATE);
 
             this.wavCache.set(path, mtimeMs, finalPcm);
-            this.mixer!.addVoice(finalPcm);
+            const addRes = this.mixer!.addVoice(finalPcm);
+            if (addRes.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${addRes.dropped} voice(s)`);
             return { ok: true, error: '' };
         } catch (e) {
             try { fileStream.destroy(); } catch { /* ignore */ }

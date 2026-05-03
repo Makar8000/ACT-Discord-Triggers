@@ -126,6 +126,77 @@ test('addVoice ignores buffer that has no aligned bytes', () => {
     assert.ok(allSamplesEqual(m._mixOneChunk(), 0));
 });
 
+test('voice cap: 65th voice causes one FIFO drop, 64 survive', () => {
+    const m = new PcmMixer();
+    // 64 voices fit; the 65th evicts the oldest. Use distinct sample values
+    // so we can prove order if we want to extend later.
+    for (let i = 0; i < 64; i++) m.addVoice(constStereo(i + 1, 1));
+    assert.equal(m.voiceCount, 64);
+    const r = m.addVoice(constStereo(99, 1));
+    assert.deepEqual(r, { dropped: 1 });
+    assert.equal(m.voiceCount, 64);
+});
+
+test('voice cap: addVoice returns {dropped:0} below the cap', () => {
+    const m = new PcmMixer();
+    const r = m.addVoice(constStereo(1, 100));
+    assert.deepEqual(r, { dropped: 0 });
+});
+
+test('voice cap: FIFO eviction — oldest dropped, newest survives', () => {
+    const m = new PcmMixer();
+    // Add 64 voices each carrying a 1-frame buffer of value 1.
+    for (let i = 0; i < 64; i++) m.addVoice(constStereo(1, 1));
+    // The 65th carries a distinct value 1000. After eviction the queue holds
+    // 63 voices @ value=1 and 1 voice @ value=1000 → first chunk sample[0] = 63 + 1000.
+    m.addVoice(constStereo(1000, 1));
+    assert.equal(m.voiceCount, 64);
+    const chunk = m._mixOneChunk();
+    // Each 1-frame voice contributes only to sample[0] (1 stereo frame = 2 samples).
+    assert.equal(chunk.readInt16LE(0), 63 + 1000);
+});
+
+test('byte cap: large queued bytes evict oldest until under MAX_QUEUED_BYTES', () => {
+    const m = new PcmMixer();
+    // 5 buffers of 8 MiB each = 40 MiB > 32 MiB cap. Adding the 5th should
+    // evict the 1st. We use real stereo s16 buffers (constStereo) so the
+    // cap math is on real consumed bytes.
+    const big = constStereo(1, 8 * 1024 * 1024 / 4); // 8 MiB worth of stereo s16
+    assert.equal(big.length, 8 * 1024 * 1024);
+    for (let i = 0; i < 4; i++) {
+        const r = m.addVoice(big);
+        assert.equal(r.dropped, 0, `voice ${i + 1} should fit`);
+    }
+    const r5 = m.addVoice(big);
+    assert.equal(r5.dropped, 1, 'fifth 8 MiB voice should evict the first');
+    assert.ok(m.queuedBytes <= 32 * 1024 * 1024);
+});
+
+test('byte cap: a single oversized voice is preserved (never the only voice)', () => {
+    const m = new PcmMixer();
+    const huge = constStereo(1, (40 * 1024 * 1024) / 4); // 40 MiB > cap
+    const r = m.addVoice(huge);
+    assert.deepEqual(r, { dropped: 0 });
+    assert.equal(m.voiceCount, 1);
+});
+
+test('byte cap: queuedBytes decrements as chunks are consumed', () => {
+    const m = new PcmMixer();
+    m.addVoice(constStereo(1, 960)); // exactly one chunk (3840 bytes)
+    assert.equal(m.queuedBytes, 3840);
+    m._mixOneChunk();
+    assert.equal(m.queuedBytes, 0);
+});
+
+test('clear() resets queuedBytes', () => {
+    const m = new PcmMixer();
+    m.addVoice(constStereo(1, 1000));
+    assert.ok(m.queuedBytes > 0);
+    m.clear();
+    assert.equal(m.queuedBytes, 0);
+    assert.equal(m.voiceCount, 0);
+});
+
 test('Readable plumbing: _read pushes one chunk per call', async () => {
     const m = new PcmMixer();
     m.addVoice(constStereo(42, 960 * 3)); // 3 chunks long

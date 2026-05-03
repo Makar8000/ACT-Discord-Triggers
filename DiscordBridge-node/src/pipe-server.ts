@@ -131,6 +131,17 @@ export class PipeServer {
         const channels = payload.readUInt8(10);
         const pcm = payload.subarray(BINARY_SPEAK_PCM_HEADER_BYTES);
         log.info(`--> SpeakPcm reqId=${reqId} pcmBytes=${pcm.length} fmt=${sampleRate}/${bits}/${channels}`);
+        // Bridge audio path is hard-wired to 48 kHz / 16-bit / stereo end-to-end
+        // (see CLAUDE.md "Audio format constraint"). Reject mismatched payloads
+        // up front rather than feeding the mixer something it would replay at
+        // the wrong rate or with garbled framing.
+        if (sampleRate !== 48000 || bits !== 16 || channels !== 2) {
+            await this._sendFrame({
+                op: Op.SpeakResult, reqId, ok: false,
+                error: `Unsupported PCM format: ${sampleRate}/${bits}/${channels}; expected 48000/16/2`,
+            });
+            return;
+        }
         try {
             const r = this.host.speakPcm(pcm);
             await this._sendFrame({ op: Op.SpeakResult, reqId, ok: r.ok, error: r.error });
@@ -147,12 +158,16 @@ export class PipeServer {
         let reqId: ReqId = null;
         try {
             const parsed: unknown = JSON.parse(json);
+            // Pull reqId opportunistically *before* shape validation so a
+            // malformed-but-reqId-bearing frame can get a synthesized error
+            // response via the catch path. C# correlates responses by reqId
+            // alone (the op string is ignored at correlation time), so the
+            // ?Result op below is an intentional placeholder.
+            reqId = asNumber((parsed as { reqId?: unknown } | null)?.reqId);
             if (!isIncomingMessage(parsed)) {
-                log.error('frame is not an object with op:string; dropping');
-                return;
+                throw new Error('frame is not an object with op:string');
             }
             op = parsed.op;
-            reqId = asNumber(parsed.reqId);
             log.info(`--> ${op} reqId=${reqId} bytes=${json.length}`);
 
             switch (op) {
@@ -228,30 +243,36 @@ export class PipeServer {
             log.error(`handler '${op}' threw`, e);
             try {
                 const message = e instanceof Error ? e.message : String(e);
-                await this._sendFrame({ op: Op.Log, level: 'Error', message: `Handler '${op}' threw: ${message}` });
+                // Queue both error frames synchronously so a concurrently-
+                // dispatched next handler can't interleave its response
+                // between our Log and synthesized Result.
+                const pending: Promise<void>[] = [
+                    this._sendFrame({ op: Op.Log, level: 'Error', message: `Handler '${op}' threw: ${message}` }),
+                ];
                 if (reqId !== null) {
                     // SpeakFile's success op is `SpeakResult`, not `SpeakFileResult`. Keep the
                     // error frame symmetric with the success path so dispatchers that key on
                     // `op` (not just reqId) still match.
                     const resultOp: OpName = op === Op.SpeakFile ? Op.SpeakResult : ((op + 'Result') as OpName);
-                    await this._sendFrame({ op: resultOp, reqId, ok: false, error: message });
+                    pending.push(this._sendFrame({ op: resultOp, reqId, ok: false, error: message }));
                 }
+                await Promise.all(pending);
             } catch { /* ignore */ }
         }
     }
 
     private _sendFrame(obj: OutboundFrame): Promise<void> {
-        // Serialize writes so length+body can't interleave.
+        // Serialize writes so frames can't interleave. Length + body go in a
+        // single socket.write so the kernel either flushes both or fails both —
+        // a torn frame (header without body) is impossible with one syscall.
         this.writeQueue = this.writeQueue.then(() => new Promise<void>((resolve) => {
             if (this.closed || !this.socket.writable) { resolve(); return; }
             try {
                 const json = Buffer.from(JSON.stringify(obj), 'utf8');
-                const len = Buffer.alloc(4);
-                len.writeUInt32LE(json.length, 0);
-                this.socket.write(len, () => {
-                    if (this.closed || !this.socket.writable) { resolve(); return; }
-                    this.socket.write(json, () => resolve());
-                });
+                const frame = Buffer.alloc(4 + json.length);
+                frame.writeUInt32LE(json.length, 0);
+                json.copy(frame, 4);
+                this.socket.write(frame, () => resolve());
             } catch (e) {
                 log.error('sendFrame failed', e);
                 resolve();

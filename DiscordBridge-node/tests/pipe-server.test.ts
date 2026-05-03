@@ -125,13 +125,35 @@ test('frame parser: malformed JSON yields Log notification; subsequent frame sti
     assert.equal(sock.destroyed, false, 'malformed JSON should not tear down the pipe');
 });
 
-test('frame parser: object missing "op" field is dropped; next frame works', async () => {
+test('frame parser: object missing "op" field yields Log + synthesized error response for reqId', async () => {
+    // C# correlates responses by reqId only, so a "valid JSON, missing op"
+    // frame still gets an error response keyed on the malformed reqId — this
+    // unblocks the C# call instead of letting it wait for the 60s timeout.
     const { sock } = makeHarness();
     const noOp = encodeFrame({ reqId: 5, foo: 'bar' });
     const good = encodeFrame({ op: Op.Hello, reqId: 6, protocolVersion: PROTOCOL_VERSION });
     sock.emit('data', Buffer.concat([noOp, good]));
-    const [frame] = await waitForFrames(sock, 1);
-    assert.equal(frame!['reqId'], 6);
+    const frames = await waitForFrames(sock, 3);
+    // First two frames belong to the malformed input: a Log notification and
+    // a synthesized error result for reqId=5.
+    assert.equal(frames[0]!['op'], Op.Log);
+    assert.equal(frames[0]!['level'], 'Error');
+    assert.match(String(frames[0]!['message']), /Handler '\?' threw/);
+    assert.equal(frames[1]!['reqId'], 5);
+    assert.equal(frames[1]!['ok'], false);
+    assert.match(String(frames[1]!['error']), /not an object with op:string/);
+    // Third frame is the response to the good Hello that followed.
+    assert.equal(frames[2]!['op'], Op.HelloResult);
+    assert.equal(frames[2]!['reqId'], 6);
+});
+
+test('frame parser: object missing "op" field with no reqId emits Log only', async () => {
+    const { sock } = makeHarness();
+    sock.emit('data', encodeFrame({ foo: 'bar' }));
+    await tick();
+    const { frames } = decodeFrames(sock.drainedWrites());
+    assert.equal(frames.length, 1);
+    assert.equal(frames[0]!['op'], Op.Log);
 });
 
 test('frame parser: extra unknown fields on a known op are tolerated', async () => {
@@ -294,6 +316,35 @@ test('SpeakPcm: binary frame decodes to byte-equal Buffer at host', async () => 
     assert.ok(call);
     assert.ok(Buffer.isBuffer(call.args[0]));
     assert.equal(Buffer.compare(call.args[0] as Buffer, pcm), 0);
+});
+
+test('SpeakPcm: mismatched sample rate is rejected without invoking host', async () => {
+    const { sock, host } = makeHarness();
+    host.nextSpeakPcm({ ok: true, error: '' });
+    const pcm = Buffer.from([0xde, 0xad, 0xbe, 0xef]);
+    sock.emit('data', encodeBinarySpeakPcmFrame(140, pcm, 44100, 16, 2));
+    const [frame] = await waitForFrames(sock, 1);
+    assert.equal(frame!['op'], Op.SpeakResult);
+    assert.equal(frame!['reqId'], 140);
+    assert.equal(frame!['ok'], false);
+    assert.match(String(frame!['error']), /Unsupported PCM format: 44100\/16\/2; expected 48000\/16\/2/);
+    assert.equal(host.calls.filter((c) => c.method === 'speakPcm').length, 0);
+});
+
+test('SpeakPcm: mismatched bit depth is rejected', async () => {
+    const { sock } = makeHarness();
+    sock.emit('data', encodeBinarySpeakPcmFrame(141, Buffer.alloc(4), 48000, 24, 2));
+    const [frame] = await waitForFrames(sock, 1);
+    assert.equal(frame!['ok'], false);
+    assert.match(String(frame!['error']), /48000\/24\/2/);
+});
+
+test('SpeakPcm: mismatched channel count is rejected', async () => {
+    const { sock } = makeHarness();
+    sock.emit('data', encodeBinarySpeakPcmFrame(142, Buffer.alloc(4), 48000, 16, 1));
+    const [frame] = await waitForFrames(sock, 1);
+    assert.equal(frame!['ok'], false);
+    assert.match(String(frame!['error']), /48000\/16\/1/);
 });
 
 test('SpeakPcm: binary frame split byte-by-byte still dispatches correctly', async () => {
@@ -485,6 +536,13 @@ test('write framing: response is preceded by 4-byte LE length prefix', async () 
     const json = buf.subarray(4).toString('utf8');
     const parsed = JSON.parse(json) as Record<string, unknown>;
     assert.equal(parsed['op'], Op.HelloResult);
+});
+
+test('write framing: each frame goes out in a single socket.write', async () => {
+    const { sock } = makeHarness();
+    sock.emit('data', encodeFrame({ op: Op.Hello, reqId: 1, protocolVersion: PROTOCOL_VERSION }));
+    await waitForFrames(sock, 1);
+    assert.equal(sock.writes.length, 1, 'length+body should be one combined write, not two');
 });
 
 test('write framing: back-to-back notifications produce two non-interleaved frames', async () => {
