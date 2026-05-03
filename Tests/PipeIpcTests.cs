@@ -355,5 +355,51 @@ namespace ActDiscordTriggers.Tests {
 
             Assert.Equal("hi", await done.Task.WaitAsync(TimeSpan.FromSeconds(2)));
         }
+
+        // The server pipe is built with outBufferSize=64KB and we never read it
+        // here, so a >64KB binary frame fills the kernel buffer and stalls
+        // pipe.WriteAsync. With the WriteWithTimeoutAsync guard, the send should
+        // bail within WriteTimeoutMs (5s) instead of hanging on the full 30s
+        // request timeout.
+        [Fact]
+        public async Task SendAsync_write_times_out_when_peer_never_reads() {
+            await ConnectAsync();
+
+            byte[] big = new byte[128 * 1024];
+            new Random(7).NextBytes(big);
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var t = pipeClient.SendSpeakPcmAsync(big, 48000, 16, 2, TimeSpan.FromSeconds(30));
+            var ex = await Assert.ThrowsAnyAsync<Exception>(() =>
+                t.WaitAsync(TimeSpan.FromSeconds(15)));
+            sw.Stop();
+
+            Assert.True(ex is IOException || ex is OperationCanceledException,
+                "expected IOException or OperationCanceledException, got " + ex.GetType().Name);
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(15),
+                "write should have failed fast via WriteTimeoutMs (~5s), not via the 30s request timeout");
+        }
+
+        // Verifies Dispose tears down in the correct order: cancel CT, dispose
+        // pipe (faults in-flight ops), wait for read loop to exit, then dispose
+        // writeLock. A pending SendAsync should fault cleanly without
+        // ObjectDisposedException escaping Dispose.
+        [Fact]
+        public async Task Dispose_waits_for_read_loop_and_does_not_throw_with_pending_send() {
+            await ConnectAsync();
+
+            var t = pipeClient.SendAsync<HelloResponse>(
+                new HelloRequest { ProtocolVersion = ProtocolConstants.Version },
+                TimeSpan.FromSeconds(30));
+
+            // Make sure the request has landed at the server before we tear down.
+            _ = await ReadFrameAsync(serverPipe);
+
+            // Must not throw.
+            pipeClient.Dispose();
+
+            // The pending send must fault rather than hang.
+            await Assert.ThrowsAnyAsync<Exception>(() => t);
+        }
     }
 }

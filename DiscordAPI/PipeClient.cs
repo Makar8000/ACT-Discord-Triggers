@@ -19,6 +19,7 @@ namespace DiscordAPI {
         private CancellationTokenSource readLoopCts;
         private Task readLoopTask;
         private const int MaxFrameBytes = 64 * 1024 * 1024;
+        private const int WriteTimeoutMs = 5000;
         private const byte FrameJsonMarker = (byte)'{';
         private const byte FrameBinarySpeakPcm = 0x01;
         private static readonly JsonSerializerOptions jsonOpts = new JsonSerializerOptions {
@@ -39,12 +40,9 @@ namespace DiscordAPI {
             readLoopTask = Task.Run(() => ReadLoopAsync(readLoopCts.Token));
         }
 
-        public async Task<TResp> SendAsync<TResp>(object request, TimeSpan? timeout = null) {
+        public async Task<TResp> SendAsync<TResp>(IBridgeRequest request, TimeSpan? timeout = null) {
             int reqId = Interlocked.Increment(ref nextReqId);
-            var prop = request.GetType().GetProperty("ReqId");
-            if (prop != null) {
-                prop.SetValue(request, (int?)reqId);
-            }
+            request.ReqId = reqId;
 
             var tcs = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
             pending[reqId] = tcs;
@@ -57,13 +55,13 @@ namespace DiscordAPI {
                     throw new TimeoutException($"Bridge request '{request.GetType().Name}' timed out after {to.TotalSeconds:0}s.");
                 }
                 var element = await tcs.Task;
-                return JsonSerializer.Deserialize<TResp>(element.GetRawText(), jsonOpts);
+                return element.Deserialize<TResp>(jsonOpts);
             } finally {
                 pending.TryRemove(reqId, out _);
             }
         }
 
-        public Task SendFireAndForgetAsync(object request) {
+        public Task SendFireAndForgetAsync(IBridgeRequest request) {
             return SendFrameAsync(request);
         }
 
@@ -96,7 +94,7 @@ namespace DiscordAPI {
                     throw new TimeoutException($"Bridge request 'SpeakPcm' timed out after {to.TotalSeconds:0}s.");
                 }
                 var element = await tcs.Task;
-                return JsonSerializer.Deserialize<OkResponse>(element.GetRawText(), jsonOpts);
+                return element.Deserialize<OkResponse>(jsonOpts);
             } finally {
                 pending.TryRemove(reqId, out _);
             }
@@ -111,11 +109,11 @@ namespace DiscordAPI {
 
         private async Task SendFrameAsync(object frame) {
             byte[] json = JsonSerializer.SerializeToUtf8Bytes(frame, frame.GetType(), jsonOpts);
+            byte[] len = BitConverter.GetBytes(json.Length);
             await writeLock.WaitAsync();
             try {
-                byte[] len = BitConverter.GetBytes(json.Length);
-                await pipe.WriteAsync(len, 0, 4);
-                await pipe.WriteAsync(json, 0, json.Length);
+                await WriteWithTimeoutAsync(len, 0, 4);
+                await WriteWithTimeoutAsync(json, 0, json.Length);
                 // No FlushAsync: on Windows named pipes that calls FlushFileBuffers, which
                 // blocks until the peer drains the pipe. WriteAsync already pushes bytes into
                 // the OS pipe buffer, which is what the peer reads.
@@ -125,14 +123,37 @@ namespace DiscordAPI {
         }
 
         private async Task SendBinaryFrameAsync(byte[] payload) {
+            byte[] len = BitConverter.GetBytes(payload.Length);
             await writeLock.WaitAsync();
             try {
-                byte[] len = BitConverter.GetBytes(payload.Length);
-                await pipe.WriteAsync(len, 0, 4);
-                await pipe.WriteAsync(payload, 0, payload.Length);
+                await WriteWithTimeoutAsync(len, 0, 4);
+                await WriteWithTimeoutAsync(payload, 0, payload.Length);
             } finally {
                 writeLock.Release();
             }
+        }
+
+        // Wraps pipe.WriteAsync with a hard deadline. A stalled peer (pipe buffer
+        // full, peer not reading) would otherwise hold writeLock indefinitely and
+        // wedge every subsequent send. On Windows .NET Framework, PipeStream's
+        // CancellationToken-aware WriteAsync does not reliably abort the
+        // underlying overlapped I/O, so we race against Task.Delay and force the
+        // pipe to fail by disposing it. A partial write would corrupt the
+        // length-prefixed frame stream, so disposing the pipe (which also faults
+        // the read loop and triggers OnPipeBroken / FailAllPending) is the
+        // correct teardown.
+        private async Task WriteWithTimeoutAsync(byte[] buf, int offset, int count) {
+            var writeTask = pipe.WriteAsync(buf, offset, count);
+            var winner = await Task.WhenAny(writeTask, Task.Delay(WriteTimeoutMs));
+            if (winner != writeTask) {
+                try { pipe.Dispose(); } catch { }
+                // Observe the orphaned write so its eventual fault doesn't surface
+                // as an unobserved task exception.
+                _ = writeTask.ContinueWith(t => { var _ = t.Exception; },
+                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+                throw new IOException("Bridge pipe write timed out after " + WriteTimeoutMs + "ms; tearing down.");
+            }
+            await writeTask;
         }
 
         private async Task ReadLoopAsync(CancellationToken ct) {
@@ -236,8 +257,14 @@ namespace DiscordAPI {
         }
 
         public void Dispose() {
+            // Order matters:
+            //   1. cancel the read loop's CT
+            //   2. dispose the pipe — faults any in-flight WriteAsync / ReadAsync
+            //   3. wait for the read loop to exit so it stops touching writeLock-adjacent state
+            //   4. dispose writeLock
             try { readLoopCts?.Cancel(); } catch { }
             try { pipe?.Dispose(); } catch { }
+            try { readLoopTask?.Wait(TimeSpan.FromSeconds(2)); } catch { }
             try { writeLock?.Dispose(); } catch { }
         }
     }

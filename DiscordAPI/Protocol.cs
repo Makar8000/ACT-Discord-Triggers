@@ -35,33 +35,39 @@ namespace DiscordBridge.Protocol {
         public const string Disconnected = "Disconnected";
     }
 
-    public class HelloRequest {
+    // Marker interface for request DTOs. Lets PipeClient.SendAsync set ReqId
+    // without reflection.
+    public interface IBridgeRequest {
+        int? ReqId { get; set; }
+    }
+
+    public class HelloRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.Hello;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
         [JsonPropertyName("protocolVersion")] public int ProtocolVersion { get; set; }
     }
 
-    public class DeinitRequest {
+    public class DeinitRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.Deinit;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
     }
 
-    public class IsConnectedRequest {
+    public class IsConnectedRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.IsConnected;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
     }
 
-    public class GetServersRequest {
+    public class GetServersRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.GetServers;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
     }
 
-    public class LeaveChannelRequest {
+    public class LeaveChannelRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.LeaveChannel;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
     }
 
-    public class ShutdownRequest {
+    public class ShutdownRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.Shutdown;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
     }
@@ -74,14 +80,14 @@ namespace DiscordBridge.Protocol {
         [JsonPropertyName("error")] public string Error { get; set; } = "";
     }
 
-    public class InitRequest {
+    public class InitRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.Init;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
         [JsonPropertyName("token")] public string Token { get; set; } = "";
         [JsonPropertyName("status")] public string Status { get; set; } = "";
     }
 
-    public class GetChannelsRequest {
+    public class GetChannelsRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.GetChannels;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
         [JsonPropertyName("server")] public string Server { get; set; } = "";
@@ -105,13 +111,13 @@ namespace DiscordBridge.Protocol {
         [JsonPropertyName("connected")] public bool Connected { get; set; }
     }
 
-    public class SetGameRequest {
+    public class SetGameRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.SetGame;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
         [JsonPropertyName("text")] public string Text { get; set; } = "";
     }
 
-    public class JoinChannelRequest {
+    public class JoinChannelRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.JoinChannel;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
         [JsonPropertyName("server")] public string Server { get; set; } = "";
@@ -130,7 +136,7 @@ namespace DiscordBridge.Protocol {
     // Layout (after the outer 4-byte LE length): [0x01][reqId u32 LE][sampleRate u32 LE][bits u8][channels u8][raw PCM...]
     // Response stays JSON: { op:"SpeakResult", reqId, ok, error }.
 
-    public class SpeakFileRequest {
+    public class SpeakFileRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.SpeakFile;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
         [JsonPropertyName("path")] public string Path { get; set; } = "";
