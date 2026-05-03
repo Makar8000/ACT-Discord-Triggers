@@ -1,7 +1,6 @@
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import type { ReadStream } from 'node:fs';
-import { Readable } from 'node:stream';
 import {
     Client,
     GatewayIntentBits,
@@ -15,16 +14,15 @@ import {
     createAudioResource,
     StreamType,
     VoiceConnectionStatus,
-    AudioPlayerStatus,
     getVoiceConnection,
     entersState,
     type VoiceConnection,
     type AudioPlayer,
-    type AudioResource,
 } from '@discordjs/voice';
 import { Reader as WavReader, type WavFormat } from 'wav';
 
 import * as log from './file-log.js';
+import { PcmMixer } from './pcm-mixer.js';
 import type { Host, Notifier, OpResult } from './pipe-server.js';
 import type { LogLevel } from './protocol.js';
 import { WavCache } from './wav-cache.js';
@@ -32,12 +30,6 @@ import { WavCache } from './wav-cache.js';
 const TARGET_SAMPLE_RATE = 48000;
 const TARGET_BITS = 16;
 const WAV_FORMAT_PCM = 1;
-
-function bufferAsStream(buf: Buffer): Readable {
-    return new Readable({
-        read() { this.push(buf); this.push(null); },
-    });
-}
 
 // Mono → stereo by sample duplication (L = R = source). 16-bit signed LE.
 // Exported for unit tests; not part of the public Host interface.
@@ -78,15 +70,13 @@ export function resampleStereo16(pcm: Buffer, srcRate: number, dstRate: number):
     return out;
 }
 
-type ResourceFactory = () => AudioResource;
-
 export class DiscordHost implements Host {
     private client: Client | null = null;
     private statusMsg = '';
     private notify: Notifier | null = null;
     private connection: VoiceConnection | null = null;
     private player: AudioPlayer | null = null;
-    private queue: ResourceFactory[] = [];
+    private mixer: PcmMixer | null = null;
     private currentGuildId: string | null = null;
     private pingTimer: NodeJS.Timeout | null = null;
     private readonly wavCache = new WavCache();
@@ -220,16 +210,29 @@ export class DiscordHost implements Host {
             log.info('joinChannel: voice Ready');
             this._startPingLog();
 
-            this.player = createAudioPlayer();
+            this.mixer = new PcmMixer();
+            // maxMissedFrames: with the mixer's pull-based _read producing
+            // a chunk per call, the encoder should never see null. But a
+            // GC pause that delays our _read by >100 ms (default tolerance)
+            // would otherwise stop the player permanently. Disable the
+            // missed-frame stop so transient delays just emit silence.
+            this.player = createAudioPlayer({
+                behaviors: { maxMissedFrames: Number.MAX_SAFE_INTEGER },
+            });
             this.player.on('stateChange', (oldS, newS) => {
                 log.info(`player ${oldS.status} -> ${newS.status}`);
-                if (newS.status === AudioPlayerStatus.Idle) this._tryDrain();
             });
             this.player.on('error', (err: Error) => {
                 log.error('player error', err);
                 this._sendLog('Error', `player: ${err.message}`);
             });
             this.connection.subscribe(this.player);
+
+            // One long-lived resource fed by the mixer. The mixer never
+            // ends, so this single play() call drives all subsequent audio
+            // (each speakPcm/speakFile just adds a voice into the mixer).
+            const resource = createAudioResource(this.mixer, { inputType: StreamType.Raw });
+            this.player.play(resource);
 
             return { ok: true, error: '' };
         } catch (e) {
@@ -241,7 +244,8 @@ export class DiscordHost implements Host {
     async leaveChannel(): Promise<void> {
         log.info('leaveChannel');
         this._stopPingLog();
-        this.queue.length = 0;
+        this.mixer?.clear();
+        this.mixer = null;
         try { this.player?.stop(true); } catch { /* ignore */ }
         this.player = null;
         try {
@@ -259,10 +263,7 @@ export class DiscordHost implements Host {
     speakPcm(pcmBuffer: Buffer): OpResult {
         const guard = this._guardPlayback();
         if (!guard.ok) return guard;
-        this.queue.push(() => createAudioResource(bufferAsStream(pcmBuffer), {
-            inputType: StreamType.Raw,
-        }));
-        this._tryDrain();
+        this.mixer!.addVoice(pcmBuffer);
         return { ok: true, error: '' };
     }
 
@@ -283,10 +284,7 @@ export class DiscordHost implements Host {
         const cachedPcm = this.wavCache.get(path, mtimeMs);
         if (cachedPcm) {
             log.info(`SpeakFile cache hit: ${path} (${cachedPcm.length} bytes)`);
-            this.queue.push(() => createAudioResource(bufferAsStream(cachedPcm), {
-                inputType: StreamType.Raw,
-            }));
-            this._tryDrain();
+            this.mixer!.addVoice(cachedPcm);
             return { ok: true, error: '' };
         }
 
@@ -335,11 +333,7 @@ export class DiscordHost implements Host {
             const finalPcm = resampleStereo16(stereoPcm, format.sampleRate, TARGET_SAMPLE_RATE);
 
             this.wavCache.set(path, mtimeMs, finalPcm);
-
-            this.queue.push(() => createAudioResource(bufferAsStream(finalPcm), {
-                inputType: StreamType.Raw,
-            }));
-            this._tryDrain();
+            this.mixer!.addVoice(finalPcm);
             return { ok: true, error: '' };
         } catch (e) {
             try { fileStream.destroy(); } catch { /* ignore */ }
@@ -390,27 +384,10 @@ export class DiscordHost implements Host {
         if (!this.connection || this.connection.state.status !== VoiceConnectionStatus.Ready) {
             return { ok: false, error: 'Not connected to a voice channel.' };
         }
-        if (!this.player) {
+        if (!this.player || !this.mixer) {
             return { ok: false, error: 'Audio player not ready.' };
         }
         return { ok: true, error: '' };
-    }
-
-    private _tryDrain(): void {
-        if (!this.player) return;
-        if (this.player.state.status !== AudioPlayerStatus.Idle) return;
-        // Loop, not recursion: a queue full of bad factories would blow the stack.
-        while (this.queue.length > 0) {
-            const factory = this.queue.shift();
-            if (!factory) continue;
-            try {
-                const resource = factory();
-                this.player.play(resource);
-                return;
-            } catch (e) {
-                log.error('play failed, dropping resource', e);
-            }
-        }
     }
 
     private _findGuild(name: string): Guild | null {
