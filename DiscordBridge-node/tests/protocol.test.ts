@@ -29,10 +29,13 @@ test('every request op has a paired Result op (Shutdown excluded)', () => {
     for (const req of requestOps) {
         assert.ok(opValues.has(`${req}Result`), `missing pair: ${req}Result`);
     }
-    // SpeakPcm is the one mismatched name — its result is "SpeakResult", not "SpeakPcmResult".
-    // Documented in protocol.ts; assert it explicitly so a rename catches the mismatch.
+    // SpeakPcm and SpeakFile both reply with "SpeakResult", not "<Op>Result".
+    // Documented in protocol.ts; assert explicitly so a rename catches the mismatch.
     assert.equal(Op.SpeakPcm, 'SpeakPcm');
+    assert.equal(Op.SpeakFile, 'SpeakFile');
     assert.equal(Op.SpeakResult, 'SpeakResult');
+    assert.ok(!opValues.has('SpeakPcmResult'));
+    assert.ok(!opValues.has('SpeakFileResult'));
     // Shutdown has no Result op by design.
     assert.ok(!opValues.has('ShutdownResult'));
 });

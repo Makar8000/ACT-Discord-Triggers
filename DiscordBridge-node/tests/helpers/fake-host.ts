@@ -17,6 +17,7 @@ export class FakeHost implements Host {
     private _nextInit: OpResult = { ok: true, error: '' };
     private _nextJoinChannel: OpResult = { ok: true, error: '' };
     private _nextSpeakPcm: OpResult = { ok: true, error: '' };
+    private _nextSpeakFile: OpResult = { ok: true, error: '' };
     private _nextIsConnected = false;
     private _nextServers: string[] = [];
     private _nextChannels: string[] = [];
@@ -25,6 +26,7 @@ export class FakeHost implements Host {
     private _joinThrows: Error | null = null;
     private _setGameThrows: Error | null = null;
     private _speakPcmThrows: Error | null = null;
+    private _speakFileThrows: Error | null = null;
 
     setNotifier(fn: Notifier): void {
         this.calls.push({ method: 'setNotifier', args: [] });
@@ -77,9 +79,16 @@ export class FakeHost implements Host {
         return this._nextSpeakPcm;
     }
 
+    async speakFile(path: string): Promise<OpResult> {
+        this.calls.push({ method: 'speakFile', args: [path] });
+        if (this._speakFileThrows) throw this._speakFileThrows;
+        return this._nextSpeakFile;
+    }
+
     nextInit(r: OpResult): void { this._nextInit = r; }
     nextJoinChannel(r: OpResult): void { this._nextJoinChannel = r; }
     nextSpeakPcm(r: OpResult): void { this._nextSpeakPcm = r; }
+    nextSpeakFile(r: OpResult): void { this._nextSpeakFile = r; }
     nextIsConnected(v: boolean): void { this._nextIsConnected = v; }
     nextServers(s: string[]): void { this._nextServers = s; }
     nextChannels(c: string[]): void { this._nextChannels = c; }
@@ -88,6 +97,7 @@ export class FakeHost implements Host {
     joinChannelThrows(err: Error): void { this._joinThrows = err; }
     setGameThrows(err: Error): void { this._setGameThrows = err; }
     speakPcmThrows(err: Error): void { this._speakPcmThrows = err; }
+    speakFileThrows(err: Error): void { this._speakFileThrows = err; }
 
     fireNotification(n: Notification): void {
         if (this.notify) this.notify(n);

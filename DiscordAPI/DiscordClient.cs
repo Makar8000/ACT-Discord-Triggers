@@ -1,10 +1,11 @@
 using DiscordBridge.Protocol;
-using NAudio.Wave;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Speech.AudioFormat;
 using System.Speech.Synthesis;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiscordAPI {
@@ -13,21 +14,28 @@ namespace DiscordAPI {
         private static BridgeProcess bridge;
         private static string bridgeDir;
         private static readonly object lifecycleLock = new object();
+        private static int initInProgress;
 
         private static readonly SpeechAudioFormatInfo formatInfo =
             new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 
         public delegate void BotLoaded();
-        public static BotLoaded BotReady;
+        public static event BotLoaded BotReady;
 
         public delegate void BotMessage(string message);
-        public static BotMessage Log;
+        public static event BotMessage Log;
 
         public static void SetBridgePath(string dir) {
             bridgeDir = dir;
         }
 
-        public static async void InIt(string logintoken, string botstatus) {
+        public static async Task InitAsync(string logintoken, string botstatus) {
+            // Race guard: a fast double-click on Connect would otherwise spawn two
+            // node.exe processes since the long async work below runs unlocked.
+            if (Interlocked.CompareExchange(ref initInProgress, 1, 0) != 0) {
+                Log?.Invoke("Initialization already in progress.");
+                return;
+            }
             try {
                 lock (lifecycleLock) {
                     if (pipeClient != null) {
@@ -98,11 +106,13 @@ namespace DiscordAPI {
                     Log?.Invoke("Discord login error: " + ex.Message);
                 }
             } catch (Exception ex) {
-                Log?.Invoke("InIt error: " + ex.Message);
+                Log?.Invoke("Init error: " + ex.Message);
+            } finally {
+                Interlocked.Exchange(ref initInProgress, 0);
             }
         }
 
-        public static async Task deInIt() {
+        public static async Task DeinitAsync() {
             PipeClient localClient;
             BridgeProcess localBridge;
             lock (lifecycleLock) {
@@ -145,41 +155,40 @@ namespace DiscordAPI {
             try { localBridge?.Dispose(); } catch { }
         }
 
-        public static bool IsConnected() {
+        public static async Task<bool> IsConnectedAsync() {
             var pc = pipeClient;
             if (pc == null) return false;
             try {
-                return Task.Run(async () =>
-                    (await pc.SendAsync<IsConnectedResponse>(new IsConnectedRequest(), TimeSpan.FromSeconds(3))).Connected
-                ).GetAwaiter().GetResult();
+                var resp = await pc.SendAsync<IsConnectedResponse>(
+                    new IsConnectedRequest(), TimeSpan.FromSeconds(3));
+                return resp.Connected;
             } catch {
                 return false;
             }
         }
 
-        public static string[] getServers() {
+        public static async Task<string[]> GetServersAsync() {
             var pc = pipeClient;
             if (pc == null) return new string[0];
             try {
-                var resp = Task.Run(() => pc.SendAsync<GetServersResponse>(new GetServersRequest()))
-                    .GetAwaiter().GetResult();
+                var resp = await pc.SendAsync<GetServersResponse>(
+                    new GetServersRequest());
                 return resp.Servers ?? new string[0];
             } catch (Exception ex) {
-                Log?.Invoke("getServers failed: " + ex.Message);
+                Log?.Invoke("GetServersAsync failed: " + ex.Message);
                 return new string[0];
             }
         }
 
-        public static string[] getChannels(string server) {
+        public static async Task<string[]> GetChannelsAsync(string server) {
             var pc = pipeClient;
             if (pc == null) return new string[0];
             try {
-                var resp = Task.Run(() => pc.SendAsync<GetChannelsResponse>(
-                    new GetChannelsRequest { Server = server }))
-                    .GetAwaiter().GetResult();
+                var resp = await pc.SendAsync<GetChannelsResponse>(
+                    new GetChannelsRequest { Server = server });
                 return resp.Channels ?? new string[0];
             } catch (Exception ex) {
-                Log?.Invoke("getChannels failed: " + ex.Message);
+                Log?.Invoke("GetChannelsAsync failed: " + ex.Message);
                 return new string[0];
             }
         }
@@ -214,18 +223,21 @@ namespace DiscordAPI {
             }
         }
 
-        public static void LeaveChannel() {
+        public static async Task LeaveChannelAsync() {
             var pc = pipeClient;
             if (pc == null) return;
             try {
-                Task.Run(() => pc.SendAsync<OkResponse>(new LeaveChannelRequest(), TimeSpan.FromSeconds(10)))
-                    .GetAwaiter().GetResult();
+                await pc.SendAsync<OkResponse>(
+                    new LeaveChannelRequest(), TimeSpan.FromSeconds(10));
             } catch (Exception ex) {
-                Log?.Invoke("LeaveChannel failed: " + ex.Message);
+                Log?.Invoke("LeaveChannelAsync failed: " + ex.Message);
             }
         }
 
         public static void Speak(string text, string voice, int vol, int speed) {
+            // Called from ACT's PlayTtsMethod hook on a background thread, not the UI.
+            // Synthesis itself is sync; downstream IPC blocks the trigger thread by design.
+            var swSynth = Stopwatch.StartNew();
             byte[] pcm;
             try {
                 using (var tts = new SpeechSynthesizer())
@@ -241,24 +253,43 @@ namespace DiscordAPI {
                 Log?.Invoke("TTS synthesis failed: " + ex.Message);
                 return;
             }
+            swSynth.Stop();
+            var swIpc = Stopwatch.StartNew();
             SendSpeakPcm(pcm);
+            swIpc.Stop();
+            Log?.Invoke($"Speak timing: synth={swSynth.ElapsedMilliseconds}ms ipc={swIpc.ElapsedMilliseconds}ms bytes={pcm.Length}");
         }
 
         public static void SpeakFile(string path) {
-            byte[] pcm;
+            // Called from ACT's PlaySoundMethod hook (signature: void(string,int)) on
+            // a background thread. The single sync-over-async boundary lives here.
             try {
-                using (var wav = new WaveFileReader(path))
-                using (var pcmStream = WaveFormatConversionStream.CreatePcmStream(wav))
-                using (var resampled = new WaveFormatConversionStream(new WaveFormat(48000, 16, 2), pcmStream))
-                using (var ms = new MemoryStream()) {
-                    resampled.CopyTo(ms);
-                    pcm = ms.ToArray();
-                }
+                Task.Run(() => SpeakFileAsync(path)).GetAwaiter().GetResult();
             } catch (Exception ex) {
-                Log?.Invoke("Unable to read file: " + ex.Message);
+                Log?.Invoke("SpeakFile error: " + ex.Message);
+            }
+        }
+
+        private static async Task SpeakFileAsync(string path) {
+            var pc = pipeClient;
+            if (pc == null) {
+                Log?.Invoke("Cannot play file: bridge not connected.");
                 return;
             }
-            SendSpeakPcm(pcm);
+            var sw = Stopwatch.StartNew();
+            try {
+                var resp = await pc.SendAsync<OkResponse>(
+                    new SpeakFileRequest { Path = path },
+                    TimeSpan.FromSeconds(30));
+                sw.Stop();
+                if (!resp.Ok && !string.IsNullOrEmpty(resp.Error)) {
+                    Log?.Invoke("Bridge file rejected: " + resp.Error);
+                } else {
+                    Log?.Invoke($"SpeakFile timing: ipc={sw.ElapsedMilliseconds}ms");
+                }
+            } catch (Exception ex) {
+                Log?.Invoke("SpeakFile error: " + ex.Message);
+            }
         }
 
         private static void SendSpeakPcm(byte[] pcm) {
@@ -268,9 +299,7 @@ namespace DiscordAPI {
                 return;
             }
             try {
-                var resp = Task.Run(() => pc.SendAsync<OkResponse>(
-                    new SpeakPcmRequest { Pcm = Convert.ToBase64String(pcm) },
-                    TimeSpan.FromSeconds(30)))
+                var resp = Task.Run(() => pc.SendSpeakPcmAsync(pcm, 48000, 16, 2, TimeSpan.FromSeconds(30)))
                     .GetAwaiter().GetResult();
                 if (!resp.Ok && !string.IsNullOrEmpty(resp.Error)) {
                     Log?.Invoke("Bridge audio rejected: " + resp.Error);

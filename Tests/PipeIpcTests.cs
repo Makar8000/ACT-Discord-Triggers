@@ -42,6 +42,12 @@ namespace ActDiscordTriggers.Tests {
         }
 
         private static async Task<JsonElement> ReadFrameAsync(Stream pipe) {
+            byte[] payload = await ReadRawFrameAsync(pipe);
+            using var doc = JsonDocument.Parse(payload);
+            return doc.RootElement.Clone();
+        }
+
+        private static async Task<byte[]> ReadRawFrameAsync(Stream pipe) {
             byte[] lenBuf = new byte[4];
             int read = 0;
             while (read < 4) {
@@ -57,8 +63,7 @@ namespace ActDiscordTriggers.Tests {
                 if (n == 0) throw new EndOfStreamException();
                 read += n;
             }
-            using var doc = JsonDocument.Parse(payload);
-            return doc.RootElement.Clone();
+            return payload;
         }
 
         private static async Task WriteFrameAsync(Stream pipe, object frame) {
@@ -187,21 +192,28 @@ namespace ActDiscordTriggers.Tests {
         }
 
         [Fact]
-        public async Task SpeakPcm_payload_arrives_at_server_intact() {
+        public async Task SpeakPcm_binary_frame_arrives_at_server_intact() {
             await ConnectAsync();
             byte[] pcm = new byte[16 * 1024];
             new Random(42).NextBytes(pcm);
 
-            var sendTask = pipeClient.SendAsync<OkResponse>(
-                new SpeakPcmRequest { Pcm = Convert.ToBase64String(pcm) },
-                TimeSpan.FromSeconds(5));
+            var sendTask = pipeClient.SendSpeakPcmAsync(pcm, 48000, 16, 2, TimeSpan.FromSeconds(5));
 
-            var f = await ReadFrameAsync(serverPipe);
-            string b64 = f.GetProperty("pcm").GetString();
-            byte[] gotPcm = Convert.FromBase64String(b64);
+            byte[] frame = await ReadRawFrameAsync(serverPipe);
+            // Binary marker + 11-byte header + payload
+            Assert.Equal(0x01, frame[0]);
+            int reqId = BitConverter.ToInt32(frame, 1);
+            int sampleRate = BitConverter.ToInt32(frame, 5);
+            byte bits = frame[9];
+            byte channels = frame[10];
+            Assert.Equal(48000, sampleRate);
+            Assert.Equal(16, bits);
+            Assert.Equal(2, channels);
+
+            byte[] gotPcm = new byte[frame.Length - 11];
+            Buffer.BlockCopy(frame, 11, gotPcm, 0, gotPcm.Length);
             Assert.Equal(pcm, gotPcm);
 
-            int reqId = f.GetProperty("reqId").GetInt32();
             await WriteFrameAsync(serverPipe, new OkResponse {
                 Op = Op.SpeakResult, ReqId = reqId, Ok = true
             });
@@ -280,23 +292,23 @@ namespace ActDiscordTriggers.Tests {
         }
 
         [Fact]
-        public async Task Large_payload_round_trips_intact() {
+        public async Task Large_binary_payload_round_trips_intact() {
             await ConnectAsync();
-            // 256 KB random bytes; base64 JSON is ~340 KB, larger than the 64 KB pipe buffer,
-            // so this exercises the partial-write/concurrent-read path
+            // 256 KB random bytes — exceeds the 64 KB pipe buffer so this exercises
+            // the partial-write / concurrent-read path on the binary frame path.
             byte[] big = new byte[256 * 1024];
             new Random(7).NextBytes(big);
 
-            var sendTask = pipeClient.SendAsync<OkResponse>(
-                new SpeakPcmRequest { Pcm = Convert.ToBase64String(big) },
-                TimeSpan.FromSeconds(10));
+            var sendTask = pipeClient.SendSpeakPcmAsync(big, 48000, 16, 2, TimeSpan.FromSeconds(10));
 
-            var f = await ReadFrameAsync(serverPipe);
-            byte[] got = Convert.FromBase64String(f.GetProperty("pcm").GetString());
+            byte[] frame = await ReadRawFrameAsync(serverPipe);
+            Assert.Equal(0x01, frame[0]);
+            int reqId = BitConverter.ToInt32(frame, 1);
+            byte[] got = new byte[frame.Length - 11];
+            Buffer.BlockCopy(frame, 11, got, 0, got.Length);
             Assert.Equal(big.Length, got.Length);
             Assert.Equal(big, got);
 
-            int reqId = f.GetProperty("reqId").GetInt32();
             await WriteFrameAsync(serverPipe, new OkResponse {
                 Op = Op.SpeakResult, ReqId = reqId, Ok = true
             });
@@ -342,6 +354,52 @@ namespace ActDiscordTriggers.Tests {
             });
 
             Assert.Equal("hi", await done.Task.WaitAsync(TimeSpan.FromSeconds(2)));
+        }
+
+        // The server pipe is built with outBufferSize=64KB and we never read it
+        // here, so a >64KB binary frame fills the kernel buffer and stalls
+        // pipe.WriteAsync. With the WriteWithTimeoutAsync guard, the send should
+        // bail within WriteTimeoutMs (5s) instead of hanging on the full 30s
+        // request timeout.
+        [Fact]
+        public async Task SendAsync_write_times_out_when_peer_never_reads() {
+            await ConnectAsync();
+
+            byte[] big = new byte[128 * 1024];
+            new Random(7).NextBytes(big);
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var t = pipeClient.SendSpeakPcmAsync(big, 48000, 16, 2, TimeSpan.FromSeconds(30));
+            var ex = await Assert.ThrowsAnyAsync<Exception>(() =>
+                t.WaitAsync(TimeSpan.FromSeconds(15)));
+            sw.Stop();
+
+            Assert.True(ex is IOException || ex is OperationCanceledException,
+                "expected IOException or OperationCanceledException, got " + ex.GetType().Name);
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(15),
+                "write should have failed fast via WriteTimeoutMs (~5s), not via the 30s request timeout");
+        }
+
+        // Verifies Dispose tears down in the correct order: cancel CT, dispose
+        // pipe (faults in-flight ops), wait for read loop to exit, then dispose
+        // writeLock. A pending SendAsync should fault cleanly without
+        // ObjectDisposedException escaping Dispose.
+        [Fact]
+        public async Task Dispose_waits_for_read_loop_and_does_not_throw_with_pending_send() {
+            await ConnectAsync();
+
+            var t = pipeClient.SendAsync<HelloResponse>(
+                new HelloRequest { ProtocolVersion = ProtocolConstants.Version },
+                TimeSpan.FromSeconds(30));
+
+            // Make sure the request has landed at the server before we tear down.
+            _ = await ReadFrameAsync(serverPipe);
+
+            // Must not throw.
+            pipeClient.Dispose();
+
+            // The pending send must fault rather than hang.
+            await Assert.ThrowsAnyAsync<Exception>(() => t);
         }
     }
 }

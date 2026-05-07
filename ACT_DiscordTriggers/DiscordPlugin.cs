@@ -7,6 +7,7 @@ using System.Xml;
 using System.Speech.Synthesis;
 using System.Reflection;
 using DiscordAPI;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 
 namespace ACT_DiscordTriggers {
@@ -415,9 +416,13 @@ namespace ACT_DiscordTriggers {
     public async void DeInitPlugin() {
       ActGlobals.oFormActMain.PlayTtsMethod = oldTTS;
       ActGlobals.oFormActMain.PlaySoundMethod = oldSound;
+      // Unhook static event subscriptions so the next init doesn't pile up
+      // duplicate callbacks against a disposed UserControl.
+      DiscordClient.BotReady -= BotReady;
+      DiscordClient.Log -= Log;
       SaveSettings();
       try {
-        await DiscordClient.deInIt();
+        await DiscordClient.DeinitAsync();
       } catch (Exception ex) {
         ActGlobals.oFormActMain.WriteExceptionLog(ex, "Error with DeInit of Discord Plugin.");
       }
@@ -490,13 +495,13 @@ namespace ACT_DiscordTriggers {
       // Marshal back to the UI thread before touching controls.
       if (InvokeRequired) { BeginInvoke(new Action(BotReady)); return; }
       btnJoin.Enabled = true;
-      populateServers();
+      _ = populateServers();
     }
 
 
-    private void populateServers() {
+    private async Task populateServers() {
       try {
-        string[] servers = DiscordClient.getServers();
+        string[] servers = await DiscordClient.GetServersAsync();
         Log("Found " + servers.Length + " discord server(s).");
 
         cmbServer.Items.Clear();
@@ -513,10 +518,11 @@ namespace ACT_DiscordTriggers {
       }
     }
 
-    private void populateChannels(string server) {
+    private async Task populateChannels(string server) {
       try {
         cmbChan.Items.Clear();
-        cmbChan.Items.AddRange(DiscordClient.getChannels(server));
+        string[] channels = await DiscordClient.GetChannelsAsync(server);
+        cmbChan.Items.AddRange(channels);
         if (cmbChan.Items.Count > 0) {
           cmbChan.SelectedIndex = 0;
           Log("Found " + cmbChan.Items.Count + " available voice channel(s) for " + server);
@@ -540,20 +546,18 @@ namespace ACT_DiscordTriggers {
       } else {
         Log("Unable to join channel. Does your bot have permission to join this channel?");
         btnJoin.Enabled = true;
-        populateServers();
+        await populateServers();
       }
     }
 
-    private void btnLeave_Click(object sender, EventArgs e) {
+    private async void btnLeave_Click(object sender, EventArgs e) {
       btnLeave.Enabled = false;
       try {
-        DiscordClient.LeaveChannel();
+        await DiscordClient.LeaveChannelAsync();
         btnJoin.Enabled = true;
-        btnLeave.Enabled = false;
         Log("Left channel.");
         ActGlobals.oFormActMain.PlayTtsMethod = oldTTS;
         ActGlobals.oFormActMain.PlaySoundMethod = oldSound;
-        btnJoin.Enabled = true;
       } catch (Exception ex) {
         Log("Error leaving channel. Possible connection issue.");
         btnLeave.Enabled = true;
@@ -561,16 +565,27 @@ namespace ACT_DiscordTriggers {
       }
     }
 
-    private void cmbServer_SelectedIndexChanged(object sender, EventArgs e) {
-      populateChannels(cmbServer.SelectedItem.ToString());
+    private async void cmbServer_SelectedIndexChanged(object sender, EventArgs e) {
+      // populateServers() does cmbServer.Items.Clear(), which fires this handler
+      // with SelectedItem == null. Bail before we NRE.
+      if (cmbServer.SelectedItem == null) return;
+      try {
+        await populateChannels(cmbServer.SelectedItem.ToString());
+      } catch (Exception ex) {
+        Log("populateChannels failed: " + ex.Message);
+      }
     }
 
-    private void discordConnectbtn_Click(object sender, EventArgs e) {
-      if (DiscordClient.IsConnected()) {
-        Log("Already connected to Discord.");
-        return;
+    private async void discordConnectbtn_Click(object sender, EventArgs e) {
+      try {
+        if (await DiscordClient.IsConnectedAsync()) {
+          Log("Already connected to Discord.");
+          return;
+        }
+        await DiscordClient.InitAsync(txtToken.Text, txtBotStatus.Text);
+      } catch (Exception ex) {
+        Log("Connect failed: " + ex.Message);
       }
-      DiscordClient.InIt(txtToken.Text, txtBotStatus.Text);
     }
 
     private void LogList_KeyUp(object sender, KeyEventArgs e) {
@@ -611,37 +626,37 @@ namespace ACT_DiscordTriggers {
       xmlSettings.AddControlSetting(chkAutoConnect.Name, chkAutoConnect);
       xmlSettings.AddControlSetting(txtBotStatus.Name, txtBotStatus);
       if (File.Exists(settingsFile)) {
-        FileStream fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        XmlTextReader xReader = new XmlTextReader(fs);
         try {
-          while (xReader.Read())
-            if (xReader.NodeType == XmlNodeType.Element)
-              if (xReader.LocalName == "SettingsSerializer")
-                xmlSettings.ImportFromXml(xReader);
+          using (var fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+          using (var xReader = new XmlTextReader(fs)) {
+            while (xReader.Read())
+              if (xReader.NodeType == XmlNodeType.Element)
+                if (xReader.LocalName == "SettingsSerializer")
+                  xmlSettings.ImportFromXml(xReader);
+          }
         } catch (Exception ex) {
           lblStatus.Text = "Error loading settings: " + ex.Message;
         }
-        xReader.Close();
       }
     }
 
     public bool SaveSettings() {
       try {
-        FileStream fs = new FileStream(settingsFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-        XmlTextWriter xWriter = new XmlTextWriter(fs, Encoding.UTF8);
-        xWriter.Formatting = Formatting.Indented;
-        xWriter.Indentation = 1;
-        xWriter.IndentChar = '\t';
-        xWriter.WriteStartDocument(true);
-        xWriter.WriteStartElement("Config");
-        xWriter.WriteStartElement("SettingsSerializer");
-        xmlSettings.ExportToXml(xWriter);
-        xWriter.WriteEndElement();
-        xWriter.WriteEndElement();
-        xWriter.WriteEndDocument();
-        xWriter.Flush();
-        xWriter.Close();
-      } catch {
+        using (var fs = new FileStream(settingsFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+        using (var xWriter = new XmlTextWriter(fs, Encoding.UTF8)) {
+          xWriter.Formatting = Formatting.Indented;
+          xWriter.Indentation = 1;
+          xWriter.IndentChar = '\t';
+          xWriter.WriteStartDocument(true);
+          xWriter.WriteStartElement("Config");
+          xWriter.WriteStartElement("SettingsSerializer");
+          xmlSettings.ExportToXml(xWriter);
+          xWriter.WriteEndElement();
+          xWriter.WriteEndElement();
+          xWriter.WriteEndDocument();
+        }
+      } catch (Exception ex) {
+        if (lblStatus != null) lblStatus.Text = "Error saving settings: " + ex.Message;
         return false;
       }
       return true;

@@ -1,4 +1,6 @@
-import { Readable } from 'node:stream';
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
+import type { ReadStream } from 'node:fs';
 import {
     Client,
     GatewayIntentBits,
@@ -12,21 +14,60 @@ import {
     createAudioResource,
     StreamType,
     VoiceConnectionStatus,
-    AudioPlayerStatus,
     getVoiceConnection,
     entersState,
     type VoiceConnection,
     type AudioPlayer,
 } from '@discordjs/voice';
+import { Reader as WavReader, type WavFormat } from 'wav';
 
 import * as log from './file-log.js';
+import { PcmMixer } from './pcm-mixer.js';
 import type { Host, Notifier, OpResult } from './pipe-server.js';
 import type { LogLevel } from './protocol.js';
+import { WavCache } from './wav-cache.js';
 
-function bufferAsStream(buf: Buffer): Readable {
-    return new Readable({
-        read() { this.push(buf); this.push(null); },
-    });
+const TARGET_SAMPLE_RATE = 48000;
+const TARGET_BITS = 16;
+const WAV_FORMAT_PCM = 1;
+
+// Mono → stereo by sample duplication (L = R = source). 16-bit signed LE.
+// Exported for unit tests; not part of the public Host interface.
+export function upmixMonoToStereo16(monoPcm: Buffer): Buffer {
+    const sampleCount = monoPcm.length >>> 1;
+    const out = Buffer.alloc(sampleCount * 4);
+    for (let i = 0; i < sampleCount; i++) {
+        const s = monoPcm.readInt16LE(i * 2);
+        out.writeInt16LE(s, i * 4);
+        out.writeInt16LE(s, i * 4 + 2);
+    }
+    return out;
+}
+
+// Linear-interpolation sample rate conversion for 16-bit signed LE stereo.
+// Quality is fine for short trigger sounds going through Opus at 48k; do not
+// reuse this for music/long-form audio without swapping to a polyphase filter.
+// Exported for unit tests.
+export function resampleStereo16(pcm: Buffer, srcRate: number, dstRate: number): Buffer {
+    if (srcRate === dstRate) return pcm;
+    const srcFrames = pcm.length >>> 2;
+    const ratio = dstRate / srcRate;
+    const dstFrames = Math.max(1, Math.floor(srcFrames * ratio));
+    const out = Buffer.alloc(dstFrames * 4);
+    const lastSrc = srcFrames - 1;
+    for (let i = 0; i < dstFrames; i++) {
+        const srcPos = i / ratio;
+        const srcIdx = Math.floor(srcPos);
+        const nextIdx = srcIdx < lastSrc ? srcIdx + 1 : lastSrc;
+        const frac = srcPos - srcIdx;
+        const l1 = pcm.readInt16LE(srcIdx * 4);
+        const l2 = pcm.readInt16LE(nextIdx * 4);
+        const r1 = pcm.readInt16LE(srcIdx * 4 + 2);
+        const r2 = pcm.readInt16LE(nextIdx * 4 + 2);
+        out.writeInt16LE(Math.round(l1 + (l2 - l1) * frac), i * 4);
+        out.writeInt16LE(Math.round(r1 + (r2 - r1) * frac), i * 4 + 2);
+    }
+    return out;
 }
 
 export class DiscordHost implements Host {
@@ -35,8 +76,10 @@ export class DiscordHost implements Host {
     private notify: Notifier | null = null;
     private connection: VoiceConnection | null = null;
     private player: AudioPlayer | null = null;
-    private queue: Buffer[] = [];
+    private mixer: PcmMixer | null = null;
     private currentGuildId: string | null = null;
+    private pingTimer: NodeJS.Timeout | null = null;
+    private readonly wavCache = new WavCache();
 
     setNotifier(fn: Notifier): void { this.notify = fn; }
 
@@ -165,11 +208,19 @@ export class DiscordHost implements Host {
 
             await entersState(this.connection, VoiceConnectionStatus.Ready, 30_000);
             log.info('joinChannel: voice Ready');
+            this._startPingLog();
 
-            this.player = createAudioPlayer();
+            this.mixer = new PcmMixer();
+            // maxMissedFrames: with the mixer's pull-based _read producing
+            // a chunk per call, the encoder should never see null. But a
+            // GC pause that delays our _read by >100 ms (default tolerance)
+            // would otherwise stop the player permanently. Disable the
+            // missed-frame stop so transient delays just emit silence.
+            this.player = createAudioPlayer({
+                behaviors: { maxMissedFrames: Number.MAX_SAFE_INTEGER },
+            });
             this.player.on('stateChange', (oldS, newS) => {
                 log.info(`player ${oldS.status} -> ${newS.status}`);
-                if (newS.status === AudioPlayerStatus.Idle) this._tryDrain();
             });
             this.player.on('error', (err: Error) => {
                 log.error('player error', err);
@@ -177,16 +228,29 @@ export class DiscordHost implements Host {
             });
             this.connection.subscribe(this.player);
 
+            // One long-lived resource fed by the mixer. The mixer never
+            // ends, so this single play() call drives all subsequent audio
+            // (each speakPcm/speakFile just adds a voice into the mixer).
+            const resource = createAudioResource(this.mixer, { inputType: StreamType.Raw });
+            this.player.play(resource);
+
             return { ok: true, error: '' };
         } catch (e) {
             log.error('joinChannel failed', e);
+            // entersState timeout (or any partial-init throw) leaves a live
+            // VoiceConnection registered with @discordjs/voice. leaveChannel
+            // is idempotent and tolerates partial state — it'll find the
+            // orphan via getVoiceConnection(currentGuildId) and destroy it.
+            try { await this.leaveChannel(); } catch { /* ignore */ }
             return { ok: false, error: log.errMsg(e) };
         }
     }
 
     async leaveChannel(): Promise<void> {
         log.info('leaveChannel');
-        this.queue.length = 0;
+        this._stopPingLog();
+        this.mixer?.clear();
+        this.mixer = null;
         try { this.player?.stop(true); } catch { /* ignore */ }
         this.player = null;
         try {
@@ -202,34 +266,139 @@ export class DiscordHost implements Host {
     }
 
     speakPcm(pcmBuffer: Buffer): OpResult {
-        if (!this.connection || this.connection.state.status !== VoiceConnectionStatus.Ready) {
-            return { ok: false, error: 'Not connected to a voice channel.' };
-        }
-        if (!this.player) {
-            return { ok: false, error: 'Audio player not ready.' };
-        }
-        this.queue.push(pcmBuffer);
-        this._tryDrain();
+        const guard = this._guardPlayback();
+        if (!guard.ok) return guard;
+        const r = this.mixer!.addVoice(pcmBuffer);
+        if (r.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${r.dropped} voice(s)`);
         return { ok: true, error: '' };
     }
 
-    private _tryDrain(): void {
-        if (!this.player) return;
-        if (this.player.state.status !== AudioPlayerStatus.Idle) return;
-        // Loop, not recursion: a queue full of bad buffers would blow the stack.
-        while (this.queue.length > 0) {
-            const buf = this.queue.shift();
-            if (!buf) continue;
-            try {
-                const resource = createAudioResource(bufferAsStream(buf), {
-                    inputType: StreamType.Raw,
-                });
-                this.player.play(resource);
-                return;
-            } catch (e) {
-                log.error('play failed, dropping buffer', e);
-            }
+    async speakFile(path: string): Promise<OpResult> {
+        const guard = this._guardPlayback();
+        if (!guard.ok) return guard;
+
+        // stat first so we can short-circuit on a cache hit and let mtime
+        // invalidate stale entries when the user edits the file in place.
+        let mtimeMs: number;
+        try {
+            const st = await stat(path);
+            mtimeMs = st.mtimeMs;
+        } catch (e) {
+            return { ok: false, error: `Cannot read file: ${log.errMsg(e)}` };
         }
+
+        const cachedPcm = this.wavCache.get(path, mtimeMs);
+        if (cachedPcm) {
+            log.info(`SpeakFile cache hit: ${path} (${cachedPcm.length} bytes)`);
+            const r = this.mixer!.addVoice(cachedPcm);
+            if (r.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${r.dropped} voice(s)`);
+            return { ok: true, error: '' };
+        }
+
+        let fileStream: ReadStream;
+        try {
+            fileStream = createReadStream(path);
+        } catch (e) {
+            return { ok: false, error: `Cannot open file: ${log.errMsg(e)}` };
+        }
+
+        const reader = new WavReader();
+
+        try {
+            const decoded = await new Promise<{ format: WavFormat; pcm: Buffer }>((resolve, reject) => {
+                const chunks: Buffer[] = [];
+                let captured: WavFormat | null = null;
+                reader.once('format', (fmt) => { captured = fmt; });
+                reader.on('data', (c: Buffer) => { chunks.push(c); });
+                reader.once('end', () => {
+                    if (!captured) reject(new Error('WAV ended before fmt header was parsed'));
+                    else resolve({ format: captured, pcm: Buffer.concat(chunks) });
+                });
+                reader.once('error', reject);
+                fileStream.once('error', reject);
+                fileStream.pipe(reader);
+            });
+
+            const { format, pcm } = decoded;
+
+            // Hard rejects: things we can't convert without a heavier toolchain.
+            // 16-bit signed PCM, mono or stereo, covers ~all real-world trigger WAVs
+            // (CD audio, Audacity defaults, in-game effect exports). For 24/32-bit or
+            // compressed WAV the user can re-export once.
+            if (format.audioFormat !== WAV_FORMAT_PCM) {
+                return { ok: false, error: `WAV must be uncompressed PCM (audioFormat=${format.audioFormat})` };
+            }
+            if (format.bitDepth !== TARGET_BITS) {
+                return { ok: false, error: `WAV must be 16-bit (got ${format.bitDepth}-bit). Re-export from Audacity as "16-bit PCM".` };
+            }
+            if (format.channels !== 1 && format.channels !== 2) {
+                return { ok: false, error: `WAV must be mono or stereo (got ${format.channels} channels)` };
+            }
+            if (!Number.isFinite(format.sampleRate) || format.sampleRate <= 0 || format.sampleRate > 192000) {
+                return { ok: false, error: `WAV sample rate ${format.sampleRate} is out of supported range (1-192000 Hz)` };
+            }
+
+            // Channel + sample-rate conversion to the format the bridge feeds Discord.
+            const stereoPcm = format.channels === 1 ? upmixMonoToStereo16(pcm) : pcm;
+            const finalPcm = resampleStereo16(stereoPcm, format.sampleRate, TARGET_SAMPLE_RATE);
+
+            this.wavCache.set(path, mtimeMs, finalPcm);
+            const addRes = this.mixer!.addVoice(finalPcm);
+            if (addRes.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${addRes.dropped} voice(s)`);
+            return { ok: true, error: '' };
+        } catch (e) {
+            try { fileStream.destroy(); } catch { /* ignore */ }
+            try { reader.destroy(); } catch { /* ignore */ }
+            return { ok: false, error: `Failed to read WAV: ${log.errMsg(e)}` };
+        }
+    }
+
+    private _startPingLog(): void {
+        this._stopPingLog();
+        const tick = (): void => {
+            if (!this.connection) return;
+            try {
+                // VoiceConnection.ping is { ws, udp } in @discordjs/voice 0.18+.
+                // ws = voice gateway heartbeat RTT. udp may be undefined for
+                // DAVE-encrypted connections — omit it from the log when so.
+                const p = this.connection.ping;
+                const parts: string[] = [];
+                if (typeof p.ws === 'number') parts.push(`ws=${p.ws}ms`);
+                if (typeof p.udp === 'number') parts.push(`udp=${p.udp}ms`);
+                if (parts.length > 0) log.info(`Discord voice RTT: ${parts.join(' ')}`);
+            } catch (e) {
+                log.warn('voice ping unavailable: ' + log.errMsg(e));
+            }
+        };
+        // Wait 5s for the first WS heartbeat to populate before logging, then
+        // sample every 60s. Both timers go through `pingTimer` so _stopPingLog
+        // cancels whichever is currently scheduled.
+        this.pingTimer = setTimeout(() => {
+            tick();
+            this.pingTimer = setInterval(tick, 60_000);
+            if (this.pingTimer.unref) this.pingTimer.unref();
+        }, 5_000);
+        if (this.pingTimer.unref) this.pingTimer.unref();
+    }
+
+    private _stopPingLog(): void {
+        if (this.pingTimer) {
+            // Node's Timer object accepts either clearTimeout or clearInterval
+            // regardless of which scheduled it, so calling both is safe.
+            clearTimeout(this.pingTimer);
+            clearInterval(this.pingTimer);
+            this.pingTimer = null;
+        }
+    }
+
+    private _guardPlayback(): OpResult {
+        if (!this.connection || this.connection.state.status !== VoiceConnectionStatus.Ready) {
+            return { ok: false, error: 'Not connected to a voice channel.' };
+        }
+        if (!this.player || !this.mixer) {
+            return { ok: false, error: 'Audio player not ready.' };
+        }
+        return { ok: true, error: '' };
     }
 
     private _findGuild(name: string): Guild | null {

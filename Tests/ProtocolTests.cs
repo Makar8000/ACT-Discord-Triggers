@@ -50,16 +50,13 @@ namespace ActDiscordTriggers.Tests {
         }
 
         [Fact]
-        public void SpeakPcmRequest_base64_payload_roundtrips() {
-            byte[] pcm = Enumerable.Range(0, 256).Select(i => (byte)(i & 0xFF)).ToArray();
-            var req = new SpeakPcmRequest { Pcm = Convert.ToBase64String(pcm) };
+        public void SpeakFileRequest_serializes_with_path() {
+            var req = new SpeakFileRequest { ReqId = 9, Path = @"C:\sounds\alert.wav" };
             string json = JsonSerializer.Serialize(req, opts);
-            var back = JsonSerializer.Deserialize<SpeakPcmRequest>(json);
-            Assert.Equal(pcm, Convert.FromBase64String(back.Pcm));
-            Assert.Equal(48000, back.SampleRate);
-            Assert.Equal(16, back.Bits);
-            Assert.Equal(2, back.Channels);
-            Assert.Equal("SpeakPcm", back.Op);
+            using var doc = JsonDocument.Parse(json);
+            Assert.Equal("SpeakFile", doc.RootElement.GetProperty("op").GetString());
+            Assert.Equal(9, doc.RootElement.GetProperty("reqId").GetInt32());
+            Assert.Equal(@"C:\sounds\alert.wav", doc.RootElement.GetProperty("path").GetString());
         }
 
         [Fact]
@@ -112,7 +109,10 @@ namespace ActDiscordTriggers.Tests {
             foreach (var req in requestsExpectingResult) {
                 Assert.Contains(req + "Result", ops);
             }
+            // SpeakPcm and SpeakFile both reply with Op.SpeakResult, not "<Op>Result".
             Assert.Contains(Op.SpeakResult, ops);
+            Assert.Contains(Op.SpeakPcm, ops);
+            Assert.Contains(Op.SpeakFile, ops);
         }
 
         [Fact]
