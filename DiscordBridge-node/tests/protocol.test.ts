@@ -1,11 +1,19 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { Op, PROTOCOL_VERSION, MAX_FRAME_BYTES } from '../src/protocol.js';
+import {
+    Op, PROTOCOL_VERSION, MAX_FRAME_BYTES,
+    BINARY_SPEAK_PCM_HEADER_BYTES, SPEAK_FLAG_RANDOM_EFFECT,
+} from '../src/protocol.js';
 
 test('PROTOCOL_VERSION is a positive integer', () => {
     assert.equal(typeof PROTOCOL_VERSION, 'number');
     assert.ok(Number.isInteger(PROTOCOL_VERSION));
     assert.ok(PROTOCOL_VERSION > 0);
+});
+
+test('binary SpeakPcm header is 12 bytes with a flags byte (matches C# PipeClient)', () => {
+    assert.equal(BINARY_SPEAK_PCM_HEADER_BYTES, 12);
+    assert.equal(SPEAK_FLAG_RANDOM_EFFECT, 0x01);
 });
 
 test('MAX_FRAME_BYTES is 64 MiB (matches C# Protocol.cs)', () => {

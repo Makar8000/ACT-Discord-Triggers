@@ -200,18 +200,20 @@ namespace ActDiscordTriggers.Tests {
             var sendTask = pipeClient.SendSpeakPcmAsync(pcm, 48000, 16, 2, TimeSpan.FromSeconds(5));
 
             byte[] frame = await ReadRawFrameAsync(serverPipe);
-            // Binary marker + 11-byte header + payload
+            // Binary marker + 12-byte header + payload
             Assert.Equal(0x01, frame[0]);
             int reqId = BitConverter.ToInt32(frame, 1);
             int sampleRate = BitConverter.ToInt32(frame, 5);
             byte bits = frame[9];
             byte channels = frame[10];
+            byte flags = frame[11];
             Assert.Equal(48000, sampleRate);
             Assert.Equal(16, bits);
             Assert.Equal(2, channels);
+            Assert.Equal(0, flags); // default: no effect
 
-            byte[] gotPcm = new byte[frame.Length - 11];
-            Buffer.BlockCopy(frame, 11, gotPcm, 0, gotPcm.Length);
+            byte[] gotPcm = new byte[frame.Length - 12];
+            Buffer.BlockCopy(frame, 12, gotPcm, 0, gotPcm.Length);
             Assert.Equal(pcm, gotPcm);
 
             await WriteFrameAsync(serverPipe, new OkResponse {
@@ -220,6 +222,24 @@ namespace ActDiscordTriggers.Tests {
 
             var resp = await sendTask;
             Assert.True(resp.Ok);
+        }
+
+        [Fact]
+        public async Task SpeakPcm_randomEffect_sets_flags_bit() {
+            await ConnectAsync();
+            byte[] pcm = new byte[8];
+
+            var sendTask = pipeClient.SendSpeakPcmAsync(pcm, 48000, 16, 2, TimeSpan.FromSeconds(5), randomEffect: true);
+
+            byte[] frame = await ReadRawFrameAsync(serverPipe);
+            Assert.Equal(0x01, frame[0]);
+            Assert.Equal(0x01, frame[11]); // flags bit0 = random effect
+            int reqId = BitConverter.ToInt32(frame, 1);
+
+            await WriteFrameAsync(serverPipe, new OkResponse {
+                Op = Op.SpeakResult, ReqId = reqId, Ok = true
+            });
+            Assert.True((await sendTask).Ok);
         }
 
         [Fact]
@@ -304,8 +324,8 @@ namespace ActDiscordTriggers.Tests {
             byte[] frame = await ReadRawFrameAsync(serverPipe);
             Assert.Equal(0x01, frame[0]);
             int reqId = BitConverter.ToInt32(frame, 1);
-            byte[] got = new byte[frame.Length - 11];
-            Buffer.BlockCopy(frame, 11, got, 0, got.Length);
+            byte[] got = new byte[frame.Length - 12];
+            Buffer.BlockCopy(frame, 12, got, 0, got.Length);
             Assert.Equal(big.Length, got.Length);
             Assert.Equal(big, got);
 

@@ -1,4 +1,4 @@
-import type { Host, Notifier, OpResult } from '../../src/pipe-server.js';
+import type { Host, Notifier, OpResult, SpeakMeta } from '../../src/pipe-server.js';
 import type { Notification } from '../../src/protocol.js';
 
 export interface RecordedCall {
@@ -73,14 +73,14 @@ export class FakeHost implements Host {
         this.calls.push({ method: 'leaveChannel', args: [] });
     }
 
-    speakPcm(pcmBuffer: Buffer): OpResult {
-        this.calls.push({ method: 'speakPcm', args: [pcmBuffer] });
+    speakPcm(pcmBuffer: Buffer, meta?: SpeakMeta): OpResult {
+        this.calls.push({ method: 'speakPcm', args: [pcmBuffer, meta] });
         if (this._speakPcmThrows) throw this._speakPcmThrows;
         return this._nextSpeakPcm;
     }
 
-    async speakFile(path: string): Promise<OpResult> {
-        this.calls.push({ method: 'speakFile', args: [path] });
+    async speakFile(path: string, meta?: SpeakMeta): Promise<OpResult> {
+        this.calls.push({ method: 'speakFile', args: [path, meta] });
         if (this._speakFileThrows) throw this._speakFileThrows;
         return this._nextSpeakFile;
     }

@@ -19,6 +19,28 @@ namespace DiscordAPI {
         private static readonly SpeechAudioFormatInfo formatInfo =
             new SpeechAudioFormatInfo(48000, AudioBitsPerSample.Sixteen, AudioChannel.Stereo);
 
+        // Random sound-effects feature. The plugin mirrors its UI (checkbox + slider)
+        // into these fields; we roll the dice here so the trigger thread never has to
+        // touch WinForms controls cross-thread. The bridge owns the effect catalog and
+        // picks which effect + params — we only send the "apply one" bit.
+        public static volatile bool RandomEffectsEnabled;
+        private static int randomEffectChance; // 0-100
+        public static int RandomEffectChance {
+            get { return randomEffectChance; }
+            set { randomEffectChance = value < 0 ? 0 : (value > 100 ? 100 : value); }
+        }
+        private static readonly Random fxRandom = new Random();
+
+        private static bool RollEffect() {
+            if (!RandomEffectsEnabled) return false;
+            int chance = randomEffectChance;
+            if (chance <= 0) return false;
+            if (chance >= 100) return true;
+            lock (fxRandom) {
+                return fxRandom.Next(100) < chance;
+            }
+        }
+
         public delegate void BotLoaded();
         public static event BotLoaded BotReady;
 
@@ -254,10 +276,11 @@ namespace DiscordAPI {
                 return;
             }
             swSynth.Stop();
+            bool fx = RollEffect();
             var swIpc = Stopwatch.StartNew();
-            SendSpeakPcm(pcm);
+            SendSpeakPcm(pcm, fx);
             swIpc.Stop();
-            Log?.Invoke($"Speak timing: synth={swSynth.ElapsedMilliseconds}ms ipc={swIpc.ElapsedMilliseconds}ms bytes={pcm.Length}");
+            Log?.Invoke($"Speak timing: synth={swSynth.ElapsedMilliseconds}ms ipc={swIpc.ElapsedMilliseconds}ms bytes={pcm.Length} fx={fx}");
         }
 
         public static void SpeakFile(string path) {
@@ -276,10 +299,11 @@ namespace DiscordAPI {
                 Log?.Invoke("Cannot play file: bridge not connected.");
                 return;
             }
+            bool fx = RollEffect();
             var sw = Stopwatch.StartNew();
             try {
                 var resp = await pc.SendAsync<OkResponse>(
-                    new SpeakFileRequest { Path = path },
+                    new SpeakFileRequest { Path = path, RandomEffect = fx },
                     TimeSpan.FromSeconds(30));
                 sw.Stop();
                 if (!resp.Ok && !string.IsNullOrEmpty(resp.Error)) {
@@ -292,14 +316,14 @@ namespace DiscordAPI {
             }
         }
 
-        private static void SendSpeakPcm(byte[] pcm) {
+        private static void SendSpeakPcm(byte[] pcm, bool randomEffect) {
             var pc = pipeClient;
             if (pc == null) {
                 Log?.Invoke("Cannot send audio: bridge not connected.");
                 return;
             }
             try {
-                var resp = Task.Run(() => pc.SendSpeakPcmAsync(pcm, 48000, 16, 2, TimeSpan.FromSeconds(30)))
+                var resp = Task.Run(() => pc.SendSpeakPcmAsync(pcm, 48000, 16, 2, TimeSpan.FromSeconds(30), randomEffect))
                     .GetAwaiter().GetResult();
                 if (!resp.Ok && !string.IsNullOrEmpty(resp.Error)) {
                     Log?.Invoke("Bridge audio rejected: " + resp.Error);

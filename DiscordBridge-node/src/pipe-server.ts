@@ -9,6 +9,7 @@ import {
     FRAME_JSON_MARKER,
     FRAME_BINARY_SPEAK_PCM,
     BINARY_SPEAK_PCM_HEADER_BYTES,
+    SPEAK_FLAG_RANDOM_EFFECT,
     type Notification,
     type OpName,
     type OutboundFrame,
@@ -27,7 +28,9 @@ export interface OpResult { ok: boolean; error: string }
 // Per-trigger latency context handed to the host so it can stamp the local
 // pipeline (recv -> enqueue) and snapshot voice RTT for that exact trigger.
 // recvT is a monotonic performance.now() captured the moment the frame was read.
-export interface SpeakMeta { reqId: number; recvT: number }
+// fx requests a random sound effect be applied to this one trigger (the plugin
+// rolled the dice; the host picks which effect + params).
+export interface SpeakMeta { reqId: number; recvT: number; fx?: boolean }
 
 // Minimal surface PipeServer needs from the host. discord-host.ts implements this.
 export interface Host {
@@ -136,8 +139,10 @@ export class PipeServer {
         const sampleRate = payload.readUInt32LE(5);
         const bits = payload.readUInt8(9);
         const channels = payload.readUInt8(10);
+        const flags = payload.readUInt8(11);
+        const fx = (flags & SPEAK_FLAG_RANDOM_EFFECT) !== 0;
         const pcm = payload.subarray(BINARY_SPEAK_PCM_HEADER_BYTES);
-        log.info(`--> SpeakPcm reqId=${reqId} pcmBytes=${pcm.length} fmt=${sampleRate}/${bits}/${channels}`);
+        log.info(`--> SpeakPcm reqId=${reqId} pcmBytes=${pcm.length} fmt=${sampleRate}/${bits}/${channels} fx=${fx}`);
         // Bridge audio path is hard-wired to 48 kHz / 16-bit / stereo end-to-end
         // (see CLAUDE.md "Audio format constraint"). Reject mismatched payloads
         // up front rather than feeding the mixer something it would replay at
@@ -150,7 +155,7 @@ export class PipeServer {
             return;
         }
         try {
-            const r = this.host.speakPcm(pcm, { reqId, recvT });
+            const r = this.host.speakPcm(pcm, { reqId, recvT, fx });
             await this._sendFrame({ op: Op.SpeakResult, reqId, ok: r.ok, error: r.error });
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
@@ -231,7 +236,8 @@ export class PipeServer {
                 }
                 case Op.SpeakFile: {
                     const recvT = performance.now();
-                    const r = await this.host.speakFile(asString(parsed['path']), { reqId: reqId ?? 0, recvT });
+                    const fx = parsed['randomEffect'] === true;
+                    const r = await this.host.speakFile(asString(parsed['path']), { reqId: reqId ?? 0, recvT, fx });
                     await this._sendFrame({ op: Op.SpeakResult, reqId, ok: r.ok, error: r.error });
                     break;
                 }

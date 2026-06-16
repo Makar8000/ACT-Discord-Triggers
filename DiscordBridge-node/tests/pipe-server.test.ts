@@ -371,7 +371,28 @@ test('SpeakFile: path passes through to host; SpeakResult ok=true', async () => 
     assert.equal(frame!['ok'], true);
     const call = host.calls.find((c) => c.method === 'speakFile');
     assert.ok(call);
-    assert.deepEqual(call.args, ['C:\\sounds\\beep.wav']);
+    assert.equal(call.args[0], 'C:\\sounds\\beep.wav');
+    // No randomEffect field -> meta.fx is false.
+    assert.equal((call.args[1] as { fx?: boolean }).fx, false);
+});
+
+test('SpeakFile: randomEffect:true sets meta.fx on the host call', async () => {
+    const { sock, host } = makeHarness();
+    host.nextSpeakFile({ ok: true, error: '' });
+    sock.emit('data', encodeFrame({ op: Op.SpeakFile, reqId: 145, path: 'beep.wav', randomEffect: true }));
+    await waitForFrames(sock, 1);
+    const call = host.calls.find((c) => c.method === 'speakFile');
+    assert.equal((call!.args[1] as { fx?: boolean }).fx, true);
+});
+
+test('SpeakPcm: flags bit0 sets meta.fx on the host call', async () => {
+    const { sock, host } = makeHarness();
+    host.nextSpeakPcm({ ok: true, error: '' });
+    const pcm = Buffer.from([0x00, 0x01, 0x02, 0x03]);
+    sock.emit('data', encodeBinarySpeakPcmFrame(146, pcm, 48000, 16, 2, 0x01));
+    await waitForFrames(sock, 1);
+    const call = host.calls.find((c) => c.method === 'speakPcm');
+    assert.equal((call!.args[1] as { fx?: boolean }).fx, true);
 });
 
 test('SpeakFile: host error echoed via SpeakResult', async () => {

@@ -58,8 +58,12 @@ namespace ACT_DiscordTriggers {
       this.listColMsg = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
       this.txtBotStatus = new System.Windows.Forms.TextBox();
       this.lblBotStatus = new System.Windows.Forms.Label();
+      this.chkRandomFx = new System.Windows.Forms.CheckBox();
+      this.lblFxChance = new System.Windows.Forms.Label();
+      this.sliderFxChance = new System.Windows.Forms.TrackBar();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
+      ((System.ComponentModel.ISupportInitialize)(this.sliderFxChance)).BeginInit();
       this.SuspendLayout();
       // 
       // chkAutoConnect
@@ -284,13 +288,47 @@ namespace ACT_DiscordTriggers {
       this.lblBotStatus.Size = new System.Drawing.Size(85, 20);
       this.lblBotStatus.TabIndex = 63;
       this.lblBotStatus.Text = "Bot Status";
-      // 
+      //
+      // chkRandomFx
+      //
+      this.chkRandomFx.AutoSize = true;
+      this.chkRandomFx.Location = new System.Drawing.Point(432, 290);
+      this.chkRandomFx.Name = "chkRandomFx";
+      this.chkRandomFx.Size = new System.Drawing.Size(160, 24);
+      this.chkRandomFx.TabIndex = 64;
+      this.chkRandomFx.Text = "Random Sound FX";
+      this.chkRandomFx.UseVisualStyleBackColor = true;
+      this.chkRandomFx.CheckedChanged += new System.EventHandler(this.fxSettings_Changed);
+      //
+      // lblFxChance
+      //
+      this.lblFxChance.AutoSize = true;
+      this.lblFxChance.Location = new System.Drawing.Point(428, 318);
+      this.lblFxChance.Name = "lblFxChance";
+      this.lblFxChance.Size = new System.Drawing.Size(85, 20);
+      this.lblFxChance.TabIndex = 65;
+      this.lblFxChance.Text = "FX Chance";
+      //
+      // sliderFxChance
+      //
+      this.sliderFxChance.Location = new System.Drawing.Point(432, 340);
+      this.sliderFxChance.Maximum = 100;
+      this.sliderFxChance.Name = "sliderFxChance";
+      this.sliderFxChance.Size = new System.Drawing.Size(289, 45);
+      this.sliderFxChance.TabIndex = 66;
+      this.sliderFxChance.TickStyle = System.Windows.Forms.TickStyle.None;
+      this.sliderFxChance.Value = 25;
+      this.sliderFxChance.Scroll += new System.EventHandler(this.fxSettings_Changed);
+      //
       // DiscordPlugin
-      // 
+      //
       this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.Controls.Add(this.lblBotStatus);
       this.Controls.Add(this.txtBotStatus);
+      this.Controls.Add(this.chkRandomFx);
+      this.Controls.Add(this.lblFxChance);
+      this.Controls.Add(this.sliderFxChance);
       this.Controls.Add(this.logList);
       this.Controls.Add(this.chkAutoConnect);
       this.Controls.Add(this.discordConnectbtn);
@@ -314,6 +352,7 @@ namespace ACT_DiscordTriggers {
       this.Size = new System.Drawing.Size(759, 608);
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
+      ((System.ComponentModel.ISupportInitialize)(this.sliderFxChance)).EndInit();
       this.ResumeLayout(false);
       this.PerformLayout();
     }
@@ -349,6 +388,9 @@ namespace ACT_DiscordTriggers {
     private ColumnHeader listColMsg;
     private TextBox txtBotStatus;
     private Label lblBotStatus;
+    private CheckBox chkRandomFx;
+    private Label lblFxChance;
+    private TrackBar sliderFxChance;
     private Label lblBotTok;
     private readonly DispatcherTimer statusDebounceTimer = new DispatcherTimer();
     #endregion
@@ -399,6 +441,7 @@ namespace ACT_DiscordTriggers {
       settingsFile = Path.Combine(ActGlobals.oFormActMain.AppDataFolder.FullName, $"Config\\{configName}.config.xml");
       xmlSettings = new SettingsSerializer(this);
       LoadSettings();
+      ApplyFxSettings();
 
       //Locate the out-of-process Discord bridge so DiscordClient knows where to spawn it
       string bridgeDir = FindBridgeDir();
@@ -619,6 +662,19 @@ namespace ACT_DiscordTriggers {
        statusDebounceTimer.Stop();
        statusDebounceTimer.Start();
     }
+
+    // Mirror the random-effects UI into DiscordClient. DiscordClient rolls the dice
+    // per trigger on a background thread, so it reads these plain fields rather than
+    // touching the controls cross-thread.
+    private void fxSettings_Changed(object sender, EventArgs e) {
+      ApplyFxSettings();
+    }
+
+    private void ApplyFxSettings() {
+      DiscordClient.RandomEffectsEnabled = chkRandomFx.Checked;
+      DiscordClient.RandomEffectChance = sliderFxChance.Value;
+      lblFxChance.Text = "FX Chance: " + sliderFxChance.Value + "%";
+    }
     #endregion
 
     #region Settings
@@ -645,6 +701,8 @@ namespace ACT_DiscordTriggers {
       xmlSettings.AddControlSetting(sliderTTSSpeed.Name, sliderTTSSpeed);
       xmlSettings.AddControlSetting(chkAutoConnect.Name, chkAutoConnect);
       xmlSettings.AddControlSetting(txtBotStatus.Name, txtBotStatus);
+      xmlSettings.AddControlSetting(chkRandomFx.Name, chkRandomFx);
+      xmlSettings.AddControlSetting(sliderFxChance.Name, sliderFxChance);
       if (File.Exists(settingsFile)) {
         try {
           using (var fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))

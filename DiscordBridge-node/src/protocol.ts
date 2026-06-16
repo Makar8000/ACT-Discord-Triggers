@@ -12,19 +12,23 @@
 //                   [sampleRate u32 LE]
 //                   [bits u8]
 //                   [channels u8]
+//                   [flags u8]           // bit0 = apply a random sound effect
 //                   [raw PCM bytes...]   // remainder of payload
-//                 Header is 11 bytes. Response is JSON `SpeakResult` with the
+//                 Header is 12 bytes. Response is JSON `SpeakResult` with the
 //                 matching reqId.
 //
 // SpeakFile is a normal JSON op carrying a file path; the bridge opens and
-// streams the file itself (must be 48 kHz / 16-bit / stereo PCM WAV).
+// streams the file itself (must be 48 kHz / 16-bit / stereo PCM WAV). Its
+// optional `randomEffect` flag mirrors the binary flags bit above.
 
-export const PROTOCOL_VERSION = 1 as const;
+export const PROTOCOL_VERSION = 2 as const;
 export const MAX_FRAME_BYTES = 64 * 1024 * 1024;
 
 export const FRAME_JSON_MARKER = 0x7B; // '{'
 export const FRAME_BINARY_SPEAK_PCM = 0x01;
-export const BINARY_SPEAK_PCM_HEADER_BYTES = 11;
+export const BINARY_SPEAK_PCM_HEADER_BYTES = 12;
+// flags byte (offset 11) bit assignments
+export const SPEAK_FLAG_RANDOM_EFFECT = 0x01;
 
 export const Op = {
     Hello: 'Hello', HelloResult: 'HelloResult',
@@ -60,7 +64,7 @@ export interface GetChannelsRequest  extends BaseRequest { op: 'GetChannels'; se
 export interface SetGameRequest      extends BaseRequest { op: 'SetGame'; text: string }
 export interface JoinChannelRequest  extends BaseRequest { op: 'JoinChannel'; server: string; channel: string }
 export interface LeaveChannelRequest extends BaseRequest { op: 'LeaveChannel' }
-export interface SpeakFileRequest    extends BaseRequest { op: 'SpeakFile'; path: string }
+export interface SpeakFileRequest    extends BaseRequest { op: 'SpeakFile'; path: string; randomEffect?: boolean }
 export interface ShutdownRequest     extends BaseRequest { op: 'Shutdown' }
 
 export type Request =

@@ -119,5 +119,15 @@ namespace ActDiscordTriggers.Tests {
         public void ProtocolVersion_is_positive() {
             Assert.True(ProtocolConstants.Version > 0);
         }
+
+        [Fact]
+        public void SpeakFileRequest_serializes_randomEffect_flag() {
+            var req = new SpeakFileRequest { ReqId = 1, Path = "beep.wav", RandomEffect = true };
+            using var doc = System.Text.Json.JsonDocument.Parse(
+                System.Text.Json.JsonSerializer.Serialize(req));
+            Assert.Equal("SpeakFile", doc.RootElement.GetProperty("op").GetString());
+            Assert.Equal("beep.wav", doc.RootElement.GetProperty("path").GetString());
+            Assert.True(doc.RootElement.GetProperty("randomEffect").GetBoolean());
+        }
     }
 }

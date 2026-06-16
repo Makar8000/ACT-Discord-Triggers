@@ -34,21 +34,24 @@ export function lenPrefix(len: number): Buffer {
     return b;
 }
 
-// Binary SpeakPcm frame: outer length-prefix + 11-byte header + PCM. Mirrors
+// Binary SpeakPcm frame: outer length-prefix + 12-byte header + PCM. Mirrors
 // PipeClient.SendSpeakPcmAsync on the C# side and pipe-server's binary handler.
+// flags bit0 = apply a random sound effect.
 export function encodeBinarySpeakPcmFrame(
     reqId: number,
     pcm: Buffer,
     sampleRate = 48000,
     bits = 16,
     channels = 2,
+    flags = 0,
 ): Buffer {
-    const payload = Buffer.alloc(11 + pcm.length);
+    const payload = Buffer.alloc(12 + pcm.length);
     payload[0] = 0x01;
     payload.writeUInt32LE(reqId >>> 0, 1);
     payload.writeUInt32LE(sampleRate >>> 0, 5);
     payload.writeUInt8(bits, 9);
     payload.writeUInt8(channels, 10);
-    pcm.copy(payload, 11);
+    payload.writeUInt8(flags, 11);
+    pcm.copy(payload, 12);
     return Buffer.concat([lenPrefix(payload.length), payload]);
 }

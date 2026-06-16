@@ -23,6 +23,7 @@ import {
 import { Reader as WavReader, type WavFormat } from 'wav';
 
 import * as log from './file-log.js';
+import { applyRandomEffect } from './effects.js';
 import { PcmMixer } from './pcm-mixer.js';
 import type { Host, Notifier, OpResult, SpeakMeta } from './pipe-server.js';
 import type { LogLevel } from './protocol.js';
@@ -278,13 +279,27 @@ export class DiscordHost implements Host {
     // exact moment of this trigger (#2). The mixer later logs enqueue->firstEmit
     // for the same reqId (#1), closing the gap between "queued" and "on the wire".
     private _enqueue(kind: string, pcm: Buffer, meta?: SpeakMeta): OpResult {
-        const enqueueT = performance.now();
         const reqId = meta?.reqId ?? 0;
-        const r = this.mixer!.addVoice(pcm, { id: reqId, enqueueT });
+        // Optional random sound effect (user opted in; plugin rolled the dice).
+        // Applied on the complete buffer here, before it enters the mixer, so the
+        // recv->enqueue stamp below includes the DSP time as the program cost it is.
+        let buf = pcm;
+        if (meta?.fx) {
+            try {
+                const fx = applyRandomEffect(pcm);
+                buf = fx.pcm;
+                log.info(`fx reqId=${reqId} effect=${fx.name} ` +
+                    `inMs=${this._pcmDurationMs(pcm.length)} outMs=${this._pcmDurationMs(buf.length)}`);
+            } catch (e) {
+                log.error('random effect failed; playing dry', e);
+            }
+        }
+        const enqueueT = performance.now();
+        const r = this.mixer!.addVoice(buf, { id: reqId, enqueueT });
         if (r.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${r.dropped} voice(s)`);
         if (meta) {
             const recvToEnqueue = (enqueueT - meta.recvT).toFixed(1);
-            log.info(`${kind} reqId=${reqId} pcmMs=${this._pcmDurationMs(pcm.length)} ` +
+            log.info(`${kind} reqId=${reqId} pcmMs=${this._pcmDurationMs(buf.length)} ` +
                 `recv->enqueue=${recvToEnqueue}ms ${this._pingStr()}`);
         }
         return { ok: true, error: '' };

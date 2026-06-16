@@ -66,11 +66,12 @@ namespace DiscordAPI {
         }
 
         // Binary SpeakPcm frame. Plugin-only direction (client → bridge); the bridge
-        // never sends binary back. Header is 11 bytes:
-        //   [0x01][reqId u32 LE][sampleRate u32 LE][bits u8][channels u8]
-        // Followed by `pcm.Length` raw PCM bytes. Response is the JSON `SpeakResult`
-        // op with the same reqId, dispatched by the existing JSON path.
-        public async Task<OkResponse> SendSpeakPcmAsync(byte[] pcm, int sampleRate, int bits, int channels, TimeSpan? timeout = null) {
+        // never sends binary back. Header is 12 bytes:
+        //   [0x01][reqId u32 LE][sampleRate u32 LE][bits u8][channels u8][flags u8]
+        // flags bit0 = apply a random sound effect. Followed by `pcm.Length` raw PCM
+        // bytes. Response is the JSON `SpeakResult` op with the same reqId, dispatched
+        // by the existing JSON path.
+        public async Task<OkResponse> SendSpeakPcmAsync(byte[] pcm, int sampleRate, int bits, int channels, TimeSpan? timeout = null, bool randomEffect = false) {
             if (pcm == null) throw new ArgumentNullException(nameof(pcm));
             int reqId = Interlocked.Increment(ref nextReqId);
 
@@ -78,13 +79,14 @@ namespace DiscordAPI {
             pending[reqId] = tcs;
 
             try {
-                byte[] payload = new byte[11 + pcm.Length];
+                byte[] payload = new byte[12 + pcm.Length];
                 payload[0] = FrameBinarySpeakPcm;
                 WriteUInt32LE(payload, 1, (uint)reqId);
                 WriteUInt32LE(payload, 5, (uint)sampleRate);
                 payload[9] = (byte)bits;
                 payload[10] = (byte)channels;
-                Buffer.BlockCopy(pcm, 0, payload, 11, pcm.Length);
+                payload[11] = (byte)(randomEffect ? 0x01 : 0x00);
+                Buffer.BlockCopy(pcm, 0, payload, 12, pcm.Length);
 
                 await SendBinaryFrameAsync(payload);
 

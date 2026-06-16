@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace DiscordBridge.Protocol {
 
     public static class ProtocolConstants {
-        public const int Version = 1;
+        public const int Version = 2;
     }
 
     public static class Op {
@@ -133,13 +133,15 @@ namespace DiscordBridge.Protocol {
 
     // SpeakPcm is sent as a length-prefixed BINARY frame, not JSON.
     // See PipeClient.SendSpeakPcmAsync / pipe-server.ts _handleBinarySpeakPcm.
-    // Layout (after the outer 4-byte LE length): [0x01][reqId u32 LE][sampleRate u32 LE][bits u8][channels u8][raw PCM...]
-    // Response stays JSON: { op:"SpeakResult", reqId, ok, error }.
+    // Layout (after the outer 4-byte LE length): [0x01][reqId u32 LE][sampleRate u32 LE][bits u8][channels u8][flags u8][raw PCM...]
+    // flags bit0 = apply a random sound effect. Response stays JSON: { op:"SpeakResult", reqId, ok, error }.
 
     public class SpeakFileRequest : IBridgeRequest {
         [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.SpeakFile;
         [JsonPropertyName("reqId")] public int? ReqId { get; set; }
         [JsonPropertyName("path")] public string Path { get; set; } = "";
+        // Mirrors the binary SpeakPcm flags bit0: apply a random sound effect to this trigger.
+        [JsonPropertyName("randomEffect")] public bool RandomEffect { get; set; }
     }
 
     public class OkResponse {
