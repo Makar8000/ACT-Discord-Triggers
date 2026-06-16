@@ -1,4 +1,5 @@
 import { Readable } from 'node:stream';
+import { performance } from 'node:perf_hooks';
 
 import * as log from './file-log.js';
 
@@ -22,6 +23,18 @@ const MAX_QUEUED_BYTES = 32 * 1024 * 1024;
 interface Voice {
     pcm: Buffer;
     position: number;
+    // Latency tracing (optional; only set when a caller passes meta). id is the
+    // trigger's reqId so the firstEmit marker correlates with the host's
+    // recv->enqueue line; enqueueT is a performance.now() stamp; emitted guards
+    // the one-shot firstEmit log.
+    id?: number;
+    enqueueT?: number;
+    emitted?: boolean;
+}
+
+export interface AddVoiceMeta {
+    id: number;
+    enqueueT: number;
 }
 
 export interface AddVoiceResult {
@@ -44,14 +57,16 @@ export class PcmMixer extends Readable {
     private totalQueued = 0;
     private readonly acc = new Int32Array(FRAME_SAMPLES * CHANNELS);
 
-    addVoice(pcm: Buffer): AddVoiceResult {
+    addVoice(pcm: Buffer, meta?: AddVoiceMeta): AddVoiceResult {
         // Defensive: a trailing odd byte would let readInt16LE walk one
         // byte past the end. Callers always emit aligned s16le, so this
         // only fires on a malformed upstream.
         const aligned = pcm.length & ~1;
         if (aligned === 0) return { dropped: 0 };
         const safe = aligned === pcm.length ? pcm : pcm.subarray(0, aligned);
-        this.voices.push({ pcm: safe, position: 0 });
+        const voice: Voice = { pcm: safe, position: 0 };
+        if (meta) { voice.id = meta.id; voice.enqueueT = meta.enqueueT; }
+        this.voices.push(voice);
         this.totalQueued += safe.length;
 
         let dropped = 0;
@@ -85,6 +100,17 @@ export class PcmMixer extends Readable {
         for (const v of this.voices) {
             const remaining = v.pcm.length - v.position;
             if (remaining <= 0) continue;
+            // First chunk this voice contributes to: the moment its audio actually
+            // starts entering the encode/send path. enqueue->firstEmit isolates
+            // mixer-side wait (event-loop starvation shows up here) from the fixed
+            // downstream buffer + network that follow.
+            if (!v.emitted) {
+                v.emitted = true;
+                if (v.enqueueT !== undefined) {
+                    const waited = (performance.now() - v.enqueueT).toFixed(1);
+                    log.info(`firstEmit reqId=${v.id} enqueue->firstEmit=${waited}ms`);
+                }
+            }
             const take = remaining < CHUNK_BYTES ? remaining : CHUNK_BYTES;
             const samples = take >>> 1;
             for (let i = 0; i < samples; i++) {

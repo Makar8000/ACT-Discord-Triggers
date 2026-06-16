@@ -29,7 +29,14 @@ export function init(): void {
         logPath = path.join(exeDir(), 'DiscordBridge.log');
         try {
             const st = fs.statSync(logPath);
-            if (st.size > MAX_BYTES) fs.unlinkSync(logPath);
+            // Rotate (keep one prior generation) instead of deleting, so the
+            // session that just hit the size cap isn't lost — that's often the
+            // one a user is reporting. The plugin merges only the current file
+            // into the unified diagnostics; .1 stays as a manual fallback.
+            if (st.size > MAX_BYTES) {
+                try { fs.renameSync(logPath, logPath + '.1'); }
+                catch { try { fs.unlinkSync(logPath); } catch { /* ignore */ } }
+            }
         } catch { /* file may not exist */ }
         info(`==== Bridge starting (pid=${process.pid}, node=${process.version}, os=${os.platform()} ${os.release()}, exe=${process.execPath}) ====`);
     } catch { /* swallow */ }

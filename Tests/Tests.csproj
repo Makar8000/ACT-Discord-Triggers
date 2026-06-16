@@ -24,6 +24,7 @@
   <ItemGroup>
     <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="..\DiscordAPI\Protocol.cs" Link="Protocol.cs" />
+    <Compile Include="..\DiscordAPI\DiagnosticsLog.cs" Link="DiagnosticsLog.cs" />
     <Compile Include="..\DiscordAPI\PipeClient.cs" Link="PipeClient.cs" />
     <Compile Include="..\DiscordAPI\BridgeProcess.cs" Link="BridgeProcess.cs" />
   </ItemGroup>

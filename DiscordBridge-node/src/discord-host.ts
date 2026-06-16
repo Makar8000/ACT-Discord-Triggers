@@ -1,5 +1,6 @@
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
+import { performance } from 'node:perf_hooks';
 import type { ReadStream } from 'node:fs';
 import {
     Client,
@@ -23,7 +24,7 @@ import { Reader as WavReader, type WavFormat } from 'wav';
 
 import * as log from './file-log.js';
 import { PcmMixer } from './pcm-mixer.js';
-import type { Host, Notifier, OpResult } from './pipe-server.js';
+import type { Host, Notifier, OpResult, SpeakMeta } from './pipe-server.js';
 import type { LogLevel } from './protocol.js';
 import { WavCache } from './wav-cache.js';
 
@@ -265,15 +266,52 @@ export class DiscordHost implements Host {
         this.currentGuildId = null;
     }
 
-    speakPcm(pcmBuffer: Buffer): OpResult {
+    speakPcm(pcmBuffer: Buffer, meta?: SpeakMeta): OpResult {
         const guard = this._guardPlayback();
         if (!guard.ok) return guard;
-        const r = this.mixer!.addVoice(pcmBuffer);
+        return this._enqueue('SpeakPcm', pcmBuffer, meta);
+    }
+
+    // Enqueue a fully-prepared 48k/16/stereo buffer into the mixer and, when a
+    // per-trigger meta is present, stamp the local pipeline: recv->enqueue ms
+    // (this much was pure program time) plus a voice-RTT snapshot taken at the
+    // exact moment of this trigger (#2). The mixer later logs enqueue->firstEmit
+    // for the same reqId (#1), closing the gap between "queued" and "on the wire".
+    private _enqueue(kind: string, pcm: Buffer, meta?: SpeakMeta): OpResult {
+        const enqueueT = performance.now();
+        const reqId = meta?.reqId ?? 0;
+        const r = this.mixer!.addVoice(pcm, { id: reqId, enqueueT });
         if (r.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${r.dropped} voice(s)`);
+        if (meta) {
+            const recvToEnqueue = (enqueueT - meta.recvT).toFixed(1);
+            log.info(`${kind} reqId=${reqId} pcmMs=${this._pcmDurationMs(pcm.length)} ` +
+                `recv->enqueue=${recvToEnqueue}ms ${this._pingStr()}`);
+        }
         return { ok: true, error: '' };
     }
 
-    async speakFile(path: string): Promise<OpResult> {
+    // Bytes of 48k/16-bit/stereo PCM -> clip duration in ms (192 bytes per ms).
+    private _pcmDurationMs(bytes: number): number {
+        return Math.round(bytes / (TARGET_SAMPLE_RATE * 2 * (TARGET_BITS / 8) / 1000));
+    }
+
+    // Voice RTT snapshot for the current connection. udp is the true media-path
+    // RTT but is often undefined under DAVE; ws (voice gateway heartbeat) is the
+    // fallback network-health signal. A late trigger with healthy rtt points at
+    // program/buffering; a late trigger with a spiking rtt points at the bot
+    // host's link to Discord. (Listener-side internet stays unobservable here.)
+    private _pingStr(): string {
+        try {
+            const p = this.connection?.ping;
+            if (!p) return 'rtt=n/a';
+            const parts: string[] = [];
+            if (typeof p.udp === 'number') parts.push(`udp=${p.udp}ms`);
+            if (typeof p.ws === 'number') parts.push(`ws=${p.ws}ms`);
+            return parts.length > 0 ? `rtt[${parts.join(' ')}]` : 'rtt=n/a';
+        } catch { return 'rtt=n/a'; }
+    }
+
+    async speakFile(path: string, meta?: SpeakMeta): Promise<OpResult> {
         const guard = this._guardPlayback();
         if (!guard.ok) return guard;
 
@@ -290,9 +328,7 @@ export class DiscordHost implements Host {
         const cachedPcm = this.wavCache.get(path, mtimeMs);
         if (cachedPcm) {
             log.info(`SpeakFile cache hit: ${path} (${cachedPcm.length} bytes)`);
-            const r = this.mixer!.addVoice(cachedPcm);
-            if (r.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${r.dropped} voice(s)`);
-            return { ok: true, error: '' };
+            return this._enqueue('SpeakFile', cachedPcm, meta);
         }
 
         let fileStream: ReadStream;
@@ -343,9 +379,7 @@ export class DiscordHost implements Host {
             const finalPcm = resampleStereo16(stereoPcm, format.sampleRate, TARGET_SAMPLE_RATE);
 
             this.wavCache.set(path, mtimeMs, finalPcm);
-            const addRes = this.mixer!.addVoice(finalPcm);
-            if (addRes.dropped > 0) this._sendLog('Warn', `Mixer overflow: dropped ${addRes.dropped} voice(s)`);
-            return { ok: true, error: '' };
+            return this._enqueue('SpeakFile', finalPcm, meta);
         } catch (e) {
             try { fileStream.destroy(); } catch { /* ignore */ }
             try { reader.destroy(); } catch { /* ignore */ }

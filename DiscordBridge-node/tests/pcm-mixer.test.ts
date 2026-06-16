@@ -46,6 +46,16 @@ test('two voices sum sample-by-sample', () => {
     assert.ok(allSamplesEqual(chunk, 300));
 });
 
+test('addVoice with latency meta mixes identically (instrumentation is side-effect-only)', () => {
+    const m = new PcmMixer();
+    const voice = constStereo(4321, 960);
+    // meta only drives the firstEmit log; it must not alter mixing output.
+    m.addVoice(voice, { id: 7, enqueueT: 0 });
+    const chunk = m._mixOneChunk();
+    assert.equal(Buffer.compare(chunk, voice), 0);
+    assert.ok(allSamplesEqual(m._mixOneChunk(), 0));
+});
+
 test('positive saturation clips to 32767', () => {
     const m = new PcmMixer();
     m.addVoice(constStereo(30000, 960));

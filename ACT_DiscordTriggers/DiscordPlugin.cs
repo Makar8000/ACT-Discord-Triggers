@@ -401,7 +401,16 @@ namespace ACT_DiscordTriggers {
       LoadSettings();
 
       //Locate the out-of-process Discord bridge so DiscordClient knows where to spawn it
-      DiscordClient.SetBridgePath(FindBridgeDir());
+      string bridgeDir = FindBridgeDir();
+      DiscordClient.SetBridgePath(bridgeDir);
+
+      //Always-on diagnostics: capture both plugin- and bridge-side logs into one
+      //unified file the user can simply email. Encapsulated — no UI, no toggle.
+      try {
+        string pluginVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        DiagnosticsLog.Init(ActGlobals.oFormActMain.AppDataFolder.FullName, bridgeDir, pluginVersion);
+        Log("Diagnostics log: " + DiagnosticsLog.UnifiedPath);
+      } catch { }
 
       //Discord Bot Stuff
       DiscordClient.BotReady += BotReady;
@@ -426,6 +435,9 @@ namespace ACT_DiscordTriggers {
       } catch (Exception ex) {
         ActGlobals.oFormActMain.WriteExceptionLog(ex, "Error with DeInit of Discord Plugin.");
       }
+      // Flush + regenerate the unified diagnostics file one last time so it reflects
+      // this whole session before ACT tears the plugin down.
+      try { DiagnosticsLog.Shutdown(); } catch { }
       lblStatus.Text = "Plugin Exited";
     }
 
@@ -611,8 +623,16 @@ namespace ACT_DiscordTriggers {
 
     #region Settings
     public void Log(string text) {
+      // Capture to the diagnostics file first, off the UI thread, so a busy/frozen
+      // UI never delays or drops a log line (and so we never double-log across the
+      // marshal hop below). UI display is a separate, best-effort concern.
+      DiagnosticsLog.Append(text);
+      UiLog(text);
+    }
+
+    private void UiLog(string text) {
       // Bridge log/disconnect/exit callbacks all funnel here from a thread-pool thread.
-      if (InvokeRequired) { BeginInvoke(new Action<string>(Log), text); return; }
+      if (InvokeRequired) { BeginInvoke(new Action<string>(UiLog), text); return; }
       string[] row = new string[2];
       row[0] = DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToLongTimeString();
       row[1] = text;

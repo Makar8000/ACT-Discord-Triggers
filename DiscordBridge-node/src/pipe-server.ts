@@ -1,4 +1,5 @@
 import type { Socket } from 'node:net';
+import { performance } from 'node:perf_hooks';
 
 import * as log from './file-log.js';
 import {
@@ -23,6 +24,11 @@ export type Notifier = (n: Notification) => void;
 
 export interface OpResult { ok: boolean; error: string }
 
+// Per-trigger latency context handed to the host so it can stamp the local
+// pipeline (recv -> enqueue) and snapshot voice RTT for that exact trigger.
+// recvT is a monotonic performance.now() captured the moment the frame was read.
+export interface SpeakMeta { reqId: number; recvT: number }
+
 // Minimal surface PipeServer needs from the host. discord-host.ts implements this.
 export interface Host {
     setNotifier(fn: Notifier): void;
@@ -34,8 +40,8 @@ export interface Host {
     setGame(text: string): Promise<void>;
     joinChannel(serverName: string, channelName: string): Promise<OpResult>;
     leaveChannel(): Promise<void>;
-    speakPcm(pcmBuffer: Buffer): OpResult;
-    speakFile(path: string): Promise<OpResult>;
+    speakPcm(pcmBuffer: Buffer, meta?: SpeakMeta): OpResult;
+    speakFile(path: string, meta?: SpeakMeta): Promise<OpResult>;
 }
 
 interface IncomingMessage {
@@ -121,6 +127,7 @@ export class PipeServer {
     }
 
     private async _handleBinarySpeakPcm(payload: Buffer): Promise<void> {
+        const recvT = performance.now();
         if (payload.length < BINARY_SPEAK_PCM_HEADER_BYTES) {
             log.error(`binary SpeakPcm frame too short: ${payload.length} bytes`);
             return;
@@ -143,7 +150,7 @@ export class PipeServer {
             return;
         }
         try {
-            const r = this.host.speakPcm(pcm);
+            const r = this.host.speakPcm(pcm, { reqId, recvT });
             await this._sendFrame({ op: Op.SpeakResult, reqId, ok: r.ok, error: r.error });
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
@@ -223,7 +230,8 @@ export class PipeServer {
                     break;
                 }
                 case Op.SpeakFile: {
-                    const r = await this.host.speakFile(asString(parsed['path']));
+                    const recvT = performance.now();
+                    const r = await this.host.speakFile(asString(parsed['path']), { reqId: reqId ?? 0, recvT });
                     await this._sendFrame({ op: Op.SpeakResult, reqId, ok: r.ok, error: r.error });
                     break;
                 }
