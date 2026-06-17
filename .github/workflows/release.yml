@@ -69,7 +69,7 @@ jobs:
                `ACT_DiscordTriggers.dll` inside that folder → **Add/Enable Plugin**.
 
             Then follow the
-            [First-Time Setup Guide](https://github.com/Makar8000/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
+            [First-Time Setup Guide](https://github.com/jlagedo/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
             to connect your Discord bot.
 
             > **Updating:** replace the whole `ACT_DiscordTriggers` folder, not just the `.dll`.

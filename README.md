@@ -69,10 +69,10 @@ Works with ACT **Custom Triggers** and **Triggernometry**.
 ## Setup
 
 Follow the
-[First-Time Setup Guide](https://github.com/Makar8000/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
+[First-Time Setup Guide](https://github.com/jlagedo/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
 to create a Discord bot, invite it to your server, and connect it to the
-plugin. (The guide is hosted on the original project; the setup steps are
-unchanged.)
+plugin. Stuck? Check
+[Common Questions & Issues](https://github.com/jlagedo/ACT-Discord-Triggers/wiki/Common-Questions-&-Issues).
 
 ## Updating
 

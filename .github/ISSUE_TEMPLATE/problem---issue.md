@@ -20,7 +20,7 @@ Steps to reproduce the behavior:
 **Environment Information:**
 - Windows Version: 
 - Has the plugin worked for you before?: 
-- Have you checked the [wiki](https://github.com/Makar8000/ACT-Discord-Triggers/wiki)?:
+- Have you checked the [wiki](https://github.com/jlagedo/ACT-Discord-Triggers/wiki)?:
 
 **Additional context**
 Add any other context or screenshots about the problem here. A screenshot of your installed ACT plugins and the Debug Log are generally very helpful.

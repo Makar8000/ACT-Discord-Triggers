@@ -9,6 +9,8 @@ using System.Reflection;
 using DiscordAPI;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using System.Drawing;
+using System.Diagnostics;
 
 namespace ACT_DiscordTriggers {
   public class DiscordPlugin : UserControl, IActPluginV1 {
@@ -76,7 +78,6 @@ namespace ACT_DiscordTriggers {
       this.grpChannel = new System.Windows.Forms.GroupBox();
       this.grpTTS = new System.Windows.Forms.GroupBox();
       this.grpFx = new System.Windows.Forms.GroupBox();
-      this.rtfInfo = new System.Windows.Forms.RichTextBox();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderFxChance)).BeginInit();
@@ -426,20 +427,9 @@ namespace ACT_DiscordTriggers {
       this.pagSound.TabIndex = 0;
       this.pagSound.Visible = false;
       //
-      // rtfInfo
-      //
-      this.rtfInfo.BorderStyle = System.Windows.Forms.BorderStyle.None;
-      this.rtfInfo.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.rtfInfo.Font = new System.Drawing.Font("Consolas", 9.75F);
-      this.rtfInfo.Name = "rtfInfo";
-      this.rtfInfo.ReadOnly = true;
-      this.rtfInfo.TabIndex = 0;
-      this.rtfInfo.TabStop = false;
-      //
-      // pagInfo
+      // pagInfo (contents built programmatically in PopulateInfoPage)
       //
       this.pagInfo.AutoScroll = true;
-      this.pagInfo.Controls.Add(this.rtfInfo);
       this.pagInfo.Dock = System.Windows.Forms.DockStyle.Fill;
       this.pagInfo.Name = "pagInfo";
       this.pagInfo.Padding = new System.Windows.Forms.Padding(10);
@@ -598,7 +588,6 @@ namespace ACT_DiscordTriggers {
     private GroupBox grpChannel;
     private GroupBox grpTTS;
     private GroupBox grpFx;
-    private RichTextBox rtfInfo;
     private readonly DispatcherTimer statusDebounceTimer = new DispatcherTimer();
     #endregion
 
@@ -918,34 +907,174 @@ namespace ACT_DiscordTriggers {
     #endregion
 
     #region Information page
-    // Static, read-only explanation of how a trigger turns into Discord audio.
-    // Mirrors the bridge's actual pipeline order; when the compressor stage lands
-    // it slots in between [1] and [2].
+    private const string RepoUrl = "https://github.com/jlagedo/ACT-Discord-Triggers";
+    private const string IssuesUrl = "https://github.com/jlagedo/ACT-Discord-Triggers/issues/new";
+    private const string SetupGuideUrl =
+      "https://github.com/jlagedo/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide";
+
+    // User-focused "About" page: mascot, name + version, what it does, the links a
+    // user actually needs (project, bug report, setup), a one-click path to the
+    // diagnostics log for bug reports, and the legal disclaimer. Built in code
+    // (not the designer) because the logo and links are loaded/wired at runtime.
     private void PopulateInfoPage() {
-      rtfInfo.Text =
-@"How a trigger becomes Discord audio
-───────────────────────────────────
-Everything is 48 kHz · 16-bit · stereo PCM end to end.
+      pagInfo.SuspendLayout();
+      pagInfo.Controls.Clear();
 
-  Trigger (TTS text  or  sound file)
-        │
-  [1] Source render ─ TTS synthesized in-process (System.Speech);
-        │             files decoded + resampled with NAudio
-        ▼
-  [2] Random Sound FX (optional) ─ a random effect is rolled per
-        │                          trigger when enabled
-        ▼
-  [3] Auto-level / normalization ─ RMS scaled toward your target
-        │   dBFS, then peak-limited (no clipping) and boost-capped
-        ▼
-  [4] Mixer ─ concurrent triggers blended in 20 ms chunks
-        │
-        ▼
-  node.exe bridge ─ encrypted Discord voice (DAVE E2EE)
+      var root = new TableLayoutPanel {
+        Dock = DockStyle.Top,
+        AutoSize = true,
+        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+        ColumnCount = 1,
+        Padding = new Padding(0, 8, 0, 12),
+      };
+      root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
-───────────────────────────────────
-Plugin version: " + PluginVersion() + @"
-Diagnostics log: " + (DiagnosticsLog.UnifiedPath ?? "(not initialized)");
+      var logo = new PictureBox {
+        Size = new Size(112, 112),
+        SizeMode = PictureBoxSizeMode.Zoom,
+        Anchor = AnchorStyles.None,
+        Margin = new Padding(0, 0, 0, 6),
+      };
+      var img = LoadLogo();
+      if (img != null) logo.Image = img; else logo.Visible = false;
+
+      var title = new Label {
+        Text = "ACT Discord Triggers",
+        Font = new Font("Segoe UI", 15f, FontStyle.Bold),
+        AutoSize = true,
+        Anchor = AnchorStyles.None,
+        Margin = new Padding(0),
+      };
+
+      var version = new Label {
+        Text = "v" + PluginVersion(),
+        Font = new Font("Segoe UI", 9f),
+        ForeColor = SystemColors.GrayText,
+        AutoSize = true,
+        Anchor = AnchorStyles.None,
+        Margin = new Padding(0, 0, 0, 8),
+      };
+
+      var tagline = new Label {
+        Text = "Play your ACT triggers — text-to-speech and sound effects —\n"
+             + "through a Discord voice bot, so your whole party hears them.",
+        Font = new Font("Segoe UI", 9.5f),
+        TextAlign = ContentAlignment.MiddleCenter,
+        AutoSize = true,
+        Anchor = AnchorStyles.None,
+        Margin = new Padding(0, 0, 0, 12),
+      };
+
+      var links = new FlowLayoutPanel {
+        FlowDirection = FlowDirection.TopDown,
+        WrapContents = false,
+        AutoSize = true,
+        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+        Anchor = AnchorStyles.None,
+        Margin = new Padding(0, 0, 0, 12),
+      };
+      links.Controls.Add(MakeLink("↗  Project on GitHub", RepoUrl));
+      links.Controls.Add(MakeLink("↗  Report a problem / open an issue", IssuesUrl));
+      links.Controls.Add(MakeLink("↗  First-Time Setup Guide", SetupGuideUrl));
+
+      var diagLabel = new Label {
+        Text = "Hit a bug? Open the diagnostics log and attach it to your report.",
+        Font = new Font("Segoe UI", 8.75f),
+        ForeColor = SystemColors.GrayText,
+        AutoSize = true,
+        Anchor = AnchorStyles.None,
+        Margin = new Padding(0, 0, 0, 4),
+      };
+      var btnLog = new Button {
+        Text = "Open log folder",
+        Font = new Font("Segoe UI", 9f),
+        AutoSize = true,
+        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+        Anchor = AnchorStyles.None,
+        Margin = new Padding(0, 0, 0, 12),
+        Padding = new Padding(6, 2, 6, 2),
+      };
+      btnLog.Click += (s, e) => OpenLogFolder();
+
+      var disclaimer = new Label {
+        Text = "ACT Discord Triggers is a community plugin — not affiliated with or "
+             + "endorsed by Discord, Square Enix, or Advanced Combat Tracker. Provided "
+             + "as-is under the MIT License, without warranty; use at your own risk and "
+             + "follow Discord's Terms of Service. Originally created by Makar8000.",
+        Font = new Font("Segoe UI", 8.25f),
+        ForeColor = SystemColors.GrayText,
+        AutoSize = true,
+        MaximumSize = new Size(540, 0),
+        Anchor = AnchorStyles.None,
+        Margin = new Padding(0, 6, 0, 0),
+      };
+
+      root.Controls.Add(logo);
+      root.Controls.Add(title);
+      root.Controls.Add(version);
+      root.Controls.Add(tagline);
+      root.Controls.Add(MakeSeparator());
+      root.Controls.Add(links);
+      root.Controls.Add(MakeSeparator());
+      root.Controls.Add(diagLabel);
+      root.Controls.Add(btnLog);
+      root.Controls.Add(MakeSeparator());
+      root.Controls.Add(disclaimer);
+
+      pagInfo.Controls.Add(root);
+      pagInfo.ResumeLayout();
+    }
+
+    private LinkLabel MakeLink(string text, string url) {
+      var ll = new LinkLabel {
+        Text = text,
+        AutoSize = true,
+        Font = new Font("Segoe UI", 10f),
+        Margin = new Padding(0, 2, 0, 2),
+      };
+      ll.LinkClicked += (s, e) => OpenUrl(url);
+      return ll;
+    }
+
+    // Full-width hairline between sections.
+    private static Panel MakeSeparator() {
+      return new Panel {
+        Height = 1,
+        BackColor = SystemColors.ControlLight,
+        Anchor = AnchorStyles.Left | AnchorStyles.Right,
+        Margin = new Padding(20, 8, 20, 8),
+      };
+    }
+
+    private static void OpenUrl(string url) {
+      try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+      catch { /* no default browser / blocked — nothing useful to do */ }
+    }
+
+    // Open Explorer at the diagnostics log (selected if present) so the user can
+    // grab the one file we ask for in bug reports.
+    private static void OpenLogFolder() {
+      try {
+        var path = DiagnosticsLog.UnifiedPath;
+        if (string.IsNullOrEmpty(path)) return;
+        if (File.Exists(path))
+          Process.Start("explorer.exe", "/select,\"" + path + "\"");
+        else
+          Process.Start("explorer.exe", "\"" + Path.GetDirectoryName(path) + "\"");
+      } catch { /* best effort */ }
+    }
+
+    // Mascot from the embedded resource. Copied into a standalone Bitmap so the
+    // source stream can close (GDI+ keeps a stream alive otherwise). Null if the
+    // resource is missing — the caller hides the PictureBox.
+    private static Image LoadLogo() {
+      try {
+        var asm = Assembly.GetExecutingAssembly();
+        using (var s = asm.GetManifestResourceStream("ACT_DiscordTriggers.logo.png")) {
+          if (s == null) return null;
+          using (var tmp = Image.FromStream(s)) return new Bitmap(tmp);
+        }
+      } catch { return null; }
     }
 
     private static string PluginVersion() {
