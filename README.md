@@ -1,3 +1,7 @@
+<div align="center">
+
+<img src="docs/logo.png" alt="ACT Discord Triggers logo" width="160" />
+
 # ACT Discord Triggers
 
 [![Build Plugin](https://github.com/jlagedo/ACT-Discord-Triggers/actions/workflows/ci.yml/badge.svg)](https://github.com/jlagedo/ACT-Discord-Triggers/actions/workflows/ci.yml)
@@ -8,6 +12,8 @@ that plays your triggers — text-to-speech and sound effects — through a Disc
 bot in a voice channel, so your whole party hears them.
 
 Works with ACT **Custom Triggers** and **Triggernometry**.
+
+</div>
 
 > 🔀 **Maintained fork.** This is the actively maintained continuation of
 > [Makar8000/ACT-Discord-Triggers](https://github.com/Makar8000/ACT-Discord-Triggers),
