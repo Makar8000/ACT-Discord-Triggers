@@ -1,13 +1,24 @@
 # ACT Discord Triggers
-[![Build Plugin](https://github.com/Makar8000/ACT-Discord-Triggers/actions/workflows/ci.yml/badge.svg)](https://github.com/Makar8000/ACT-Discord-Triggers/actions/workflows/ci.yml)
+[![Build Plugin](https://github.com/jlagedo/ACT-Discord-Triggers/actions/workflows/ci.yml/badge.svg)](https://github.com/jlagedo/ACT-Discord-Triggers/actions/workflows/ci.yml)
 
 An ACT plugin for using Custom Triggers and/or Triggernometry with Discord bots.
 
+> **This is the maintained continuation of
+> [Makar8000/ACT-Discord-Triggers](https://github.com/Makar8000/ACT-Discord-Triggers).**
+> The original repository has been archived and now points here. This fork
+> revives the plugin after Discord's [DAVE](https://daveprotocol.com/) rollout
+> broke the in-process voice path in March 2026 (see
+> [Why the rewrite](#why-the-rewrite-2026)). Huge thanks to
+> [@Makar8000](https://github.com/Makar8000) for creating the original plugin
+> and for handing the project off cleanly — see
+> [Acknowledgments](#acknowledgments).
+
 ## Download
-See the [releases](https://github.com/Makar8000/ACT-Discord-Triggers/releases)
+See the [releases](https://github.com/jlagedo/ACT-Discord-Triggers/releases)
 
 ## Setup
 See the [wiki](https://github.com/Makar8000/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
+(hosted on the original project; the first-time setup steps are unchanged)
 
 The release archive now contains additional files alongside the plugin DLL
 (`node.exe`, `bundle.js`, `node_modules/`). Drop the whole folder next to
@@ -98,3 +109,19 @@ Integration tests require the bridge to be built first (they spawn
  * [NAudio](https://github.com/naudio/NAudio) (PCM resampling in plugin)
  * [discord.js](https://github.com/discordjs/discord.js) + [@discordjs/voice](https://github.com/discordjs/voice) (bridge)
  * [@snazzah/davey](https://github.com/snazzah/davey) (DAVE E2EE)
+
+## Acknowledgments
+
+This project began as a fork of
+[Makar8000/ACT-Discord-Triggers](https://github.com/Makar8000/ACT-Discord-Triggers)
+by [@Makar8000](https://github.com/Makar8000), who created and maintained the
+original plugin. The DAVE rewrite landed as
+[PR #82](https://github.com/Makar8000/ACT-Discord-Triggers/pull/82) on the
+upstream repository, after which maintenance was handed off to this fork.
+All credit for the original design and years of upkeep goes to Makar8000 —
+thank you.
+
+## License
+
+[MIT](LICENSE) — Copyright (c) 2017 Marcus Terry, Copyright (c) 2026 João
+Amaro Lagedo.
