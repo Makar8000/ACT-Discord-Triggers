@@ -206,6 +206,9 @@ DiscordBridge-node/dist-types/
 DiscordBridge-node/stdout.txt
 DiscordBridge-node/stderr.txt
 
+# Claude Code local session/tooling state (machine-specific, not shared)
+.claude/
+
 # RIA/Silverlight projects
 Generated_Code/
 
