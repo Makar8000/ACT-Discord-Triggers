@@ -46,13 +46,19 @@ Works with ACT **Custom Triggers** and **Triggernometry**.
 
 ## Installation
 
-1. Download the latest release from the
+1. Download the latest `ACT_DiscordTriggers-*.zip` from the
    [Releases page](https://github.com/jlagedo/ACT-Discord-Triggers/releases).
-2. Extract the archive. Keep all the files together —
-   `ACT_DiscordTriggers.dll` plus `node.exe`, `bundle.js`, and the
-   `node_modules/` folder must stay in the **same** folder.
-3. In ACT, go to **Plugins → Plugin Listing**, browse to
-   `ACT_DiscordTriggers.dll`, and add it.
+2. Right-click the downloaded zip → **Properties** → tick **Unblock** → OK.
+   (Windows flags `node.exe`/DLLs downloaded from the internet; skipping this
+   can trip SmartScreen or antivirus.)
+3. Extract it into your ACT plugins folder:
+   `%AppData%\Advanced Combat Tracker\Plugins`. You should end up with a
+   `Plugins\ACT_DiscordTriggers\` folder containing `ACT_DiscordTriggers.dll`,
+   `node.exe`, `bundle.js`, and `node_modules\`. **Keep all of these files
+   together in that folder.**
+4. In ACT, open the **Plugins** tab → **Browse…**, select
+   `ACT_DiscordTriggers.dll` inside that folder, and click **Add/Enable
+   Plugin**.
 
 ## Setup
 

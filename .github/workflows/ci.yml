@@ -22,14 +22,11 @@ jobs:
     - name: Test bridge (Node)
       working-directory: DiscordBridge-node
       run: npm test
-    - name: Build (plugin + bridge + release archive)
+    - name: Build + package (plugin + bridge + zip)
       shell: pwsh
-      run: ./build.ps1
+      run: ./build.ps1 -Zip
     - name: Run C# tests (net48)
       run: dotnet test Tests/Tests.csproj -c Release --nologo
-    - name: Compress release archive
-      shell: pwsh
-      run: Compress-Archive -Path release\* -DestinationPath ACT_DiscordTriggers.zip
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:

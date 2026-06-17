@@ -10,10 +10,20 @@
 #
 # For bridge-only iteration, use the npm scripts in DiscordBridge-node/
 # (typecheck / bundle / test). Those stay independent of this script.
+#
+# Pass -Zip to also produce a distributable archive at the repo root:
+#   pwsh ./build.ps1 -Zip
+# The zip wraps everything in a single top-level ACT_DiscordTriggers/ folder so
+# users can extract it straight into ACT's Plugins\ directory (per ACT's
+# "use subfolders" guidance) and get Plugins\ACT_DiscordTriggers\.
+
+param([switch]$Zip)
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 Set-Location $PSScriptRoot
+
+$PluginName = 'ACT_DiscordTriggers'
 
 # --- 1. Plugin (net48 via dotnet build) ---
 # net48 reference assemblies are auto-restored as a transitive dep of the SDK's
@@ -106,17 +116,38 @@ try {
     Pop-Location
 }
 
-# --- 3. Assemble ./release/ ---
-Write-Host "==> Assembling release\"
+# --- 3. Assemble ./release/<PluginName>/ ---
+# Everything goes inside a single wrapper folder named after the plugin so the
+# shipped zip extracts to Plugins\ACT_DiscordTriggers\ — a self-contained
+# subfolder, never loose files in ACT's plugin root.
+Write-Host "==> Assembling release\$PluginName\"
 if (Test-Path release) { Remove-Item -Recurse -Force release }
-New-Item -ItemType Directory release | Out-Null
-Copy-Item ACT_DiscordTriggers\bin\Release\net48\ACT_DiscordTriggers.dll release\
-Copy-Item DiscordBridge-node\dist\node.exe release\
-Copy-Item DiscordBridge-node\dist\bundle.js release\
-Copy-Item -Recurse DiscordBridge-node\dist\node_modules release\node_modules
+$stage = "release\$PluginName"
+New-Item -ItemType Directory $stage | Out-Null
+Copy-Item ACT_DiscordTriggers\bin\Release\net48\ACT_DiscordTriggers.dll $stage\
+Copy-Item DiscordBridge-node\dist\node.exe $stage\
+Copy-Item DiscordBridge-node\dist\bundle.js $stage\
+Copy-Item -Recurse DiscordBridge-node\dist\node_modules $stage\node_modules
+# Ship docs/license alongside the plugin for users browsing the folder.
+foreach ($doc in 'README.md', 'LICENSE') {
+    if (Test-Path $doc) { Copy-Item $doc $stage\ }
+}
 
 Write-Host ""
-Write-Host "==> Done. Release contents in release\:"
-$totalSize = (Get-ChildItem -Recurse release | Measure-Object -Property Length -Sum).Sum / 1MB
+Write-Host "==> Done. Release contents in release\$PluginName\:"
+$totalSize = (Get-ChildItem -Recurse $stage | Measure-Object -Property Length -Sum).Sum / 1MB
 Write-Host ("    Total: {0:N1} MB" -f $totalSize)
-Get-ChildItem release | ForEach-Object { Write-Host ("    {0,-32} {1}" -f $_.Name, $_.LastWriteTime) }
+Get-ChildItem $stage | ForEach-Object { Write-Host ("    {0,-32} {1}" -f $_.Name, $_.LastWriteTime) }
+
+# --- 4. Optional: distributable zip at repo root ---
+# Compress the wrapper folder (not its contents) so the archive's top-level
+# entry is ACT_DiscordTriggers\.
+if ($Zip) {
+    $zipPath = "$PSScriptRoot\$PluginName.zip"
+    Write-Host ""
+    Write-Host "==> Packaging $PluginName.zip"
+    if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
+    Compress-Archive -Path $stage -DestinationPath $zipPath
+    $zipSize = (Get-Item $zipPath).Length / 1MB
+    Write-Host ("    {0} ({1:N1} MB)" -f $zipPath, $zipSize)
+}

@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & test
 
-Top-level release build (produces `release/` with everything an end user
-drops into ACT's plugins directory):
+Top-level release build (produces `release/ACT_DiscordTriggers/` with everything
+an end user drops into ACT's plugins directory):
 ```
 cd DiscordBridge-node && npm ci && cd ..
-pwsh ./build.ps1
+pwsh ./build.ps1            # add -Zip to also emit ACT_DiscordTriggers.zip at the repo root
 ```
-`./build.ps1` (root) runs `dotnet build` on the plugin (net48 — ACT only loads net48 assemblies; Costura.Fody weaves under the SDK's MSBuild and produces a single merged DLL, so no separate Visual Studio install is needed), then `tsc --noEmit` as a type-check gate, then bundles TS via esbuild, copies `node.exe` from the current PATH, stages externals into `DiscordBridge-node/dist/node_modules/`, spawns `node.exe bundle.js <pipe>` and asserts `BRIDGE_READY` appears on stdout, then assembles `release/` from the plugin DLL + bridge dist. The self-test catches packaging regressions; **do not skip or weaken it**.
+`./build.ps1` (root) runs `dotnet build` on the plugin (net48 — ACT only loads net48 assemblies; Costura.Fody weaves under the SDK's MSBuild and produces a single merged DLL, so no separate Visual Studio install is needed), then `tsc --noEmit` as a type-check gate, then bundles TS via esbuild, copies `node.exe` from the current PATH, stages externals into `DiscordBridge-node/dist/node_modules/`, spawns `node.exe bundle.js <pipe>` and asserts `BRIDGE_READY` appears on stdout, then assembles `release/ACT_DiscordTriggers/` from the plugin DLL + bridge dist (plus `README.md`/`LICENSE`). The self-test catches packaging regressions; **do not skip or weaken it**. With `-Zip` it then compresses the wrapper folder to `ACT_DiscordTriggers.zip` so the archive's top-level entry is `ACT_DiscordTriggers\` — extracting into `Plugins\` yields a self-contained `Plugins\ACT_DiscordTriggers\` subfolder rather than loose files in ACT's plugin root.
 
 For bridge-only iteration use the npm scripts in `DiscordBridge-node/`:
 - `npm run typecheck` — `tsc --noEmit`
@@ -88,6 +88,8 @@ Discord voice in this project is hard-wired to 48 kHz / 16-bit signed / stereo P
 
 ## Plugin packaging
 
-The release archive shipped to users contains: `ACT_DiscordTriggers.dll`, `node.exe`, `bundle.js`, and `node_modules/`. `DiscordPlugin.FindBridgeDir()` looks for `node.exe` + `bundle.js` next to the plugin DLL first, then falls back to ACT's `AppData\Plugins\Discord\`. Users drop the whole folder into ACT's plugins directory.
+The release archive shipped to users contains a single top-level `ACT_DiscordTriggers/` folder holding: `ACT_DiscordTriggers.dll`, `node.exe`, `bundle.js`, `node_modules/`, plus `README.md`/`LICENSE`. `DiscordPlugin.FindBridgeDir()` looks for `node.exe` + `bundle.js` next to the plugin DLL first, then falls back to ACT's `AppData\Plugins\Discord\`. Users extract the zip into ACT's `Plugins\` directory, yielding `Plugins\ACT_DiscordTriggers\`, then Browse to the DLL inside it (ACT supports plugin subfolders; loose DLLs in ACT's root are discouraged).
+
+Releases are automated: `.github/workflows/release.yml` fires on a pushed `v*` tag, runs the full build/test, calls `build.ps1 -Zip`, renames the archive to `ACT_DiscordTriggers-<tag>.zip`, and publishes a GitHub Release (via `softprops/action-gh-release`) with install instructions + auto-generated notes. Tags containing `-` (e.g. `v2.0.0-pre.9`) are flagged as pre-releases. To cut a release: bump `AssemblyVersion`/`FileVersion`/`Version` in `ACT_DiscordTriggers.csproj` to match, then `git tag vX.Y.Z && git push origin vX.Y.Z`. `ci.yml` (on every push) runs the same build via `build.ps1 -Zip` and uploads the zip as a CI artifact for validation.
 
 The plugin uses Costura.Fody to merge net48 dependencies into the DLL — stick to it if you add managed deps to `ACT_DiscordTriggers/` so the plugin remains a single file.

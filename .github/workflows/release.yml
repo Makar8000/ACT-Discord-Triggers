@@ -1,0 +1,77 @@
+name: Release
+
+# Publish a GitHub Release whenever a version tag is pushed:
+#   git tag v2.0.0 && git push origin v2.0.0
+# Tags containing a hyphen (e.g. v2.0.0-pre.9) are marked as pre-releases.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write          # required for softprops/action-gh-release to publish
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download ACT Binaries
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory packages
+          Invoke-WebRequest https://advancedcombattracker.com/includes/page-download.php?id=57 -OutFile packages/act.zip
+          Expand-Archive -Path packages/act.zip -DestinationPath packages
+
+      - name: Install bridge npm deps
+        working-directory: DiscordBridge-node
+        run: npm ci
+
+      - name: Test bridge (Node)
+        working-directory: DiscordBridge-node
+        run: npm test
+
+      - name: Build + package (plugin + bridge + zip)
+        shell: pwsh
+        run: ./build.ps1 -Zip
+
+      - name: Run C# tests (net48)
+        run: dotnet test Tests/Tests.csproj -c Release --nologo
+
+      - name: Name archive after the tag
+        shell: pwsh
+        run: Rename-Item ACT_DiscordTriggers.zip "ACT_DiscordTriggers-${{ github.ref_name }}.zip"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ACT_DiscordTriggers-*.zip
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          body: |
+            ## Installation
+
+            1. Download `ACT_DiscordTriggers-${{ github.ref_name }}.zip` from the **Assets** below.
+            2. Right-click the downloaded zip → **Properties** → tick **Unblock** → OK.
+               (Windows flags `node.exe`/DLLs from the internet; skipping this can trip SmartScreen/antivirus.)
+            3. Extract it into your ACT plugins folder:
+               `%AppData%\Advanced Combat Tracker\Plugins`
+               You should end up with a `Plugins\ACT_DiscordTriggers\` folder containing
+               `ACT_DiscordTriggers.dll`, `node.exe`, `bundle.js`, and `node_modules\`.
+               **Keep all of these files together in that folder.**
+            4. In ACT: **Plugins** tab → **Browse…** → select
+               `ACT_DiscordTriggers.dll` inside that folder → **Add/Enable Plugin**.
+
+            Then follow the
+            [First-Time Setup Guide](https://github.com/Makar8000/ACT-Discord-Triggers/wiki/First-Time-Setup-Guide)
+            to connect your Discord bot.
+
+            > **Updating:** replace the whole `ACT_DiscordTriggers` folder, not just the `.dll`.
+
+            ---
