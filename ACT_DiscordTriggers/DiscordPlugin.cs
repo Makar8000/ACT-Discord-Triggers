@@ -13,12 +13,12 @@ using System.Windows.Threading;
 namespace ACT_DiscordTriggers {
   public class DiscordPlugin : UserControl, IActPluginV1 {
     #region Designer Created Code (Avoid editing)
-    /// <summary> 
+    /// <summary>
     /// Required designer variable.
     /// </summary>
     private System.ComponentModel.IContainer components = null;
 
-    /// <summary> 
+    /// <summary>
     /// Clean up any resources being used.
     /// </summary>
     /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
@@ -31,11 +31,12 @@ namespace ACT_DiscordTriggers {
 
     #region Component Designer generated code
 
-    /// <summary> 
-    /// Required method for Designer support - do not modify 
+    /// <summary>
+    /// Required method for Designer support - do not modify
     /// the contents of this method with the code editor.
     /// </summary>
     private void InitializeComponent() {
+      // --- Settings controls (carried over; reparented into the new layout) ---
       this.chkAutoConnect = new System.Windows.Forms.CheckBox();
       this.discordConnectbtn = new System.Windows.Forms.Button();
       this.sliderTTSSpeed = new System.Windows.Forms.TrackBar();
@@ -61,241 +62,285 @@ namespace ACT_DiscordTriggers {
       this.chkRandomFx = new System.Windows.Forms.CheckBox();
       this.lblFxChance = new System.Windows.Forms.Label();
       this.sliderFxChance = new System.Windows.Forms.TrackBar();
+      this.chkNormalize = new System.Windows.Forms.CheckBox();
+      this.lblNormalizeTarget = new System.Windows.Forms.Label();
+      this.sliderNormalizeTarget = new System.Windows.Forms.TrackBar();
+      // --- New layout containers ---
+      this.lstNav = new System.Windows.Forms.ListBox();
+      this.pnlContent = new System.Windows.Forms.Panel();
+      this.pagGeneral = new System.Windows.Forms.Panel();
+      this.pagSound = new System.Windows.Forms.Panel();
+      this.pagInfo = new System.Windows.Forms.Panel();
+      this.pnlLog = new System.Windows.Forms.Panel();
+      this.grpConnection = new System.Windows.Forms.GroupBox();
+      this.grpChannel = new System.Windows.Forms.GroupBox();
+      this.grpTTS = new System.Windows.Forms.GroupBox();
+      this.grpFx = new System.Windows.Forms.GroupBox();
+      this.rtfInfo = new System.Windows.Forms.RichTextBox();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).BeginInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderFxChance)).BeginInit();
+      ((System.ComponentModel.ISupportInitialize)(this.sliderNormalizeTarget)).BeginInit();
+      this.pnlContent.SuspendLayout();
+      this.pagGeneral.SuspendLayout();
+      this.pagSound.SuspendLayout();
+      this.pagInfo.SuspendLayout();
+      this.pnlLog.SuspendLayout();
+      this.grpConnection.SuspendLayout();
+      this.grpChannel.SuspendLayout();
+      this.grpTTS.SuspendLayout();
+      this.grpFx.SuspendLayout();
       this.SuspendLayout();
-      // 
-      // chkAutoConnect
-      // 
-      this.chkAutoConnect.AutoSize = true;
-      this.chkAutoConnect.Location = new System.Drawing.Point(180, 98);
-      this.chkAutoConnect.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.chkAutoConnect.Name = "chkAutoConnect";
-      this.chkAutoConnect.Size = new System.Drawing.Size(133, 24);
-      this.chkAutoConnect.TabIndex = 59;
-      this.chkAutoConnect.Text = "Auto Connect";
-      this.chkAutoConnect.UseVisualStyleBackColor = true;
-      // 
-      // discordConnectbtn
-      // 
-      this.discordConnectbtn.Location = new System.Drawing.Point(32, 92);
-      this.discordConnectbtn.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.discordConnectbtn.Name = "discordConnectbtn";
-      this.discordConnectbtn.Size = new System.Drawing.Size(140, 35);
-      this.discordConnectbtn.TabIndex = 58;
-      this.discordConnectbtn.Text = "Connect";
-      this.discordConnectbtn.UseVisualStyleBackColor = true;
-      this.discordConnectbtn.Click += new System.EventHandler(this.discordConnectbtn_Click);
-      // 
-      // sliderTTSSpeed
-      // 
-      this.sliderTTSSpeed.Location = new System.Drawing.Point(432, 177);
-      this.sliderTTSSpeed.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.sliderTTSSpeed.Maximum = 20;
-      this.sliderTTSSpeed.Name = "sliderTTSSpeed";
-      this.sliderTTSSpeed.Size = new System.Drawing.Size(290, 69);
-      this.sliderTTSSpeed.TabIndex = 57;
-      this.sliderTTSSpeed.Value = 10;
-      // 
-      // lblTTSSpeed
-      // 
-      this.lblTTSSpeed.AutoSize = true;
-      this.lblTTSSpeed.Location = new System.Drawing.Point(428, 152);
-      this.lblTTSSpeed.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-      this.lblTTSSpeed.Name = "lblTTSSpeed";
-      this.lblTTSSpeed.Size = new System.Drawing.Size(89, 20);
-      this.lblTTSSpeed.TabIndex = 56;
-      this.lblTTSSpeed.Text = "TTS Speed";
-      // 
-      // sliderTTSVol
-      // 
-      this.sliderTTSVol.Location = new System.Drawing.Point(432, 103);
-      this.sliderTTSVol.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.sliderTTSVol.Maximum = 20;
-      this.sliderTTSVol.Name = "sliderTTSVol";
-      this.sliderTTSVol.Size = new System.Drawing.Size(290, 69);
-      this.sliderTTSVol.TabIndex = 55;
-      this.sliderTTSVol.Value = 10;
-      // 
-      // lblTTSVol
-      // 
-      this.lblTTSVol.AutoSize = true;
-      this.lblTTSVol.Location = new System.Drawing.Point(428, 83);
-      this.lblTTSVol.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-      this.lblTTSVol.Name = "lblTTSVol";
-      this.lblTTSVol.Size = new System.Drawing.Size(96, 20);
-      this.lblTTSVol.TabIndex = 54;
-      this.lblTTSVol.Text = "TTS Volume";
-      // 
-      // cmbChan
-      // 
-      this.cmbChan.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-      this.cmbChan.FormattingEnabled = true;
-      this.cmbChan.Location = new System.Drawing.Point(32, 245);
-      this.cmbChan.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.cmbChan.Name = "cmbChan";
-      this.cmbChan.Size = new System.Drawing.Size(288, 28);
-      this.cmbChan.TabIndex = 53;
-      // 
-      // lblChan
-      // 
-      this.lblChan.AutoSize = true;
-      this.lblChan.Location = new System.Drawing.Point(27, 217);
-      this.lblChan.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-      this.lblChan.Name = "lblChan";
-      this.lblChan.Size = new System.Drawing.Size(68, 20);
-      this.lblChan.TabIndex = 52;
-      this.lblChan.Text = "Channel";
-      // 
-      // cmbServer
-      // 
-      this.cmbServer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-      this.cmbServer.FormattingEnabled = true;
-      this.cmbServer.Location = new System.Drawing.Point(32, 174);
-      this.cmbServer.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.cmbServer.Name = "cmbServer";
-      this.cmbServer.Size = new System.Drawing.Size(288, 28);
-      this.cmbServer.TabIndex = 51;
-      this.cmbServer.SelectedValueChanged += new System.EventHandler(this.cmbServer_SelectedIndexChanged);
-      // 
-      // lblServer
-      // 
-      this.lblServer.AutoSize = true;
-      this.lblServer.Location = new System.Drawing.Point(27, 152);
-      this.lblServer.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-      this.lblServer.Name = "lblServer";
-      this.lblServer.Size = new System.Drawing.Size(55, 20);
-      this.lblServer.TabIndex = 50;
-      this.lblServer.Text = "Server";
-      // 
-      // cmbTTS
-      // 
-      this.cmbTTS.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-      this.cmbTTS.FormattingEnabled = true;
-      this.cmbTTS.Location = new System.Drawing.Point(432, 50);
-      this.cmbTTS.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.cmbTTS.Name = "cmbTTS";
-      this.cmbTTS.Size = new System.Drawing.Size(288, 28);
-      this.cmbTTS.TabIndex = 49;
-      // 
-      // lblTTS
-      // 
-      this.lblTTS.AutoSize = true;
-      this.lblTTS.Location = new System.Drawing.Point(428, 28);
-      this.lblTTS.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-      this.lblTTS.Name = "lblTTS";
-      this.lblTTS.Size = new System.Drawing.Size(82, 20);
-      this.lblTTS.TabIndex = 48;
-      this.lblTTS.Text = "TTS Voice";
-      // 
-      // btnLeave
-      // 
-      this.btnLeave.Enabled = false;
-      this.btnLeave.Location = new System.Drawing.Point(180, 286);
-      this.btnLeave.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.btnLeave.Name = "btnLeave";
-      this.btnLeave.Size = new System.Drawing.Size(141, 35);
-      this.btnLeave.TabIndex = 47;
-      this.btnLeave.Text = "Leave Channel";
-      this.btnLeave.UseVisualStyleBackColor = true;
-      this.btnLeave.Click += new System.EventHandler(this.btnLeave_Click);
-      // 
-      // btnJoin
-      // 
-      this.btnJoin.Enabled = false;
-      this.btnJoin.Location = new System.Drawing.Point(32, 285);
-      this.btnJoin.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.btnJoin.Name = "btnJoin";
-      this.btnJoin.Size = new System.Drawing.Size(140, 35);
-      this.btnJoin.TabIndex = 46;
-      this.btnJoin.Text = "Join Channel";
-      this.btnJoin.UseVisualStyleBackColor = true;
-      this.btnJoin.Click += new System.EventHandler(this.btnJoin_Click);
-      // 
-      // lblLog
-      // 
-      this.lblLog.AutoSize = true;
-      this.lblLog.Location = new System.Drawing.Point(27, 368);
-      this.lblLog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-      this.lblLog.Name = "lblLog";
-      this.lblLog.Size = new System.Drawing.Size(88, 20);
-      this.lblLog.TabIndex = 45;
-      this.lblLog.Text = "Debug Log";
-      // 
-      // txtToken
-      // 
-      this.txtToken.Location = new System.Drawing.Point(32, 52);
-      this.txtToken.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.txtToken.Name = "txtToken";
-      this.txtToken.Size = new System.Drawing.Size(288, 26);
-      this.txtToken.TabIndex = 43;
-      this.txtToken.UseSystemPasswordChar = true;
-      // 
+      //
       // lblBotTok
-      // 
+      //
       this.lblBotTok.AutoSize = true;
-      this.lblBotTok.Location = new System.Drawing.Point(27, 28);
+      this.lblBotTok.Location = new System.Drawing.Point(15, 28);
       this.lblBotTok.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.lblBotTok.Name = "lblBotTok";
       this.lblBotTok.Size = new System.Drawing.Size(140, 20);
-      this.lblBotTok.TabIndex = 42;
+      this.lblBotTok.TabIndex = 0;
       this.lblBotTok.Text = "Discord Bot Token";
-      // 
-      // logList
-      // 
-      this.logList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-      this.logList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.listColTim,
-            this.listColMsg});
-      this.logList.FullRowSelect = true;
-      this.logList.HideSelection = false;
-      this.logList.Location = new System.Drawing.Point(32, 392);
-      this.logList.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-      this.logList.Name = "logList";
-      this.logList.Size = new System.Drawing.Size(690, 189);
-      this.logList.TabIndex = 61;
-      this.logList.UseCompatibleStateImageBehavior = false;
-      this.logList.View = System.Windows.Forms.View.Details;
-      this.logList.KeyUp += new System.Windows.Forms.KeyEventHandler(this.LogList_KeyUp);
-      // 
-      // listColTim
-      // 
-      this.listColTim.Text = "Timestamp";
-      this.listColTim.Width = 120;
-      // 
-      // listColMsg
-      // 
-      this.listColMsg.Text = "Message";
-      this.listColMsg.Width = 315;
-      // 
-      // txtBotStatus
-      // 
-      this.txtBotStatus.Location = new System.Drawing.Point(432, 254);
-      this.txtBotStatus.Name = "txtBotStatus";
-      this.txtBotStatus.Size = new System.Drawing.Size(289, 26);
-      this.txtBotStatus.TabIndex = 62;
-      this.txtBotStatus.Text = "Playing with ACT Triggers";
-      this.txtBotStatus.TextChanged += new System.EventHandler(this.txtBotStatus_TextChanged);
-      // 
+      //
+      // txtToken
+      //
+      this.txtToken.Location = new System.Drawing.Point(18, 50);
+      this.txtToken.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.txtToken.Name = "txtToken";
+      this.txtToken.Size = new System.Drawing.Size(320, 26);
+      this.txtToken.TabIndex = 1;
+      this.txtToken.UseSystemPasswordChar = true;
+      //
+      // discordConnectbtn
+      //
+      this.discordConnectbtn.Location = new System.Drawing.Point(18, 90);
+      this.discordConnectbtn.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.discordConnectbtn.Name = "discordConnectbtn";
+      this.discordConnectbtn.Size = new System.Drawing.Size(140, 35);
+      this.discordConnectbtn.TabIndex = 2;
+      this.discordConnectbtn.Text = "Connect";
+      this.discordConnectbtn.UseVisualStyleBackColor = true;
+      this.discordConnectbtn.Click += new System.EventHandler(this.discordConnectbtn_Click);
+      //
+      // chkAutoConnect
+      //
+      this.chkAutoConnect.AutoSize = true;
+      this.chkAutoConnect.Location = new System.Drawing.Point(170, 96);
+      this.chkAutoConnect.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.chkAutoConnect.Name = "chkAutoConnect";
+      this.chkAutoConnect.Size = new System.Drawing.Size(133, 24);
+      this.chkAutoConnect.TabIndex = 3;
+      this.chkAutoConnect.Text = "Auto Connect";
+      this.chkAutoConnect.UseVisualStyleBackColor = true;
+      //
       // lblBotStatus
-      // 
+      //
       this.lblBotStatus.AutoSize = true;
-      this.lblBotStatus.Location = new System.Drawing.Point(428, 226);
+      this.lblBotStatus.Location = new System.Drawing.Point(15, 140);
       this.lblBotStatus.Name = "lblBotStatus";
       this.lblBotStatus.Size = new System.Drawing.Size(85, 20);
-      this.lblBotStatus.TabIndex = 63;
+      this.lblBotStatus.TabIndex = 4;
       this.lblBotStatus.Text = "Bot Status";
+      //
+      // txtBotStatus
+      //
+      this.txtBotStatus.Location = new System.Drawing.Point(18, 162);
+      this.txtBotStatus.Name = "txtBotStatus";
+      this.txtBotStatus.Size = new System.Drawing.Size(320, 26);
+      this.txtBotStatus.TabIndex = 5;
+      this.txtBotStatus.Text = "Playing with ACT Triggers";
+      this.txtBotStatus.TextChanged += new System.EventHandler(this.txtBotStatus_TextChanged);
+      //
+      // grpConnection
+      //
+      this.grpConnection.Controls.Add(this.lblBotTok);
+      this.grpConnection.Controls.Add(this.txtToken);
+      this.grpConnection.Controls.Add(this.discordConnectbtn);
+      this.grpConnection.Controls.Add(this.chkAutoConnect);
+      this.grpConnection.Controls.Add(this.lblBotStatus);
+      this.grpConnection.Controls.Add(this.txtBotStatus);
+      this.grpConnection.Location = new System.Drawing.Point(10, 10);
+      this.grpConnection.Name = "grpConnection";
+      this.grpConnection.Size = new System.Drawing.Size(560, 205);
+      this.grpConnection.TabIndex = 0;
+      this.grpConnection.TabStop = false;
+      this.grpConnection.Text = "Discord Connection";
+      //
+      // lblServer
+      //
+      this.lblServer.AutoSize = true;
+      this.lblServer.Location = new System.Drawing.Point(15, 28);
+      this.lblServer.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+      this.lblServer.Name = "lblServer";
+      this.lblServer.Size = new System.Drawing.Size(55, 20);
+      this.lblServer.TabIndex = 0;
+      this.lblServer.Text = "Server";
+      //
+      // cmbServer
+      //
+      this.cmbServer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+      this.cmbServer.FormattingEnabled = true;
+      this.cmbServer.Location = new System.Drawing.Point(18, 50);
+      this.cmbServer.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.cmbServer.Name = "cmbServer";
+      this.cmbServer.Size = new System.Drawing.Size(320, 28);
+      this.cmbServer.TabIndex = 1;
+      this.cmbServer.SelectedValueChanged += new System.EventHandler(this.cmbServer_SelectedIndexChanged);
+      //
+      // lblChan
+      //
+      this.lblChan.AutoSize = true;
+      this.lblChan.Location = new System.Drawing.Point(15, 92);
+      this.lblChan.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+      this.lblChan.Name = "lblChan";
+      this.lblChan.Size = new System.Drawing.Size(68, 20);
+      this.lblChan.TabIndex = 2;
+      this.lblChan.Text = "Channel";
+      //
+      // cmbChan
+      //
+      this.cmbChan.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+      this.cmbChan.FormattingEnabled = true;
+      this.cmbChan.Location = new System.Drawing.Point(18, 114);
+      this.cmbChan.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.cmbChan.Name = "cmbChan";
+      this.cmbChan.Size = new System.Drawing.Size(320, 28);
+      this.cmbChan.TabIndex = 3;
+      //
+      // btnJoin
+      //
+      this.btnJoin.Enabled = false;
+      this.btnJoin.Location = new System.Drawing.Point(18, 152);
+      this.btnJoin.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.btnJoin.Name = "btnJoin";
+      this.btnJoin.Size = new System.Drawing.Size(140, 35);
+      this.btnJoin.TabIndex = 4;
+      this.btnJoin.Text = "Join Channel";
+      this.btnJoin.UseVisualStyleBackColor = true;
+      this.btnJoin.Click += new System.EventHandler(this.btnJoin_Click);
+      //
+      // btnLeave
+      //
+      this.btnLeave.Enabled = false;
+      this.btnLeave.Location = new System.Drawing.Point(170, 152);
+      this.btnLeave.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.btnLeave.Name = "btnLeave";
+      this.btnLeave.Size = new System.Drawing.Size(141, 35);
+      this.btnLeave.TabIndex = 5;
+      this.btnLeave.Text = "Leave Channel";
+      this.btnLeave.UseVisualStyleBackColor = true;
+      this.btnLeave.Click += new System.EventHandler(this.btnLeave_Click);
+      //
+      // grpChannel
+      //
+      this.grpChannel.Controls.Add(this.lblServer);
+      this.grpChannel.Controls.Add(this.cmbServer);
+      this.grpChannel.Controls.Add(this.lblChan);
+      this.grpChannel.Controls.Add(this.cmbChan);
+      this.grpChannel.Controls.Add(this.btnJoin);
+      this.grpChannel.Controls.Add(this.btnLeave);
+      this.grpChannel.Location = new System.Drawing.Point(10, 225);
+      this.grpChannel.Name = "grpChannel";
+      this.grpChannel.Size = new System.Drawing.Size(560, 205);
+      this.grpChannel.TabIndex = 1;
+      this.grpChannel.TabStop = false;
+      this.grpChannel.Text = "Voice Channel";
+      //
+      // pagGeneral
+      //
+      this.pagGeneral.AutoScroll = true;
+      this.pagGeneral.Controls.Add(this.grpConnection);
+      this.pagGeneral.Controls.Add(this.grpChannel);
+      this.pagGeneral.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.pagGeneral.Name = "pagGeneral";
+      this.pagGeneral.TabIndex = 0;
+      //
+      // lblTTS
+      //
+      this.lblTTS.AutoSize = true;
+      this.lblTTS.Location = new System.Drawing.Point(15, 28);
+      this.lblTTS.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+      this.lblTTS.Name = "lblTTS";
+      this.lblTTS.Size = new System.Drawing.Size(82, 20);
+      this.lblTTS.TabIndex = 0;
+      this.lblTTS.Text = "TTS Voice";
+      //
+      // cmbTTS
+      //
+      this.cmbTTS.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+      this.cmbTTS.FormattingEnabled = true;
+      this.cmbTTS.Location = new System.Drawing.Point(18, 50);
+      this.cmbTTS.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.cmbTTS.Name = "cmbTTS";
+      this.cmbTTS.Size = new System.Drawing.Size(320, 28);
+      this.cmbTTS.TabIndex = 1;
+      //
+      // lblTTSVol
+      //
+      this.lblTTSVol.AutoSize = true;
+      this.lblTTSVol.Location = new System.Drawing.Point(15, 90);
+      this.lblTTSVol.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+      this.lblTTSVol.Name = "lblTTSVol";
+      this.lblTTSVol.Size = new System.Drawing.Size(96, 20);
+      this.lblTTSVol.TabIndex = 2;
+      this.lblTTSVol.Text = "TTS Volume";
+      //
+      // sliderTTSVol
+      //
+      this.sliderTTSVol.AutoSize = false;
+      this.sliderTTSVol.Location = new System.Drawing.Point(18, 112);
+      this.sliderTTSVol.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.sliderTTSVol.Maximum = 20;
+      this.sliderTTSVol.Name = "sliderTTSVol";
+      this.sliderTTSVol.Size = new System.Drawing.Size(320, 35);
+      this.sliderTTSVol.TabIndex = 3;
+      this.sliderTTSVol.TickStyle = System.Windows.Forms.TickStyle.None;
+      this.sliderTTSVol.Value = 10;
+      //
+      // lblTTSSpeed
+      //
+      this.lblTTSSpeed.AutoSize = true;
+      this.lblTTSSpeed.Location = new System.Drawing.Point(15, 165);
+      this.lblTTSSpeed.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+      this.lblTTSSpeed.Name = "lblTTSSpeed";
+      this.lblTTSSpeed.Size = new System.Drawing.Size(89, 20);
+      this.lblTTSSpeed.TabIndex = 4;
+      this.lblTTSSpeed.Text = "TTS Speed";
+      //
+      // sliderTTSSpeed
+      //
+      this.sliderTTSSpeed.AutoSize = false;
+      this.sliderTTSSpeed.Location = new System.Drawing.Point(18, 187);
+      this.sliderTTSSpeed.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.sliderTTSSpeed.Maximum = 20;
+      this.sliderTTSSpeed.Name = "sliderTTSSpeed";
+      this.sliderTTSSpeed.Size = new System.Drawing.Size(320, 35);
+      this.sliderTTSSpeed.TabIndex = 5;
+      this.sliderTTSSpeed.TickStyle = System.Windows.Forms.TickStyle.None;
+      this.sliderTTSSpeed.Value = 10;
+      //
+      // grpTTS
+      //
+      this.grpTTS.Controls.Add(this.lblTTS);
+      this.grpTTS.Controls.Add(this.cmbTTS);
+      this.grpTTS.Controls.Add(this.lblTTSVol);
+      this.grpTTS.Controls.Add(this.sliderTTSVol);
+      this.grpTTS.Controls.Add(this.lblTTSSpeed);
+      this.grpTTS.Controls.Add(this.sliderTTSSpeed);
+      this.grpTTS.Location = new System.Drawing.Point(10, 10);
+      this.grpTTS.Name = "grpTTS";
+      this.grpTTS.Size = new System.Drawing.Size(560, 240);
+      this.grpTTS.TabIndex = 0;
+      this.grpTTS.TabStop = false;
+      this.grpTTS.Text = "Text-to-Speech";
       //
       // chkRandomFx
       //
       this.chkRandomFx.AutoSize = true;
-      this.chkRandomFx.Location = new System.Drawing.Point(432, 290);
+      this.chkRandomFx.Location = new System.Drawing.Point(18, 25);
       this.chkRandomFx.Name = "chkRandomFx";
       this.chkRandomFx.Size = new System.Drawing.Size(160, 24);
-      this.chkRandomFx.TabIndex = 64;
+      this.chkRandomFx.TabIndex = 0;
       this.chkRandomFx.Text = "Random Sound FX";
       this.chkRandomFx.UseVisualStyleBackColor = true;
       this.chkRandomFx.CheckedChanged += new System.EventHandler(this.fxSettings_Changed);
@@ -303,56 +348,203 @@ namespace ACT_DiscordTriggers {
       // lblFxChance
       //
       this.lblFxChance.AutoSize = true;
-      this.lblFxChance.Location = new System.Drawing.Point(428, 318);
+      this.lblFxChance.Location = new System.Drawing.Point(15, 58);
       this.lblFxChance.Name = "lblFxChance";
       this.lblFxChance.Size = new System.Drawing.Size(85, 20);
-      this.lblFxChance.TabIndex = 65;
+      this.lblFxChance.TabIndex = 1;
       this.lblFxChance.Text = "FX Chance";
       //
       // sliderFxChance
       //
-      this.sliderFxChance.Location = new System.Drawing.Point(432, 340);
+      this.sliderFxChance.AutoSize = false;
+      this.sliderFxChance.Location = new System.Drawing.Point(18, 80);
       this.sliderFxChance.Maximum = 100;
       this.sliderFxChance.Name = "sliderFxChance";
-      this.sliderFxChance.Size = new System.Drawing.Size(289, 45);
-      this.sliderFxChance.TabIndex = 66;
+      this.sliderFxChance.Size = new System.Drawing.Size(320, 35);
+      this.sliderFxChance.TabIndex = 2;
       this.sliderFxChance.TickStyle = System.Windows.Forms.TickStyle.None;
       this.sliderFxChance.Value = 25;
       this.sliderFxChance.Scroll += new System.EventHandler(this.fxSettings_Changed);
+      //
+      // chkNormalize
+      //
+      this.chkNormalize.AutoSize = true;
+      this.chkNormalize.Checked = true;
+      this.chkNormalize.CheckState = System.Windows.Forms.CheckState.Checked;
+      this.chkNormalize.Location = new System.Drawing.Point(18, 133);
+      this.chkNormalize.Name = "chkNormalize";
+      this.chkNormalize.Size = new System.Drawing.Size(180, 24);
+      this.chkNormalize.TabIndex = 3;
+      this.chkNormalize.Text = "Auto-level Volume";
+      this.chkNormalize.UseVisualStyleBackColor = true;
+      this.chkNormalize.CheckedChanged += new System.EventHandler(this.normalizeSettings_Changed);
+      //
+      // lblNormalizeTarget
+      //
+      this.lblNormalizeTarget.AutoSize = true;
+      this.lblNormalizeTarget.Location = new System.Drawing.Point(15, 166);
+      this.lblNormalizeTarget.Name = "lblNormalizeTarget";
+      this.lblNormalizeTarget.Size = new System.Drawing.Size(120, 20);
+      this.lblNormalizeTarget.TabIndex = 4;
+      this.lblNormalizeTarget.Text = "Auto-level Target";
+      //
+      // sliderNormalizeTarget
+      //
+      this.sliderNormalizeTarget.AutoSize = false;
+      this.sliderNormalizeTarget.Location = new System.Drawing.Point(18, 188);
+      this.sliderNormalizeTarget.Minimum = 12;
+      this.sliderNormalizeTarget.Maximum = 30;
+      this.sliderNormalizeTarget.Name = "sliderNormalizeTarget";
+      this.sliderNormalizeTarget.Size = new System.Drawing.Size(320, 35);
+      this.sliderNormalizeTarget.TabIndex = 5;
+      this.sliderNormalizeTarget.TickStyle = System.Windows.Forms.TickStyle.None;
+      this.sliderNormalizeTarget.Value = 20;
+      this.sliderNormalizeTarget.Scroll += new System.EventHandler(this.normalizeSettings_Changed);
+      //
+      // grpFx
+      //
+      this.grpFx.Controls.Add(this.chkRandomFx);
+      this.grpFx.Controls.Add(this.lblFxChance);
+      this.grpFx.Controls.Add(this.sliderFxChance);
+      this.grpFx.Controls.Add(this.chkNormalize);
+      this.grpFx.Controls.Add(this.lblNormalizeTarget);
+      this.grpFx.Controls.Add(this.sliderNormalizeTarget);
+      this.grpFx.Location = new System.Drawing.Point(10, 260);
+      this.grpFx.Name = "grpFx";
+      this.grpFx.Size = new System.Drawing.Size(560, 240);
+      this.grpFx.TabIndex = 1;
+      this.grpFx.TabStop = false;
+      this.grpFx.Text = "Effects && Leveling";
+      //
+      // pagSound
+      //
+      this.pagSound.AutoScroll = true;
+      this.pagSound.Controls.Add(this.grpTTS);
+      this.pagSound.Controls.Add(this.grpFx);
+      this.pagSound.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.pagSound.Name = "pagSound";
+      this.pagSound.TabIndex = 0;
+      this.pagSound.Visible = false;
+      //
+      // rtfInfo
+      //
+      this.rtfInfo.BorderStyle = System.Windows.Forms.BorderStyle.None;
+      this.rtfInfo.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.rtfInfo.Font = new System.Drawing.Font("Consolas", 9.75F);
+      this.rtfInfo.Name = "rtfInfo";
+      this.rtfInfo.ReadOnly = true;
+      this.rtfInfo.TabIndex = 0;
+      this.rtfInfo.TabStop = false;
+      //
+      // pagInfo
+      //
+      this.pagInfo.AutoScroll = true;
+      this.pagInfo.Controls.Add(this.rtfInfo);
+      this.pagInfo.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.pagInfo.Name = "pagInfo";
+      this.pagInfo.Padding = new System.Windows.Forms.Padding(10);
+      this.pagInfo.TabIndex = 0;
+      this.pagInfo.Visible = false;
+      //
+      // pnlContent
+      //
+      this.pnlContent.Controls.Add(this.pagGeneral);
+      this.pnlContent.Controls.Add(this.pagSound);
+      this.pnlContent.Controls.Add(this.pagInfo);
+      this.pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.pnlContent.Name = "pnlContent";
+      this.pnlContent.TabIndex = 1;
+      //
+      // lstNav
+      //
+      this.lstNav.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+      this.lstNav.Dock = System.Windows.Forms.DockStyle.Left;
+      this.lstNav.Font = new System.Drawing.Font("Segoe UI", 11F);
+      this.lstNav.FormattingEnabled = true;
+      this.lstNav.IntegralHeight = false;
+      this.lstNav.ItemHeight = 28;
+      this.lstNav.Items.AddRange(new object[] { "General", "Sound", "Information" });
+      this.lstNav.Name = "lstNav";
+      this.lstNav.Size = new System.Drawing.Size(150, 520);
+      this.lstNav.TabIndex = 0;
+      this.lstNav.SelectedIndexChanged += new System.EventHandler(this.nav_SelectedIndexChanged);
+      //
+      // lblLog
+      //
+      this.lblLog.AutoSize = true;
+      this.lblLog.Dock = System.Windows.Forms.DockStyle.Top;
+      this.lblLog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+      this.lblLog.Name = "lblLog";
+      this.lblLog.Padding = new System.Windows.Forms.Padding(4, 4, 0, 2);
+      this.lblLog.Size = new System.Drawing.Size(88, 26);
+      this.lblLog.TabIndex = 0;
+      this.lblLog.Text = "Debug Log";
+      //
+      // logList
+      //
+      this.logList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.listColTim,
+            this.listColMsg});
+      this.logList.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.logList.FullRowSelect = true;
+      this.logList.HideSelection = false;
+      this.logList.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+      this.logList.Name = "logList";
+      this.logList.Size = new System.Drawing.Size(607, 184);
+      this.logList.TabIndex = 1;
+      this.logList.UseCompatibleStateImageBehavior = false;
+      this.logList.View = System.Windows.Forms.View.Details;
+      this.logList.KeyUp += new System.Windows.Forms.KeyEventHandler(this.LogList_KeyUp);
+      //
+      // listColTim
+      //
+      this.listColTim.Text = "Timestamp";
+      this.listColTim.Width = 120;
+      //
+      // listColMsg
+      //
+      this.listColMsg.Text = "Message";
+      this.listColMsg.Width = 315;
+      //
+      // pnlLog
+      //
+      this.pnlLog.Controls.Add(this.logList);
+      this.pnlLog.Controls.Add(this.lblLog);
+      this.pnlLog.Dock = System.Windows.Forms.DockStyle.Bottom;
+      this.pnlLog.Name = "pnlLog";
+      this.pnlLog.Size = new System.Drawing.Size(759, 210);
+      this.pnlLog.TabIndex = 2;
       //
       // DiscordPlugin
       //
       this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.Controls.Add(this.lblBotStatus);
-      this.Controls.Add(this.txtBotStatus);
-      this.Controls.Add(this.chkRandomFx);
-      this.Controls.Add(this.lblFxChance);
-      this.Controls.Add(this.sliderFxChance);
-      this.Controls.Add(this.logList);
-      this.Controls.Add(this.chkAutoConnect);
-      this.Controls.Add(this.discordConnectbtn);
-      this.Controls.Add(this.sliderTTSSpeed);
-      this.Controls.Add(this.lblTTSSpeed);
-      this.Controls.Add(this.sliderTTSVol);
-      this.Controls.Add(this.lblTTSVol);
-      this.Controls.Add(this.cmbChan);
-      this.Controls.Add(this.lblChan);
-      this.Controls.Add(this.cmbServer);
-      this.Controls.Add(this.lblServer);
-      this.Controls.Add(this.cmbTTS);
-      this.Controls.Add(this.lblTTS);
-      this.Controls.Add(this.btnLeave);
-      this.Controls.Add(this.btnJoin);
-      this.Controls.Add(this.lblLog);
-      this.Controls.Add(this.txtToken);
-      this.Controls.Add(this.lblBotTok);
+      // Docking is laid out in reverse z-order: add Fill first (laid out last,
+      // fills the leftover), then the left nav, then the full-width bottom log.
+      this.Controls.Add(this.pnlContent);
+      this.Controls.Add(this.lstNav);
+      this.Controls.Add(this.pnlLog);
       this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
       this.Name = "DiscordPlugin";
-      this.Size = new System.Drawing.Size(759, 608);
+      this.Size = new System.Drawing.Size(759, 730);
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSSpeed)).EndInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderTTSVol)).EndInit();
       ((System.ComponentModel.ISupportInitialize)(this.sliderFxChance)).EndInit();
+      ((System.ComponentModel.ISupportInitialize)(this.sliderNormalizeTarget)).EndInit();
+      this.grpConnection.ResumeLayout(false);
+      this.grpConnection.PerformLayout();
+      this.grpChannel.ResumeLayout(false);
+      this.grpChannel.PerformLayout();
+      this.grpTTS.ResumeLayout(false);
+      this.grpTTS.PerformLayout();
+      this.grpFx.ResumeLayout(false);
+      this.grpFx.PerformLayout();
+      this.pagGeneral.ResumeLayout(false);
+      this.pagSound.ResumeLayout(false);
+      this.pagInfo.ResumeLayout(false);
+      this.pnlContent.ResumeLayout(false);
+      this.pnlLog.ResumeLayout(false);
+      this.pnlLog.PerformLayout();
       this.ResumeLayout(false);
       this.PerformLayout();
     }
@@ -391,7 +583,22 @@ namespace ACT_DiscordTriggers {
     private CheckBox chkRandomFx;
     private Label lblFxChance;
     private TrackBar sliderFxChance;
+    private CheckBox chkNormalize;
+    private Label lblNormalizeTarget;
+    private TrackBar sliderNormalizeTarget;
     private Label lblBotTok;
+    // Layout containers for the categorized (nav + paged) settings UI.
+    private ListBox lstNav;
+    private Panel pnlContent;
+    private Panel pagGeneral;
+    private Panel pagSound;
+    private Panel pagInfo;
+    private Panel pnlLog;
+    private GroupBox grpConnection;
+    private GroupBox grpChannel;
+    private GroupBox grpTTS;
+    private GroupBox grpFx;
+    private RichTextBox rtfInfo;
     private readonly DispatcherTimer statusDebounceTimer = new DispatcherTimer();
     #endregion
 
@@ -400,12 +607,16 @@ namespace ACT_DiscordTriggers {
       AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
       InitializeComponent();
       InitializeDebounceTimer();
+      PopulateInfoPage();
 
       //Add installed voices to dropdown
       var tts = new SpeechSynthesizer();
       foreach (InstalledVoice v in tts.GetInstalledVoices())
         cmbTTS.Items.Add(v.VoiceInfo.Name);
       cmbTTS.SelectedIndex = 0;
+
+      //Show the first page (also makes the nav selection visible).
+      lstNav.SelectedIndex = 0;
     }
 
     private void InitializeDebounceTimer() {
@@ -442,6 +653,7 @@ namespace ACT_DiscordTriggers {
       xmlSettings = new SettingsSerializer(this);
       LoadSettings();
       ApplyFxSettings();
+      ApplyNormalizationSettings();
 
       //Locate the out-of-process Discord bridge so DiscordClient knows where to spawn it
       string bridgeDir = FindBridgeDir();
@@ -450,8 +662,7 @@ namespace ACT_DiscordTriggers {
       //Always-on diagnostics: capture both plugin- and bridge-side logs into one
       //unified file the user can simply email. Encapsulated — no UI, no toggle.
       try {
-        string pluginVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-        DiagnosticsLog.Init(ActGlobals.oFormActMain.AppDataFolder.FullName, bridgeDir, pluginVersion);
+        DiagnosticsLog.Init(ActGlobals.oFormActMain.AppDataFolder.FullName, bridgeDir, PluginVersion());
         Log("Diagnostics log: " + DiagnosticsLog.UnifiedPath);
       } catch { }
 
@@ -592,6 +803,19 @@ namespace ACT_DiscordTriggers {
     #endregion
 
     #region UI Events
+    private void nav_SelectedIndexChanged(object sender, EventArgs e) {
+      ShowPage(lstNav.SelectedIndex);
+    }
+
+    // Swap the visible content page. Guarded because the ListBox selection can
+    // change before the page panels exist during construction.
+    private void ShowPage(int index) {
+      if (pagGeneral == null) return;
+      pagGeneral.Visible = index == 0;
+      pagSound.Visible = index == 1;
+      pagInfo.Visible = index == 2;
+    }
+
     private async void btnJoin_Click(object sender, EventArgs e) {
       btnJoin.Enabled = false;
       if (await DiscordClient.JoinChannel(cmbServer.SelectedItem.ToString(), cmbChan.SelectedItem.ToString())) {
@@ -675,6 +899,59 @@ namespace ACT_DiscordTriggers {
       DiscordClient.RandomEffectChance = sliderFxChance.Value;
       lblFxChance.Text = "FX Chance: " + sliderFxChance.Value + "%";
     }
+
+    // Mirror the auto-leveling UI into DiscordClient, then push it to the bridge.
+    // Unlike FX (rolled per trigger), normalization is global bridge config, so a
+    // change here sends a SetNormalization op (a no-op while disconnected — connect
+    // re-pushes the current values). The slider holds the target magnitude in dB;
+    // the bridge wants a negative dBFS value, hence the sign flip.
+    private void normalizeSettings_Changed(object sender, EventArgs e) {
+      ApplyNormalizationSettings();
+      _ = DiscordClient.SetNormalizationAsync();
+    }
+
+    private void ApplyNormalizationSettings() {
+      DiscordClient.NormalizeEnabled = chkNormalize.Checked;
+      DiscordClient.NormalizeTargetDb = -sliderNormalizeTarget.Value;
+      lblNormalizeTarget.Text = "Auto-level Target: -" + sliderNormalizeTarget.Value + " dBFS";
+    }
+    #endregion
+
+    #region Information page
+    // Static, read-only explanation of how a trigger turns into Discord audio.
+    // Mirrors the bridge's actual pipeline order; when the compressor stage lands
+    // it slots in between [1] and [2].
+    private void PopulateInfoPage() {
+      rtfInfo.Text =
+@"How a trigger becomes Discord audio
+───────────────────────────────────
+Everything is 48 kHz · 16-bit · stereo PCM end to end.
+
+  Trigger (TTS text  or  sound file)
+        │
+  [1] Source render ─ TTS synthesized in-process (System.Speech);
+        │             files decoded + resampled with NAudio
+        ▼
+  [2] Random Sound FX (optional) ─ a random effect is rolled per
+        │                          trigger when enabled
+        ▼
+  [3] Auto-level / normalization ─ RMS scaled toward your target
+        │   dBFS, then peak-limited (no clipping) and boost-capped
+        ▼
+  [4] Mixer ─ concurrent triggers blended in 20 ms chunks
+        │
+        ▼
+  node.exe bridge ─ encrypted Discord voice (DAVE E2EE)
+
+───────────────────────────────────
+Plugin version: " + PluginVersion() + @"
+Diagnostics log: " + (DiagnosticsLog.UnifiedPath ?? "(not initialized)");
+    }
+
+    private static string PluginVersion() {
+      try { return Assembly.GetExecutingAssembly().GetName().Version.ToString(); }
+      catch { return "?"; }
+    }
     #endregion
 
     #region Settings
@@ -703,6 +980,8 @@ namespace ACT_DiscordTriggers {
       xmlSettings.AddControlSetting(txtBotStatus.Name, txtBotStatus);
       xmlSettings.AddControlSetting(chkRandomFx.Name, chkRandomFx);
       xmlSettings.AddControlSetting(sliderFxChance.Name, sliderFxChance);
+      xmlSettings.AddControlSetting(chkNormalize.Name, chkNormalize);
+      xmlSettings.AddControlSetting(sliderNormalizeTarget.Name, sliderNormalizeTarget);
       if (File.Exists(settingsFile)) {
         try {
           using (var fs = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
