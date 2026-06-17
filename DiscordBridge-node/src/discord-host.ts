@@ -24,6 +24,7 @@ import { Reader as WavReader, type WavFormat } from 'wav';
 
 import * as log from './file-log.js';
 import { applyRandomEffect } from './effects.js';
+import { normalizePcm16, DEFAULT_NORMALIZE_ENABLED, DEFAULT_NORMALIZE_TARGET_DB } from './normalize.js';
 import { PcmMixer } from './pcm-mixer.js';
 import type { Host, Notifier, OpResult, SpeakMeta } from './pipe-server.js';
 import type { LogLevel } from './protocol.js';
@@ -83,7 +84,19 @@ export class DiscordHost implements Host {
     private pingTimer: NodeJS.Timeout | null = null;
     private readonly wavCache = new WavCache();
 
+    // Auto-leveling config, pushed by the plugin via SetNormalization. Defaults
+    // mirror the plugin's defaults (checkbox on, -20 dBFS) so clips are leveled
+    // even before the first config frame lands after connect.
+    private normalizeEnabled = DEFAULT_NORMALIZE_ENABLED;
+    private normalizeTargetDb = DEFAULT_NORMALIZE_TARGET_DB;
+
     setNotifier(fn: Notifier): void { this.notify = fn; }
+
+    setNormalization(enabled: boolean, targetDb: number): void {
+        this.normalizeEnabled = enabled;
+        this.normalizeTargetDb = targetDb;
+        log.info(`setNormalization: enabled=${enabled} targetDb=${targetDb}`);
+    }
 
     async init(token: string, status: string): Promise<OpResult> {
         if (this.client) {
@@ -292,6 +305,20 @@ export class DiscordHost implements Host {
                     `inMs=${this._pcmDurationMs(pcm.length)} outMs=${this._pcmDurationMs(buf.length)}`);
             } catch (e) {
                 log.error('random effect failed; playing dry', e);
+            }
+        }
+        // Auto-level AFTER the effect so the effect's own level change is what we
+        // correct — a distortion hit that came out hot, or an echo tail that
+        // dropped the average, both land near the target loudness.
+        if (this.normalizeEnabled) {
+            try {
+                const norm = normalizePcm16(buf, this.normalizeTargetDb);
+                if (norm.applied) {
+                    buf = norm.pcm;
+                    log.info(`normalize reqId=${reqId} gain=${norm.gain.toFixed(3)} target=${this.normalizeTargetDb}dBFS`);
+                }
+            } catch (e) {
+                log.error('normalize failed; playing un-leveled', e);
             }
         }
         const enqueueT = performance.now();

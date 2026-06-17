@@ -31,6 +31,18 @@ namespace DiscordAPI {
         }
         private static readonly Random fxRandom = new Random();
 
+        // Auto-leveling (loudness normalization). Like the FX fields, the plugin
+        // mirrors its UI here. Unlike FX, this is global config the bridge applies
+        // to every clip — so we push it to the bridge on connect and whenever it
+        // changes, rather than tagging each trigger. Defaults match the bridge's
+        // own defaults (on, -20 dBFS) so behavior is consistent before the first push.
+        public static volatile bool NormalizeEnabled = true;
+        private static int normalizeTargetDb = -20;
+        public static int NormalizeTargetDb {
+            get { return normalizeTargetDb; }
+            set { normalizeTargetDb = value < -60 ? -60 : (value > 0 ? 0 : value); }
+        }
+
         private static bool RollEffect() {
             if (!RandomEffectsEnabled) return false;
             int chance = randomEffectChance;
@@ -127,6 +139,9 @@ namespace DiscordAPI {
                 } catch (Exception ex) {
                     Log?.Invoke("Discord login error: " + ex.Message);
                 }
+
+                // Push current auto-leveling config so a fresh bridge matches the UI.
+                await PushNormalizationAsync(localClient);
             } catch (Exception ex) {
                 Log?.Invoke("Init error: " + ex.Message);
             } finally {
@@ -212,6 +227,25 @@ namespace DiscordAPI {
             } catch (Exception ex) {
                 Log?.Invoke("GetChannelsAsync failed: " + ex.Message);
                 return new string[0];
+            }
+        }
+
+        // Push auto-leveling config to the bridge. Called on connect (with the
+        // freshly-created client) and from the UI whenever the user toggles the
+        // checkbox or moves the target slider. No-op when not connected — connect
+        // re-pushes the current values anyway.
+        public static Task SetNormalizationAsync() {
+            return PushNormalizationAsync(pipeClient);
+        }
+
+        private static async Task PushNormalizationAsync(PipeClient pc) {
+            if (pc == null) return;
+            try {
+                await pc.SendAsync<OkResponse>(
+                    new SetNormalizationRequest { Enabled = NormalizeEnabled, TargetDb = NormalizeTargetDb },
+                    TimeSpan.FromSeconds(5));
+            } catch (Exception ex) {
+                Log?.Invoke("SetNormalization failed: " + ex.Message);
             }
         }
 

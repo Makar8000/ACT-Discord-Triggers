@@ -85,6 +85,10 @@ export class FakeHost implements Host {
         return this._nextSpeakFile;
     }
 
+    setNormalization(enabled: boolean, targetDb: number): void {
+        this.calls.push({ method: 'setNormalization', args: [enabled, targetDb] });
+    }
+
     nextInit(r: OpResult): void { this._nextInit = r; }
     nextJoinChannel(r: OpResult): void { this._nextJoinChannel = r; }
     nextSpeakPcm(r: OpResult): void { this._nextSpeakPcm = r; }

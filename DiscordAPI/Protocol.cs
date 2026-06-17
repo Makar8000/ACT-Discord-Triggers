@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace DiscordBridge.Protocol {
 
     public static class ProtocolConstants {
-        public const int Version = 2;
+        public const int Version = 3;
     }
 
     public static class Op {
@@ -28,6 +28,8 @@ namespace DiscordBridge.Protocol {
         public const string SpeakPcm = "SpeakPcm";
         public const string SpeakFile = "SpeakFile";
         public const string SpeakResult = "SpeakResult";
+        public const string SetNormalization = "SetNormalization";
+        public const string SetNormalizationResult = "SetNormalizationResult";
         public const string Shutdown = "Shutdown";
 
         public const string BotReady = "BotReady";
@@ -142,6 +144,15 @@ namespace DiscordBridge.Protocol {
         [JsonPropertyName("path")] public string Path { get; set; } = "";
         // Mirrors the binary SpeakPcm flags bit0: apply a random sound effect to this trigger.
         [JsonPropertyName("randomEffect")] public bool RandomEffect { get; set; }
+    }
+
+    // Auto-leveling config. Global, not per-trigger: the bridge stores it and
+    // applies it to every clip. TargetDb is a negative dBFS RMS target (e.g. -20).
+    public class SetNormalizationRequest : IBridgeRequest {
+        [JsonPropertyName("op")] public string Op { get; set; } = Protocol.Op.SetNormalization;
+        [JsonPropertyName("reqId")] public int? ReqId { get; set; }
+        [JsonPropertyName("enabled")] public bool Enabled { get; set; }
+        [JsonPropertyName("targetDb")] public int TargetDb { get; set; }
     }
 
     public class OkResponse {

@@ -15,6 +15,7 @@ import {
     type OutboundFrame,
     type ReqId,
 } from './protocol.js';
+import { DEFAULT_NORMALIZE_TARGET_DB } from './normalize.js';
 import pkg from '../package.json' with { type: 'json' };
 
 const BRIDGE_VERSION: string = pkg.version;
@@ -45,6 +46,7 @@ export interface Host {
     leaveChannel(): Promise<void>;
     speakPcm(pcmBuffer: Buffer, meta?: SpeakMeta): OpResult;
     speakFile(path: string, meta?: SpeakMeta): Promise<OpResult>;
+    setNormalization(enabled: boolean, targetDb: number): void;
 }
 
 interface IncomingMessage {
@@ -239,6 +241,13 @@ export class PipeServer {
                     const fx = parsed['randomEffect'] === true;
                     const r = await this.host.speakFile(asString(parsed['path']), { reqId: reqId ?? 0, recvT, fx });
                     await this._sendFrame({ op: Op.SpeakResult, reqId, ok: r.ok, error: r.error });
+                    break;
+                }
+                case Op.SetNormalization: {
+                    const enabled = parsed['enabled'] === true;
+                    const targetDb = asNumber(parsed['targetDb']) ?? DEFAULT_NORMALIZE_TARGET_DB;
+                    this.host.setNormalization(enabled, targetDb);
+                    await this._sendFrame({ op: Op.SetNormalizationResult, reqId, ok: true, error: '' });
                     break;
                 }
                 case Op.Shutdown: {

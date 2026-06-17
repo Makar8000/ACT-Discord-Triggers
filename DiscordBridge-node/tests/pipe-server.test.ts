@@ -405,6 +405,26 @@ test('SpeakFile: host error echoed via SpeakResult', async () => {
     assert.match(String(frame!['error']), /48 kHz/);
 });
 
+test('SetNormalization: forwards enabled + targetDb to host; result ok=true', async () => {
+    const { sock, host } = makeHarness();
+    sock.emit('data', encodeFrame({ op: Op.SetNormalization, reqId: 150, enabled: true, targetDb: -18 }));
+    const [frame] = await waitForFrames(sock, 1);
+    assert.equal(frame!['op'], Op.SetNormalizationResult);
+    assert.equal(frame!['reqId'], 150);
+    assert.equal(frame!['ok'], true);
+    const call = host.calls.find((c) => c.method === 'setNormalization');
+    assert.ok(call);
+    assert.deepEqual(call.args, [true, -18]);
+});
+
+test('SetNormalization: missing targetDb defaults to -20; enabled defaults false', async () => {
+    const { sock, host } = makeHarness();
+    sock.emit('data', encodeFrame({ op: Op.SetNormalization, reqId: 151 }));
+    await waitForFrames(sock, 1);
+    const call = host.calls.find((c) => c.method === 'setNormalization');
+    assert.deepEqual(call!.args, [false, -20]);
+});
+
 test('Unknown op: emits Log notification with no reqId, level=Error', async () => {
     const { sock } = makeHarness();
     sock.emit('data', encodeFrame({ op: 'Bogus', reqId: 999 }));

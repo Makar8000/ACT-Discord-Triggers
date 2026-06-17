@@ -31,7 +31,7 @@ test('every request op has a paired Result op (Shutdown excluded)', () => {
     const requestOps = [
         'Hello', 'Init', 'Deinit', 'IsConnected',
         'GetServers', 'GetChannels', 'SetGame',
-        'JoinChannel', 'LeaveChannel',
+        'JoinChannel', 'LeaveChannel', 'SetNormalization',
     ] as const;
     const opValues = new Set<string>(Object.values(Op));
     for (const req of requestOps) {

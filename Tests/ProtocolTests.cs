@@ -104,7 +104,7 @@ namespace ActDiscordTriggers.Tests {
             string[] requestsExpectingResult = {
                 Op.Hello, Op.Init, Op.Deinit, Op.IsConnected,
                 Op.GetServers, Op.GetChannels, Op.SetGame,
-                Op.JoinChannel, Op.LeaveChannel,
+                Op.JoinChannel, Op.LeaveChannel, Op.SetNormalization,
             };
             foreach (var req in requestsExpectingResult) {
                 Assert.Contains(req + "Result", ops);
@@ -118,6 +118,16 @@ namespace ActDiscordTriggers.Tests {
         [Fact]
         public void ProtocolVersion_is_positive() {
             Assert.True(ProtocolConstants.Version > 0);
+        }
+
+        [Fact]
+        public void SetNormalizationRequest_serializes_enabled_and_targetDb() {
+            var req = new SetNormalizationRequest { ReqId = 4, Enabled = true, TargetDb = -18 };
+            using var doc = JsonDocument.Parse(JsonSerializer.Serialize(req, opts));
+            Assert.Equal("SetNormalization", doc.RootElement.GetProperty("op").GetString());
+            Assert.Equal(4, doc.RootElement.GetProperty("reqId").GetInt32());
+            Assert.True(doc.RootElement.GetProperty("enabled").GetBoolean());
+            Assert.Equal(-18, doc.RootElement.GetProperty("targetDb").GetInt32());
         }
 
         [Fact]
