@@ -1,3 +1,8 @@
+> [!WARNING]
+> This repo has been archived and is no longer maintained.
+> You can check out a working, actively maintained fork by [@jlagedo](https://github.com/jlagedo) here:
+> https://github.com/jlagedo/ACT-Discord-Triggers
+
 # ACT Discord Triggers
 [![Build Plugin](https://github.com/Makar8000/ACT-Discord-Triggers/actions/workflows/ci.yml/badge.svg)](https://github.com/Makar8000/ACT-Discord-Triggers/actions/workflows/ci.yml)
 
